@@ -5,19 +5,53 @@ version: 0
 
 library
   build-depends:
-    base
+    aeson ^>= 1.4,
+    base,
+    fused-effects ^>= 0.3,
+    servant ^>= 0.16,
+    servant-server ^>= 0.16,
+    wai ^>= 3.2,
+    warp ^>= 3.2,
+
+  default-extensions:
+    DataKinds
+    DeriveAnyClass
+    DeriveFunctor
+    DeriveGeneric
+    DerivingStrategies
+    DerivingVia
+    FlexibleContexts
+    FlexibleInstances
+    GADTs
+    GeneralizedNewtypeDeriving
+    InstanceSigs
+    KindSignatures
+    LambdaCase
+    MultiParamTypeClasses
+    OverloadedStrings
+    QuantifiedConstraints
+    TypeApplications
+    TypeOperators
 
   default-language:
     Haskell2010
 
   exposed-modules:
+    Hp.API
+    Hp.Env
+    Hp.Form
     Hp.Main
+    Prelude
 
   ghc-options:
     -Wall
 
   hs-source-dirs:
     src
+
+  mixins:
+    base hiding (Prelude),
+    base (Prelude as PreludeFromBase)
 
 executable hspolls
   build-depends:
