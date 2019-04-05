@@ -1,0 +1,4 @@
+.ghc.environment.*
+.ghci
+.ghcid
+dist-newstyle/
