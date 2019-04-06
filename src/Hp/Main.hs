@@ -8,6 +8,7 @@ import Hp.API
 import Hp.Eff.GitHubAuth      (GitHubAuthEffect, gitHubAuth)
 import Hp.Eff.GitHubAuth.Http (runGitHubAuthHttp)
 import Hp.Eff.HttpClient      (runHttpManager)
+import Hp.Eff.SavePoll        (SavePoll, savePoll, runSavePollPrint)
 import Hp.Env
 import Hp.GitHub.ClientId     (GitHubClientId(..))
 import Hp.GitHub.ClientSecret (GitHubClientSecret(..))
@@ -71,6 +72,7 @@ application httpManager clientSecret =
     η = runGitHubAuthHttp @Env
       >>> runHttpManager @Env
       >>> runReader env
+      >>> runSavePollPrint
       -- >>> runError @Servant.ClientError
       >>> runM @IO
       -- >>> over (mapped . _Left) toServerError
@@ -129,8 +131,10 @@ handleGetLoginGitHub code =
 
 handlePostPoll ::
      ( Carrier sig m
+     , Member SavePoll sig
      )
   => Poll
   -> m Servant.NoContent
-handlePostPoll _poll =
+handlePostPoll poll = do
+  savePoll poll
   pure Servant.NoContent

@@ -6,7 +6,7 @@ import Data.Aeson (FromJSON)
 -- TODO proper markdown type
 newtype Markdown
   = Markdown Text
-  deriving newtype (FromJSON)
+  deriving newtype (FromJSON, Show)
 
 -- TODO checkbox
 -- TODO text field
@@ -16,7 +16,7 @@ newtype Markdown
 data PollFormElement
   = MarkdownElement Markdown
   | RadioElement Text [Text]
-  deriving stock (Generic)
+  deriving stock (Generic, Show)
 
 -- TODO FromJSON PollFormElement
 instance FromJSON PollFormElement where

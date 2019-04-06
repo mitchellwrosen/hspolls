@@ -63,6 +63,7 @@ library
     Hp.Eff.GitHubAuth
     Hp.Eff.GitHubAuth.Http
     Hp.Eff.HttpClient
+    Hp.Eff.SavePoll
     Hp.Env
     Hp.GitHub
     Hp.GitHub.AccessToken

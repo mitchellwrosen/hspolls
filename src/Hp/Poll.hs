@@ -12,5 +12,5 @@ data Poll
   = Poll
   { elements :: Seq PollFormElement
   , endTime :: UTCTime
-  } deriving stock (Generic)
+  } deriving stock (Generic, Show)
     deriving anyclass (FromJSON)
