@@ -7,9 +7,19 @@ library
   build-depends:
     aeson ^>= 1.4,
     base,
+    blaze-html ^>= 0.9,
+    bytestring,
     containers,
+    free,
     fused-effects ^>= 0.3,
+    generic-lens ^>= 1.1,
+    http-client,
+    lens ^>= 4.17,
+    safe-exceptions,
     servant ^>= 0.16,
+    servant-blaze ^>= 0.9,
+    servant-client ^>= 0.16,
+    servant-client-core ^>= 0.16,
     servant-server ^>= 0.16,
     text,
     wai ^>= 3.2,
@@ -30,8 +40,11 @@ library
     KindSignatures
     LambdaCase
     MultiParamTypeClasses
+    NamedFieldPuns
     OverloadedStrings
     QuantifiedConstraints
+    ScopedTypeVariables
+    StrictData
     TypeApplications
     TypeOperators
 
@@ -40,14 +53,19 @@ library
 
   exposed-modules:
     Hp.API
+    Hp.Eff.HttpClient
     Hp.Env
     Hp.Form
+    Hp.GitHub
+    Hp.GitHub.AccessToken
+    Hp.GitHub.API
     Hp.Main
     Hp.PollFormElement
     Prelude
 
   ghc-options:
     -Wall
+    -fno-warn-name-shadowing
 
   hs-source-dirs:
     src
