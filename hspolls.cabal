@@ -72,3 +72,6 @@ executable hspolls
 
   main-is:
     Main.hs
+
+  mixins:
+    base hiding (Prelude)
