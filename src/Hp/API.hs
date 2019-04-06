@@ -1,6 +1,6 @@
 module Hp.API where
 
-import Hp.Form
+import Hp.Poll (Poll)
 
 import Servant
 import Servant.API.Generic
@@ -30,6 +30,6 @@ data API route
   , postPollRoute
       :: route
       :- "poll"
-      :> ReqBody '[JSON] Form
+      :> ReqBody '[JSON] Poll
       :> Post '[JSON] NoContent
   } deriving stock (Generic)

@@ -25,6 +25,7 @@ library
     servant-server ^>= 0.16,
     transformers,
     text,
+    time ^>= 1.8 || ^>= 1.9,
     wai ^>= 3.2,
     warp ^>= 3.2,
 
@@ -60,7 +61,6 @@ library
     Hp.API
     Hp.Eff.HttpClient
     Hp.Env
-    Hp.Form
     Hp.GitHub
     Hp.GitHub.AccessToken
     Hp.GitHub.API
@@ -70,6 +70,7 @@ library
     Hp.GitHub.Response
     Hp.GitHub.User
     Hp.Main
+    Hp.Poll
     Hp.PollFormElement
     Prelude
 

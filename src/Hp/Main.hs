@@ -7,13 +7,13 @@ module Hp.Main where
 import Hp.API
 import Hp.Eff.HttpClient                           (HttpClient, runHttpManager)
 import Hp.Env
-import Hp.Form
 import Hp.GitHub                                   (gitHubClientId,
                                                     gitHubGetUser,
                                                     gitHubPostLoginOauthAccessToken)
 import Hp.GitHub.ClientSecret                      (GitHubClientSecret(..))
 import Hp.GitHub.PostLoginOauthAccessTokenResponse (GitHubPostLoginOauthAccessTokenResponse(..))
 import Hp.GitHub.Response                          (GitHubResponse(..))
+import Hp.Poll
 
 import Control.Effect
 -- import Control.Effect.Error
@@ -154,7 +154,7 @@ handleGetLoginGitHub code =
 handlePostPoll ::
      ( Carrier sig m
      )
-  => Form
+  => Poll
   -> m Servant.NoContent
-handlePostPoll _form =
+handlePostPoll _poll =
   pure Servant.NoContent
