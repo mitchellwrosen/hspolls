@@ -1,12 +1,10 @@
 module Hp.GitHub.AccessToken where
 
-import Data.Aeson (FromJSON)
+import Data.Aeson      (FromJSON)
+import Web.HttpApiData (ToHttpApiData)
 
 
-data AccessToken
-  = AccessToken
-  { access_token :: Text
-  , scope :: Text
-  , token_type :: Text
-  } deriving stock (Generic)
-    deriving anyclass (FromJSON)
+newtype GitHubAccessToken
+  = GitHubAccessToken { unGitHubAccessToken :: Text }
+  deriving stock (Show)
+  deriving newtype (FromJSON, ToHttpApiData)

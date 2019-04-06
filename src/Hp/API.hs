@@ -24,7 +24,8 @@ data API route
       :> QueryParam' '[Required, Strict] "code" Text
       -- TODO newtype the "code"
       -- TODO required "state" query param
-      :> Get '[JSON] NoContent
+      -- TODO just returning html for now, but should redirect
+      :> Get '[HTML] Blaze.Html
 
   , postPollRoute
       :: route

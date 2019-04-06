@@ -1,16 +1,26 @@
 module Hp.GitHub.API where
 
-import Hp.GitHub.AccessToken (AccessToken)
-import Hp.GitHub.Response    (Response)
+import Hp.GitHub.AccessToken                       (GitHubAccessToken)
+import Hp.GitHub.PostLoginOauthAccessTokenResponse (GitHubPostLoginOauthAccessTokenResponse)
+import Hp.GitHub.Response                          (GitHubResponse)
+import Hp.GitHub.User                              (GitHubUser)
 
 import Servant.API
 import Servant.API.Generic
 
 
-data API route
-  = API
-  { -- | https://developer.github.com/apps/building-oauth-apps/authorizing-oauth-apps/#2-users-are-redirected-back-to-your-site-by-github
-    postLoginOauthAccessToken
+data GitHubAPI route
+  = GitHubAPI
+  { -- | https://developer.github.com/v3/users/#get-the-authenticated-user
+    gitHubGetUser
+      :: route
+      :- "user"
+      :> Header' '[Required, Strict] "User-Agent" Text
+      :> QueryParam' '[Required, Strict] "access_token" GitHubAccessToken
+      :> Get '[JSON] GitHubUser
+
+    -- | https://developer.github.com/apps/building-oauth-apps/authorizing-oauth-apps/#2-users-are-redirected-back-to-your-site-by-github
+  , gitHubPostLoginOauthAccessToken
       :: route
       :- "login"
       :> "oauth"
@@ -20,5 +30,5 @@ data API route
       :> QueryParam' '[Required, Strict] "code" Text
       :> QueryParam' '[Optional, Strict] "redirect_uri" Text
       :> QueryParam' '[Optional, Strict] "state" Text
-      :> Get '[JSON] (Response AccessToken)
+      :> Get '[JSON] (GitHubResponse GitHubPostLoginOauthAccessTokenResponse)
   } deriving stock (Generic)

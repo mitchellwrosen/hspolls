@@ -1,13 +1,17 @@
 module Hp.GitHub
-  ( clientId
+  ( gitHubClientId
     -- * API
-  , postLoginOauthAccessToken
+  , gitHubGetUser
+  , gitHubPostLoginOauthAccessToken
   ) where
 
-import Hp.Eff.HttpClient     (HttpClient, fromServantClient)
-import Hp.GitHub.AccessToken (AccessToken)
-import Hp.GitHub.API         (API)
-import Hp.GitHub.Response    (Response)
+import Hp.Eff.HttpClient                           (HttpClient,
+                                                    fromServantClient)
+import Hp.GitHub.AccessToken                       (GitHubAccessToken)
+import Hp.GitHub.API                               (GitHubAPI)
+import Hp.GitHub.PostLoginOauthAccessTokenResponse (GitHubPostLoginOauthAccessTokenResponse)
+import Hp.GitHub.Response                          (GitHubResponse)
+import Hp.GitHub.User                              (GitHubUser)
 
 import qualified Hp.GitHub.API as API
 
@@ -21,8 +25,8 @@ import qualified Servant.Client.Generic as Servant
 
 -- | (Temporary) hspolls-test application client ID
 -- TODO don't hard code client id even though it's not a secret
-clientId :: Text
-clientId =
+gitHubClientId :: Text
+gitHubClientId =
   "0708940f1632f7a953e8"
 
 baseUrl :: Servant.BaseUrl
@@ -34,12 +38,25 @@ baseUrl =
     , Servant.baseUrlPath = ""
     }
 
+apiBaseUrl :: Servant.BaseUrl
+apiBaseUrl =
+  Servant.BaseUrl
+    { Servant.baseUrlScheme = Servant.Https
+    , Servant.baseUrlHost = "api.github.com"
+    , Servant.baseUrlPort = 443
+    , Servant.baseUrlPath = ""
+    }
+
+userAgent :: Text
+userAgent =
+  "hspolls"
+
 
 --------------------------------------------------------------------------------
 -- Internal servant-generated client
 --------------------------------------------------------------------------------
 
-servantClient :: API (Servant.AsClientT (Free Servant.ClientF))
+servantClient :: GitHubAPI (Servant.AsClientT (Free Servant.ClientF))
 servantClient =
   Servant.genericClient
 
@@ -48,7 +65,21 @@ servantClient =
 -- Cleaned up client API
 --------------------------------------------------------------------------------
 
-postLoginOauthAccessToken ::
+gitHubGetUser ::
+     ( Carrier sig m
+     , Member HttpClient sig
+     )
+  => GitHubAccessToken
+  -> m (Either SomeException GitHubUser)
+gitHubGetUser accessToken =
+  fromServantClient
+    apiBaseUrl
+    (API.gitHubGetUser
+      servantClient
+      userAgent
+      accessToken)
+
+gitHubPostLoginOauthAccessToken ::
      ( Carrier sig m
      , Member HttpClient sig
      )
@@ -57,11 +88,11 @@ postLoginOauthAccessToken ::
   -> Text
   -> Maybe Text
   -> Maybe Text
-  -> m (Either SomeException (Response AccessToken))
-postLoginOauthAccessToken clientId clientSecret code redirectUri state =
+  -> m (Either SomeException (GitHubResponse GitHubPostLoginOauthAccessTokenResponse))
+gitHubPostLoginOauthAccessToken clientId clientSecret code redirectUri state =
   fromServantClient
     baseUrl
-    (API.postLoginOauthAccessToken
+    (API.gitHubPostLoginOauthAccessToken
       servantClient
       clientId
       clientSecret

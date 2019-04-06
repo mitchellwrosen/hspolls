@@ -1,6 +1,6 @@
 module Hp.Env where
 
-import qualified Hp.GitHub.ClientSecret as Hp.GitHub (ClientSecret)
+import Hp.GitHub.ClientSecret (GitHubClientSecret)
 
 import qualified Network.HTTP.Client as Http
 
@@ -8,5 +8,5 @@ import qualified Network.HTTP.Client as Http
 data Env
   = Env
   { manager :: Http.Manager
-  , gitHubClientSecret :: Hp.GitHub.ClientSecret
+  , gitHubClientSecret :: GitHubClientSecret
   } deriving stock (Generic)

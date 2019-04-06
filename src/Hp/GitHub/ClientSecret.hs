@@ -1,5 +1,5 @@
 module Hp.GitHub.ClientSecret where
 
 
-newtype ClientSecret
-  = ClientSecret { unClientSecret :: Text }
+newtype GitHubClientSecret
+  = GitHubClientSecret { unGitHubClientSecret :: Text }

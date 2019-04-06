@@ -10,7 +10,7 @@ import Control.Lens           as X (Lens, Traversal, mapped, over, set, view,
 import Control.Monad.IO.Class as X
 import Data.Coerce            as X (coerce)
 import Data.Foldable          as X (asum)
-import Data.Generics.Product  as X (HasType, typed)
+import Data.Generics.Product  as X (HasType, field, typed)
 import Data.Kind              as X (Type)
 import Data.Sequence          as X (Seq)
 import Data.Text              as X (Text)

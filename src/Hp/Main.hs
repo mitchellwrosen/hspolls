@@ -5,14 +5,15 @@
 module Hp.Main where
 
 import Hp.API
-import Hp.Eff.HttpClient (HttpClient, runHttpManager)
+import Hp.Eff.HttpClient                           (HttpClient, runHttpManager)
 import Hp.Env
 import Hp.Form
-
-import qualified Hp.GitHub
-import qualified Hp.GitHub.AccessToken  as Hp.GitHub (AccessToken)
-import qualified Hp.GitHub.ClientSecret as Hp.GitHub (ClientSecret(..))
-import qualified Hp.GitHub.Response     as Hp.GitHub (Response(..))
+import Hp.GitHub                                   (gitHubClientId,
+                                                    gitHubGetUser,
+                                                    gitHubPostLoginOauthAccessToken)
+import Hp.GitHub.ClientSecret                      (GitHubClientSecret(..))
+import Hp.GitHub.PostLoginOauthAccessTokenResponse (GitHubPostLoginOauthAccessTokenResponse(..))
+import Hp.GitHub.Response                          (GitHubResponse(..))
 
 import Control.Effect
 -- import Control.Effect.Error
@@ -49,11 +50,11 @@ main = do
     8000
     (application
       httpManager
-      (Hp.GitHub.ClientSecret (Text.pack clientSecret)))
+      (GitHubClientSecret (Text.pack clientSecret)))
 
 application ::
      Http.Manager
-  -> Hp.GitHub.ClientSecret
+  -> GitHubClientSecret
   -> Wai.Request
   -> (Wai.Response -> IO Wai.ResponseReceived)
   -> IO Wai.ResponseReceived
@@ -104,36 +105,37 @@ handleGetLogin =
 handleGetLoginGitHub ::
      ∀ env m sig.
      ( Carrier sig m
-     , HasType Hp.GitHub.ClientSecret env
+     , HasType GitHubClientSecret env
      , Member HttpClient sig
      , Member (Reader env) sig
-     , MonadIO m -- TODO axe this
      )
   => Text
-  -> m Servant.NoContent
+  -> m Blaze.Html
 handleGetLoginGitHub code =
   doPostLoginOauthAccessToken >>= \case
-    Left ex -> do
-      liftIO (print ex) -- debug print for now
-      pure Servant.NoContent
+    Left ex ->
+      pure (Blaze.toHtml (show ex))
 
-    Right (Hp.GitHub.ResponseError err) -> do
-      liftIO (print err)
-      pure Servant.NoContent
+    Right (GitHubResponseError err) -> do
+      pure (Blaze.toHtml (show err))
 
-    Right (Hp.GitHub.ResponseSuccess accessToken) ->
-      -- TODO finish oauth flow
-      pure Servant.NoContent
+    Right (GitHubResponseSuccess response) ->
+      gitHubGetUser (response ^. field @"access_token") >>= \case
+        Left ex ->
+          pure (Blaze.toHtml (show ex))
+
+        Right user ->
+          pure (Blaze.toHtml (show user))
 
   where
     doPostLoginOauthAccessToken ::
-         m (Either SomeException (Hp.GitHub.Response Hp.GitHub.AccessToken))
+         m (Either SomeException (GitHubResponse GitHubPostLoginOauthAccessTokenResponse))
     doPostLoginOauthAccessToken = do
-      clientSecret :: Hp.GitHub.ClientSecret <-
+      clientSecret :: GitHubClientSecret <-
         asks @env (^. typed)
 
-      Hp.GitHub.postLoginOauthAccessToken
-        Hp.GitHub.clientId
+      gitHubPostLoginOauthAccessToken
+        gitHubClientId
         (coerce clientSecret)
         code
         redirectUri

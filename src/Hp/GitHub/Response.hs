@@ -1,20 +1,20 @@
 module Hp.GitHub.Response where
 
-import Hp.GitHub.ErrorResponse (ErrorResponse)
+import Hp.GitHub.ErrorResponse (GitHubErrorResponse)
 
 import Data.Aeson       (FromJSON(..), Value)
 import Data.Aeson.Types (Parser)
 
 
-data Response a
-  = ResponseError ErrorResponse
-  | ResponseSuccess a
+data GitHubResponse a
+  = GitHubResponseError GitHubErrorResponse
+  | GitHubResponseSuccess a
   deriving stock (Show)
 
-instance FromJSON a => FromJSON (Response a) where
-  parseJSON :: Value -> Parser (Response a)
+instance FromJSON a => FromJSON (GitHubResponse a) where
+  parseJSON :: Value -> Parser (GitHubResponse a)
   parseJSON value =
     asum
-      [ ResponseError <$> parseJSON value
-      , ResponseSuccess <$> parseJSON value
+      [ GitHubResponseError <$> parseJSON value
+      , GitHubResponseSuccess <$> parseJSON value
       ]

@@ -3,8 +3,8 @@ module Hp.GitHub.ErrorResponse where
 import Data.Aeson (FromJSON)
 
 
-data ErrorResponse
-  = ErrorResponse
+data GitHubErrorResponse
+  = GitHubErrorResponse
   { error :: Text
   , error_description :: Text
   , error_uri :: Text
