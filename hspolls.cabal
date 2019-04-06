@@ -63,6 +63,9 @@ library
     Hp.GitHub
     Hp.GitHub.AccessToken
     Hp.GitHub.API
+    Hp.GitHub.ClientSecret
+    Hp.GitHub.ErrorResponse
+    Hp.GitHub.Response
     Hp.Main
     Hp.PollFormElement
     Prelude

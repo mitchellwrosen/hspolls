@@ -4,15 +4,15 @@ module Hp.GitHub
   , postLoginOauthAccessToken
   ) where
 
-import Hp.Eff.HttpClient     (HttpClient, fromServantClient, httpRequest)
+import Hp.Eff.HttpClient     (HttpClient, fromServantClient)
 import Hp.GitHub.AccessToken (AccessToken)
 import Hp.GitHub.API         (API)
+import Hp.GitHub.Response    (Response)
 
 import qualified Hp.GitHub.API as API
 
 import Control.Effect
-import Control.Effect.Error (throwError)
-import Control.Monad.Free   (Free(..), foldFree)
+import Control.Monad.Free (Free(..))
 
 import qualified Servant.Client         as Servant
 import qualified Servant.Client.Free    as Servant
@@ -30,7 +30,7 @@ baseUrl =
   Servant.BaseUrl
     { Servant.baseUrlScheme = Servant.Https
     , Servant.baseUrlHost = "github.com"
-    , Servant.baseUrlPort = 80
+    , Servant.baseUrlPort = 443
     , Servant.baseUrlPath = ""
     }
 
@@ -57,7 +57,7 @@ postLoginOauthAccessToken ::
   -> Text
   -> Maybe Text
   -> Maybe Text
-  -> m (Either SomeException AccessToken)
+  -> m (Either SomeException (Response AccessToken))
 postLoginOauthAccessToken clientId clientSecret code redirectUri state =
   fromServantClient
     baseUrl

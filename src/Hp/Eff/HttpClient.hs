@@ -16,7 +16,6 @@ import Control.Effect.Sum
 import Control.Exception      (toException)
 import Control.Exception.Safe (tryAny)
 import Control.Monad.Free     (Free(..))
-import Data.Generics.Product  (HasType, typed)
 
 import qualified Network.HTTP.Client                as Http
 import qualified Servant.Client.Core                as Servant (BaseUrl,

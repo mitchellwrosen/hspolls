@@ -1,6 +1,7 @@
 module Hp.GitHub.API where
 
 import Hp.GitHub.AccessToken (AccessToken)
+import Hp.GitHub.Response    (Response)
 
 import Servant.API
 import Servant.API.Generic
@@ -19,5 +20,5 @@ data API route
       :> QueryParam' '[Required, Strict] "code" Text
       :> QueryParam' '[Optional, Strict] "redirect_uri" Text
       :> QueryParam' '[Optional, Strict] "state" Text
-      :> Get '[JSON] AccessToken
+      :> Get '[JSON] (Response AccessToken)
   } deriving stock (Generic)
