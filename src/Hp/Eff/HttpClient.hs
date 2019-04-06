@@ -11,10 +11,10 @@ module Hp.Eff.HttpClient
 
 import Control.Effect
 import Control.Effect.Carrier
-import Control.Effect.Error
 import Control.Effect.Reader
 import Control.Effect.Sum
 import Control.Exception      (toException)
+import Control.Exception.Safe (tryAny)
 import Control.Monad.Free     (Free(..))
 import Data.Generics.Product  (HasType, typed)
 
@@ -116,11 +116,14 @@ instance
                 , Servant.cookieJar = Nothing
                 }
 
-        liftIO doRequest >>= \case
-          Left err ->
+        liftIO (tryAny doRequest) >>= \case
+          Left ex ->
+            runHttpManager (next (Left ex))
+
+          Right (Left err) ->
             runHttpManager (next (Left (toException err)))
 
-          Right response ->
+          Right (Right response) ->
             runHttpManager (next (Right response))
 
     R other ->
