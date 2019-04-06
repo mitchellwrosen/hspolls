@@ -4,7 +4,7 @@ module Hp.GitHub
   , postLoginOauthAccessToken
   ) where
 
-import Hp.Eff.HttpClient     (HttpClient, httpRequest)
+import Hp.Eff.HttpClient     (HttpClient, fromServantClient, httpRequest)
 import Hp.GitHub.AccessToken (AccessToken)
 import Hp.GitHub.API         (API)
 
@@ -12,7 +12,7 @@ import qualified Hp.GitHub.API as API
 
 import Control.Effect
 import Control.Effect.Error (throwError)
-import Control.Monad.Free   (foldFree)
+import Control.Monad.Free   (Free(..), foldFree)
 
 import qualified Servant.Client         as Servant
 import qualified Servant.Client.Free    as Servant
@@ -28,7 +28,7 @@ clientId =
 baseUrl :: Servant.BaseUrl
 baseUrl =
   Servant.BaseUrl
-    { Servant.baseUrlScheme = Servant.Http -- TODO https
+    { Servant.baseUrlScheme = Servant.Https
     , Servant.baseUrlHost = "github.com"
     , Servant.baseUrlPort = 80
     , Servant.baseUrlPath = ""
@@ -36,27 +36,12 @@ baseUrl =
 
 
 --------------------------------------------------------------------------------
--- Servant-generated client (not very nice to use)
+-- Internal servant-generated client
 --------------------------------------------------------------------------------
 
-servantClient ::
-  forall m sig.
-     ( Carrier sig m
-     , Member (Error Servant.ClientError) sig
-     , Member HttpClient sig
-     )
-  => API (Servant.AsClientT m)
+servantClient :: API (Servant.AsClientT (Free Servant.ClientF))
 servantClient =
-  Servant.genericClientHoist (foldFree phi)
-
-  where
-    phi :: forall x. Servant.ClientF x -> m x
-    phi = \case
-      Servant.RunRequest request next ->
-        next <$> httpRequest baseUrl request
-
-      Servant.Throw err ->
-        throwError err
+  Servant.genericClient
 
 
 --------------------------------------------------------------------------------
@@ -65,7 +50,6 @@ servantClient =
 
 postLoginOauthAccessToken ::
      ( Carrier sig m
-     , Member (Error Servant.ClientError) sig
      , Member HttpClient sig
      )
   => Text
@@ -73,12 +57,14 @@ postLoginOauthAccessToken ::
   -> Text
   -> Maybe Text
   -> Maybe Text
-  -> m AccessToken
+  -> m (Either SomeException AccessToken)
 postLoginOauthAccessToken clientId clientSecret code redirectUri state =
-  API.postLoginOauthAccessToken
-    servantClient
-    clientId
-    clientSecret
-    code
-    redirectUri
-    state
+  fromServantClient
+    baseUrl
+    (API.postLoginOauthAccessToken
+      servantClient
+      clientId
+      clientSecret
+      code
+      redirectUri
+      state)

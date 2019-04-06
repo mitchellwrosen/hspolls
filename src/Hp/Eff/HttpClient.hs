@@ -3,6 +3,7 @@
 module Hp.Eff.HttpClient
   ( HttpClient
   , httpRequest
+  , fromServantClient
     -- * Carriers
   , HttpManagerC
   , runHttpManager
@@ -13,6 +14,8 @@ import Control.Effect.Carrier
 import Control.Effect.Error
 import Control.Effect.Reader
 import Control.Effect.Sum
+import Control.Exception      (toException)
+import Control.Monad.Free     (Free(..))
 import Data.Generics.Product  (HasType, typed)
 
 import qualified Network.HTTP.Client                as Http
@@ -20,14 +23,16 @@ import qualified Servant.Client.Core                as Servant (BaseUrl,
                                                                 ClientError,
                                                                 Request,
                                                                 Response)
+import qualified Servant.Client.Free                as Servant
 import qualified Servant.Client.Internal.HttpClient as Servant
 
 
+-- TODO more accurate exception than SomeException
 data HttpClient (m :: Type -> Type) (k :: Type) where
-  HttpRequest ::
+  Request ::
        Servant.BaseUrl
     -> Servant.Request
-    -> (Servant.Response -> k)
+    -> (Either SomeException Servant.Response -> k)
     -> HttpClient m k
 
   deriving stock (Functor)
@@ -43,9 +48,36 @@ httpRequest ::
      )
   => Servant.BaseUrl
   -> Servant.Request
-  -> m Servant.Response
+  -> m (Either SomeException Servant.Response)
 httpRequest baseUrl request =
-  send (HttpRequest baseUrl request pure)
+  send (Request baseUrl request pure)
+
+-- | Helper function for translating servant-generated client calls into the
+-- HttpClient effect.
+--
+-- Assumes (unsafely) that servant calls are *always* structured as containing a
+-- request node at the top (Free RunRequest) followed by either a success node
+-- (Pure) or a failure node (Free Throw).
+fromServantClient ::
+     ( Carrier sig m
+     , Member HttpClient sig
+     )
+  => Servant.BaseUrl
+  -> Free Servant.ClientF a
+  -> m (Either SomeException a)
+fromServantClient baseUrl = \case
+  Free (Servant.RunRequest request next) ->
+    httpRequest baseUrl request >>= \case
+      Left ex ->
+        pure (Left ex)
+
+      Right response ->
+        case next response of
+          Pure token ->
+            pure (Right token)
+
+          Free (Servant.Throw err) ->
+            pure (Left (toException err))
 
 
 --------------------------------------------------------------------------------
@@ -54,12 +86,11 @@ httpRequest baseUrl request =
 
 newtype HttpManagerC env m a
   = HttpManagerC (m a)
-  deriving newtype (Applicative, Functor, Monad)
+  deriving newtype (Applicative, Functor, Monad, MonadIO)
 
 instance
      ( Carrier sig m
      , HasType Http.Manager env
-     , Member (Error Servant.ClientError) sig
      , Member (Reader env) sig
      , MonadIO m
      )
@@ -69,7 +100,7 @@ instance
        (HttpClient :+: sig) (HttpManagerC env m) (HttpManagerC env m a)
     -> HttpManagerC env m a
   eff = \case
-    L (HttpRequest baseUrl request next) -> do
+    L (Request baseUrl request next) -> do
       HttpManagerC $ do
         manager :: Http.Manager <-
           asks @env (^. typed)
@@ -85,13 +116,12 @@ instance
                 , Servant.cookieJar = Nothing
                 }
 
-        -- TODO what about IO exceptions?
         liftIO doRequest >>= \case
           Left err ->
-            throwError err
+            runHttpManager (next (Left (toException err)))
 
           Right response ->
-            runHttpManager (next response)
+            runHttpManager (next (Right response))
 
     R other ->
       HttpManagerC (eff (handleCoercible other))

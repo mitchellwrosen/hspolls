@@ -14,6 +14,7 @@ library
     fused-effects ^>= 0.3,
     generic-lens ^>= 1.1,
     http-client,
+    http-client-tls ^>= 0.3,
     lens ^>= 4.17,
     safe-exceptions,
     servant ^>= 0.16,
