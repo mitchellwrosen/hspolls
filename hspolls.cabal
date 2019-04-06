@@ -59,6 +59,7 @@ library
 
   exposed-modules:
     Hp.API
+    Hp.Eff.FirstOrder
     Hp.Eff.HttpClient
     Hp.Env
     Hp.GitHub

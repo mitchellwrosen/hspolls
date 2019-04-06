@@ -9,6 +9,8 @@ module Hp.Eff.HttpClient
   , runHttpManager
   ) where
 
+import Hp.Eff.FirstOrder (FirstOrderEffect(..))
+
 import Control.Effect
 import Control.Effect.Carrier
 import Control.Effect.Reader
@@ -35,10 +37,8 @@ data HttpClient (m :: Type -> Type) (k :: Type) where
     -> HttpClient m k
 
   deriving stock (Functor)
-
--- TODO copy over FirstOrderEffect newtype for deriving via
-instance HFunctor HttpClient where
-instance Effect HttpClient where
+  deriving (Effect, HFunctor)
+       via (FirstOrderEffect HttpClient)
 
 
 httpRequest ::
