@@ -11,6 +11,7 @@ import Hp.GitHub                                   (gitHubClientId,
                                                     gitHubGetUser,
                                                     gitHubPostLoginOauthAccessToken)
 import Hp.GitHub.ClientSecret                      (GitHubClientSecret(..))
+import Hp.GitHub.Code                              (GitHubCode)
 import Hp.GitHub.PostLoginOauthAccessTokenResponse (GitHubPostLoginOauthAccessTokenResponse(..))
 import Hp.GitHub.Response                          (GitHubResponse(..))
 import Hp.Poll
@@ -109,7 +110,7 @@ handleGetLoginGitHub ::
      , Member HttpClient sig
      , Member (Reader env) sig
      )
-  => Text
+  => GitHubCode
   -> m Blaze.Html
 handleGetLoginGitHub code =
   doPostLoginOauthAccessToken >>= \case
@@ -136,7 +137,7 @@ handleGetLoginGitHub code =
 
       gitHubPostLoginOauthAccessToken
         gitHubClientId
-        (coerce clientSecret)
+        clientSecret
         code
         redirectUri
         state

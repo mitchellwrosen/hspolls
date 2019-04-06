@@ -9,6 +9,9 @@ import Hp.Eff.HttpClient                           (HttpClient,
                                                     fromServantClient)
 import Hp.GitHub.AccessToken                       (GitHubAccessToken)
 import Hp.GitHub.API                               (GitHubAPI)
+import Hp.GitHub.ClientId                          (GitHubClientId(..))
+import Hp.GitHub.ClientSecret                      (GitHubClientSecret)
+import Hp.GitHub.Code                              (GitHubCode)
 import Hp.GitHub.PostLoginOauthAccessTokenResponse (GitHubPostLoginOauthAccessTokenResponse)
 import Hp.GitHub.Response                          (GitHubResponse)
 import Hp.GitHub.User                              (GitHubUser)
@@ -25,9 +28,9 @@ import qualified Servant.Client.Generic as Servant
 
 -- | (Temporary) hspolls-test application client ID
 -- TODO don't hard code client id even though it's not a secret
-gitHubClientId :: Text
+gitHubClientId :: GitHubClientId
 gitHubClientId =
-  "0708940f1632f7a953e8"
+  GitHubClientId "0708940f1632f7a953e8"
 
 baseUrl :: Servant.BaseUrl
 baseUrl =
@@ -83,9 +86,9 @@ gitHubPostLoginOauthAccessToken ::
      ( Carrier sig m
      , Member HttpClient sig
      )
-  => Text
-  -> Text
-  -> Text
+  => GitHubClientId
+  -> GitHubClientSecret
+  -> GitHubCode
   -> Maybe Text
   -> Maybe Text
   -> m (Either SomeException (GitHubResponse GitHubPostLoginOauthAccessTokenResponse))

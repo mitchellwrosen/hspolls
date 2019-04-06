@@ -1,6 +1,9 @@
 module Hp.GitHub.API where
 
 import Hp.GitHub.AccessToken                       (GitHubAccessToken)
+import Hp.GitHub.ClientId                          (GitHubClientId)
+import Hp.GitHub.ClientSecret                      (GitHubClientSecret)
+import Hp.GitHub.Code                              (GitHubCode)
 import Hp.GitHub.PostLoginOauthAccessTokenResponse (GitHubPostLoginOauthAccessTokenResponse)
 import Hp.GitHub.Response                          (GitHubResponse)
 import Hp.GitHub.User                              (GitHubUser)
@@ -25,9 +28,9 @@ data GitHubAPI route
       :- "login"
       :> "oauth"
       :> "access_token"
-      :> QueryParam' '[Required, Strict] "client_id" Text
-      :> QueryParam' '[Required, Strict] "client_secret" Text
-      :> QueryParam' '[Required, Strict] "code" Text
+      :> QueryParam' '[Required, Strict] "client_id" GitHubClientId
+      :> QueryParam' '[Required, Strict] "client_secret" GitHubClientSecret
+      :> QueryParam' '[Required, Strict] "code" GitHubCode
       :> QueryParam' '[Optional, Strict] "redirect_uri" Text
       :> QueryParam' '[Optional, Strict] "state" Text
       :> Get '[JSON] (GitHubResponse GitHubPostLoginOauthAccessTokenResponse)

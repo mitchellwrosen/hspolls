@@ -65,7 +65,9 @@ library
     Hp.GitHub
     Hp.GitHub.AccessToken
     Hp.GitHub.API
+    Hp.GitHub.ClientId
     Hp.GitHub.ClientSecret
+    Hp.GitHub.Code
     Hp.GitHub.ErrorResponse
     Hp.GitHub.PostLoginOauthAccessTokenResponse
     Hp.GitHub.Response
