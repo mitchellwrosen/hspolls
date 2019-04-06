@@ -1,7 +1,9 @@
+{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
+
 module Hp.Main where
 
 import Hp.API
-import Hp.Eff.HttpClient (HttpClient, HttpManagerC, runHttpManager)
+import Hp.Eff.HttpClient (HttpClient, runHttpManager)
 import Hp.Env
 import Hp.Form
 
@@ -11,6 +13,7 @@ import qualified Hp.GitHub.AccessToken as Hp.GitHub (AccessToken)
 import Control.Effect
 import Control.Effect.Error
 import Control.Effect.Reader
+import Control.Monad.Trans.Except (ExceptT(..))
 
 import qualified Data.ByteString             as ByteString
 import qualified Network.HTTP.Client         as Http
@@ -38,7 +41,7 @@ application ::
   -> IO Wai.ResponseReceived
 application httpManager =
   Servant.genericServeTWithContext
-    collapse
+    η
     API
       { getLoginRoute = handleGetLogin
       , getLoginGitHubRoute = handleGetLoginGitHub
@@ -46,40 +49,21 @@ application httpManager =
       }
     Servant.EmptyContext
   where
-    collapse ::
-         HttpManagerC Env
-           (ReaderC Env
-             (ErrorC Servant.ClientError
-               (LiftC Servant.Handler))) x
-      -> Servant.Handler x
-    collapse =
-      -- Rewrite
-      --
-      --   Member HttpClient sig
-      --
-      -- as
-      --
-      --   ( HasType Manager env
-      --   , Member (Reader env) sig
-      --   )
-      runHttpManager >>>
+    η :: ∀ a. _ a -> Servant.Handler a
+    η = runHttpManager @Env
+      >>> runReader (Env httpManager)
+      >>> runError @Servant.ClientError
+      >>> runM @IO
+      >>> over (mapped . _Left) toServerError
+      >>> ExceptT
+      >>> Servant.Handler
 
-      -- Discharge
-      --
-      --   Member (Reader Env)
-      runReader (Env httpManager) >>>
-
-      -- Discharge
-      --
-      --   Member (Error ClientError)
-      runError >>>
-
-      runM >>>
-
-      -- Wow... seems like we must throwIO here... RIP checked exceptions
-      (>>= \case
-        Left ex -> throwIO ex
-        Right x -> pure x)
+-- TODO Generalize to ApplicationException
+-- TODO Implement toServerError
+toServerError
+  :: Servant.ClientError
+  -> Servant.ServerError
+toServerError = undefined
 
 handleGetLogin ::
      ( Carrier sig m

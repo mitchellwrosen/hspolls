@@ -21,6 +21,7 @@ library
     servant-client ^>= 0.16,
     servant-client-core ^>= 0.16,
     servant-server ^>= 0.16,
+    transformers,
     text,
     wai ^>= 3.2,
     warp ^>= 3.2,
@@ -42,11 +43,13 @@ library
     MultiParamTypeClasses
     NamedFieldPuns
     OverloadedStrings
+    PartialTypeSignatures
     QuantifiedConstraints
     ScopedTypeVariables
     StrictData
     TypeApplications
     TypeOperators
+    UnicodeSyntax
 
   default-language:
     Haskell2010
