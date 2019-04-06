@@ -1,7 +1,5 @@
 module Hp.GitHub
-  ( gitHubClientId
-    -- * API
-  , gitHubGetUser
+  ( gitHubGetUser
   , gitHubPostLoginOauthAccessToken
   ) where
 
@@ -25,12 +23,6 @@ import qualified Servant.Client         as Servant
 import qualified Servant.Client.Free    as Servant
 import qualified Servant.Client.Generic as Servant
 
-
--- | (Temporary) hspolls-test application client ID
--- TODO don't hard code client id even though it's not a secret
-gitHubClientId :: GitHubClientId
-gitHubClientId =
-  GitHubClientId "0708940f1632f7a953e8"
 
 baseUrl :: Servant.BaseUrl
 baseUrl =

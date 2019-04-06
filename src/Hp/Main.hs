@@ -5,15 +5,13 @@
 module Hp.Main where
 
 import Hp.API
-import Hp.Eff.HttpClient                           (HttpClient, runHttpManager)
+import Hp.Eff.GitHubAuth      (GitHubAuthEffect, gitHubAuth)
+import Hp.Eff.GitHubAuth.Http (runGitHubAuthHttp)
+import Hp.Eff.HttpClient      (runHttpManager)
 import Hp.Env
-import Hp.GitHub                                   (gitHubClientId,
-                                                    gitHubGetUser,
-                                                    gitHubPostLoginOauthAccessToken)
-import Hp.GitHub.ClientSecret                      (GitHubClientSecret(..))
-import Hp.GitHub.Code                              (GitHubCode)
-import Hp.GitHub.PostLoginOauthAccessTokenResponse (GitHubPostLoginOauthAccessTokenResponse(..))
-import Hp.GitHub.Response                          (GitHubResponse(..))
+import Hp.GitHub.ClientId     (GitHubClientId(..))
+import Hp.GitHub.ClientSecret (GitHubClientSecret(..))
+import Hp.GitHub.Code         (GitHubCode)
 import Hp.Poll
 
 import Control.Effect
@@ -64,20 +62,31 @@ application httpManager clientSecret =
     η
     API
       { getLoginRoute = handleGetLogin
-      , getLoginGitHubRoute = handleGetLoginGitHub @Env
+      , getLoginGitHubRoute = handleGetLoginGitHub
       , postPollRoute = handlePostPoll
       }
     Servant.EmptyContext
   where
     η :: ∀ a. _ a -> Servant.Handler a
-    η = runHttpManager @Env
-      >>> runReader (Env httpManager clientSecret)
+    η = runGitHubAuthHttp @Env
+      >>> runHttpManager @Env
+      >>> runReader env
       -- >>> runError @Servant.ClientError
       >>> runM @IO
       -- >>> over (mapped . _Left) toServerError
       -- >>> ExceptT
       >>> liftIO
       >>> Servant.Handler
+
+    env :: Env
+    env =
+      Env
+        { manager = httpManager
+          -- TODO don't hard code client id even though it's not a secret
+        , gitHubClientId = GitHubClientId "0708940f1632f7a953e8"
+        , gitHubClientSecret = clientSecret
+        }
+
 
 -- TODO Generalize to ApplicationException
 -- TODO Implement toServerError
@@ -104,53 +113,19 @@ handleGetLogin =
             ]))
 
 handleGetLoginGitHub ::
-     ∀ env m sig.
+     ∀ m sig.
      ( Carrier sig m
-     , HasType GitHubClientSecret env
-     , Member HttpClient sig
-     , Member (Reader env) sig
+     , Member GitHubAuthEffect sig
      )
   => GitHubCode
   -> m Blaze.Html
 handleGetLoginGitHub code =
-  doPostLoginOauthAccessToken >>= \case
-    Left ex ->
-      pure (Blaze.toHtml (show ex))
+  gitHubAuth code >>= \case
+    Nothing ->
+      pure "Couldn't auth"
 
-    Right (GitHubResponseError err) -> do
-      pure (Blaze.toHtml (show err))
-
-    Right (GitHubResponseSuccess response) ->
-      gitHubGetUser (response ^. field @"access_token") >>= \case
-        Left ex ->
-          pure (Blaze.toHtml (show ex))
-
-        Right user ->
-          pure (Blaze.toHtml (show user))
-
-  where
-    doPostLoginOauthAccessToken ::
-         m (Either SomeException (GitHubResponse GitHubPostLoginOauthAccessTokenResponse))
-    doPostLoginOauthAccessToken = do
-      clientSecret :: GitHubClientSecret <-
-        asks @env (^. typed)
-
-      gitHubPostLoginOauthAccessToken
-        gitHubClientId
-        clientSecret
-        code
-        redirectUri
-        state
-
-    redirectUri :: Maybe Text
-    redirectUri =
-      -- TODO type safe link
-      Just "http://localhost:8000/login/github"
-
-    state :: Maybe Text
-    state =
-      -- TODO send random state
-      Nothing
+    Just user ->
+      pure (Blaze.toHtml (show user))
 
 handlePostPoll ::
      ( Carrier sig m
