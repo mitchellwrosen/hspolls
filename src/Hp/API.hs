@@ -2,6 +2,7 @@ module Hp.API where
 
 import Hp.GitHub.Code (GitHubCode)
 import Hp.Poll        (Poll)
+import Hp.User        (User)
 import Hp.UserId      (UserId)
 
 import Servant
@@ -17,7 +18,7 @@ data API route
   = API
   { getRootRoute
       :: route
-      :- Auth '[Cookie] UserId
+      :- Auth '[Cookie] (User UserId)
       :> Get '[HTML] Blaze.Html
 
     -- Callback URL used for GitHub OAuth.

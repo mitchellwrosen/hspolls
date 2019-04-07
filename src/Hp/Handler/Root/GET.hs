@@ -2,6 +2,7 @@ module Hp.Handler.Root.GET
   ( handleGetRoot
   ) where
 
+import Hp.User   (User)
 import Hp.UserId (UserId)
 
 import Control.Effect
@@ -14,7 +15,7 @@ import Text.Blaze.Html5.Attributes
 handleGetRoot ::
      ( Carrier sig m
      )
-  => AuthResult UserId
+  => AuthResult (User UserId)
   -> m Html
 handleGetRoot auth =
   (pure . fold)

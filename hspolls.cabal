@@ -83,6 +83,8 @@ library
     Hp.Eff.GitHubAuth.Http
     Hp.Eff.HttpClient
     Hp.Eff.ManagePoll
+    Hp.Eff.PersistUser
+    Hp.Eff.PersistUser.DB
     Hp.Env
     Hp.GitHub
     Hp.GitHub.AccessToken
@@ -94,12 +96,14 @@ library
     Hp.GitHub.PostLoginOauthAccessTokenResponse
     Hp.GitHub.Response
     Hp.GitHub.User
+    Hp.GitHub.UserName
     Hp.Handler.Login.GitHub.GET
     Hp.Handler.Root.GET
     Hp.Main
     Hp.Poll
     Hp.PollFormElement
     Hp.PostgresConfig
+    Hp.User
     Hp.UserId
     Prelude
 

@@ -32,6 +32,7 @@ gitHubAuth ::
 gitHubAuth code =
   send (GitHubAuth code pure)
 
+-- TODO remove this, move to .Http
 newtype GitHubAuthCarrier
           (name :: Symbol)
           (env :: Type)

@@ -11,6 +11,7 @@ import Hp.Eff.DB                   (runDBC)
 import Hp.Eff.GitHubAuth.Http      (runGitHubAuthHttp)
 import Hp.Eff.HttpClient           (runHttpManager)
 import Hp.Eff.ManagePoll           (ManagePoll, ManagePollDBC(..), savePoll)
+import Hp.Eff.PersistUser.DB       (runPersistUserDB)
 import Hp.Env
 import Hp.Handler.Login.GitHub.GET (handleGetLoginGitHub)
 import Hp.Handler.Root.GET         (handleGetRoot)
@@ -93,6 +94,7 @@ application env = do
     η = runGitHubAuthHttp @Env
       >>> runHttpManager @Env
       >>> unManagePollDBC
+      >>> runPersistUserDB
       >>> runDBC @Env
       >>> runReader env
       -- >>> runError @Servant.ClientError

@@ -1,12 +1,11 @@
 module Hp.UserId where
 
 import Data.Aeson          (FromJSON, ToJSON)
+import Data.UUID           (UUID)
 import Servant.Auth.Server (FromJWT, ToJWT)
 
--- TODO encrypt user id in ToJWT
--- TODO use database user id instead of GH username
 newtype UserId
-  = UserId { unUserId :: Text }
+  = UserId { unUserId :: UUID }
   deriving stock (Show)
   deriving newtype (FromJSON, ToJSON)
   deriving anyclass (FromJWT, ToJWT)

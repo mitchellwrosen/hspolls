@@ -4,9 +4,11 @@ module Hp.Handler.Login.GitHub.GET
   ( handleGetLoginGitHub
   ) where
 
-import Hp.Eff.GitHubAuth (GitHubAuthEffect, gitHubAuth)
-import Hp.GitHub.Code    (GitHubCode)
-import Hp.UserId         (UserId(..))
+import Hp.Eff.GitHubAuth  (GitHubAuthEffect, gitHubAuth)
+import Hp.Eff.PersistUser (PersistUserEffect, putUserByGitHubUserName)
+import Hp.GitHub.Code     (GitHubCode)
+import Hp.User            (User)
+import Hp.UserId          (UserId(..))
 
 import Control.Effect
 import Control.Effect.Reader
@@ -22,6 +24,7 @@ handleGetLoginGitHub ::
      , HasType JWTSettings env
      , Member GitHubAuthEffect sig
      , Member (Reader env) sig
+     , Member PersistUserEffect sig
      , MonadIO m -- TODO Unfortunate, get rid of this MonadIO
      )
   => GitHubCode
@@ -43,7 +46,10 @@ handleGetLoginGitHub code =
       jwtSettings :: JWTSettings <-
         asks @env (^. typed)
 
-      liftIO (acceptLogin cookieSettings jwtSettings (UserId (user ^. #login))) >>= \case
+      user :: User UserId <-
+        putUserByGitHubUserName (user ^. #login)
+
+      liftIO (acceptLogin cookieSettings jwtSettings user) >>= \case
         Nothing ->
           authFailure
 

@@ -22,6 +22,8 @@ import Control.Effect.Carrier
 import Control.Effect.Reader
 import Control.Effect.Sum
 
+-- TODO log failures instead of discarding them
+
 instance
      ( Carrier sig m
      , HasType GitHubClientId env
