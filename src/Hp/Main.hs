@@ -5,6 +5,7 @@
 module Hp.Main where
 
 import Hp.API
+import Hp.Config              (Config(..), readConfigFile)
 import Hp.Eff.DB              (runDBC)
 import Hp.Eff.GitHubAuth      (GitHubAuthEffect, gitHubAuth)
 import Hp.Eff.GitHubAuth.Http (runGitHubAuthHttp)
@@ -24,9 +25,11 @@ import Control.Effect.Reader
 -- import Control.Monad.Trans.Except (ExceptT(..))
 import Crypto.JOSE.JWK (JWK)
 import Servant         (Context((:.)))
+import System.Exit     (exitFailure)
 import System.IO       (readFile)
 
 import qualified Data.ByteString             as ByteString
+import qualified Data.Text.IO                as Text
 import qualified Dhall                       as Dhall
 import qualified Network.HTTP.Client         as Http
 import qualified Network.HTTP.Client.TLS     as Http (tlsManagerSettings)
@@ -45,6 +48,14 @@ import qualified Text.Blaze.Html5.Attributes as Blaze
 
 main :: IO ()
 main = do
+  config :: Config <-
+    readConfigFile "config.dhall" >>= \case
+      Left errs -> do
+        for_ errs Text.putStrLn
+        exitFailure
+      Right config ->
+        pure config
+
   gitHubClientSecret :: [Char] <-
     readFile "github-client-secret" <|> pure "0xDEADBEEF"
 

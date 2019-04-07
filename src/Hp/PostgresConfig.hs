@@ -3,11 +3,11 @@ module Hp.PostgresConfig
   , acquirePostgresPool
   ) where
 
-import Numeric.Natural
 import Dhall (Interpret)
 
 import qualified Hasql.Connection as Hasql
-import qualified Hasql.Pool as Pool
+import qualified Hasql.Pool       as Pool
+
 
 data PostgresConfig
   = PostgresConfig
