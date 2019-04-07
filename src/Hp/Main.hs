@@ -5,17 +5,18 @@
 module Hp.Main where
 
 import Hp.API
-import Hp.Config              (Config(..), prettyPrintConfig, readConfigFile)
-import Hp.Eff.DB              (runDBC)
-import Hp.Eff.GitHubAuth      (GitHubAuthEffect, gitHubAuth)
-import Hp.Eff.GitHubAuth.Http (runGitHubAuthHttp)
-import Hp.Eff.HttpClient      (runHttpManager)
-import Hp.Eff.ManagePoll      (ManagePoll, ManagePollDBC(..), savePoll)
+import Hp.Config                   (Config(..), prettyPrintConfig,
+                                    readConfigFile)
+import Hp.Eff.DB                   (runDBC)
+import Hp.Eff.GitHubAuth.Http      (runGitHubAuthHttp)
+import Hp.Eff.HttpClient           (runHttpManager)
+import Hp.Eff.ManagePoll           (ManagePoll, ManagePollDBC(..), savePoll)
 import Hp.Env
-import Hp.GitHub.Code         (GitHubCode)
-import Hp.Handler.Root.GET    (handleGetRoot)
+import Hp.Handler.Login.GET        (handleGetLogin)
+import Hp.Handler.Login.GitHub.GET (handleGetLoginGitHub)
+import Hp.Handler.Root.GET         (handleGetRoot)
 import Hp.Poll
-import Hp.PostgresConfig      (PostgresConfig, acquirePostgresPool)
+import Hp.PostgresConfig           (PostgresConfig, acquirePostgresPool)
 
 import Control.Effect
 -- import Control.Effect.Error
@@ -24,18 +25,15 @@ import Control.Effect.Reader
 import Servant     (Context((:.)))
 import System.Exit (exitFailure)
 
-import qualified Data.ByteString             as ByteString
-import qualified Data.Text.IO                as Text
-import qualified Dhall                       as Dhall
-import qualified Network.HTTP.Client         as Http
-import qualified Network.HTTP.Client.TLS     as Http (tlsManagerSettings)
-import qualified Network.Wai                 as Wai
-import qualified Network.Wai.Handler.Warp    as Warp
+import qualified Data.Text.IO             as Text
+import qualified Dhall                    as Dhall
+import qualified Network.HTTP.Client      as Http
+import qualified Network.HTTP.Client.TLS  as Http (tlsManagerSettings)
+import qualified Network.Wai              as Wai
+import qualified Network.Wai.Handler.Warp as Warp
 import qualified Servant
-import qualified Servant.Client              as Servant (ClientError)
-import qualified Servant.Server.Generic      as Servant (genericServeTWithContext)
-import qualified Text.Blaze.Html5            as Blaze
-import qualified Text.Blaze.Html5.Attributes as Blaze
+import qualified Servant.Client           as Servant (ClientError)
+import qualified Servant.Server.Generic   as Servant (genericServeTWithContext)
 
 
 main :: IO ()
@@ -112,38 +110,6 @@ toServerError
   :: Servant.ClientError
   -> Servant.ServerError
 toServerError = undefined
-
-handleGetLogin ::
-     ( Carrier sig m
-     )
-  => m Blaze.Html
-handleGetLogin =
-  -- TODO set state get param
-  -- TODO set redirect_uri get param
-  pure $
-    Blaze.a "Log in with GitHub" Blaze.!
-      Blaze.href
-        (Blaze.unsafeByteStringValue
-          (ByteString.concat
-            [ "https://github.com/login/oauth/authorize?"
-            , "allow_signup=false&"
-            , "client_id=0708940f1632f7a953e8"
-            ]))
-
-handleGetLoginGitHub ::
-     ∀ m sig.
-     ( Carrier sig m
-     , Member GitHubAuthEffect sig
-     )
-  => GitHubCode
-  -> m Blaze.Html
-handleGetLoginGitHub code =
-  gitHubAuth code >>= \case
-    Nothing ->
-      pure "Couldn't auth"
-
-    Just user ->
-      pure (Blaze.toHtml (show user))
 
 handlePostPoll ::
      ( Carrier sig m

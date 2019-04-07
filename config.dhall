@@ -2,8 +2,9 @@
   gitHub =
     ./secrets/github.dhall
     ?
-    { clientId = "DummyGitHubClientId"
-    , clientSecret = "DummyGitHubClientSecret"
+    {
+      clientId = "DummyGitHubClientId",
+      clientSecret = "DummyGitHubClientSecret"
     },
 
   port =

@@ -94,6 +94,8 @@ library
     Hp.GitHub.PostLoginOauthAccessTokenResponse
     Hp.GitHub.Response
     Hp.GitHub.User
+    Hp.Handler.Login.GET
+    Hp.Handler.Login.GitHub.GET
     Hp.Handler.Root.GET
     Hp.Main
     Hp.Poll
