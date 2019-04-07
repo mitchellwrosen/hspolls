@@ -79,7 +79,7 @@ doGitHubAuth code = do
       pure Nothing
 
     Right (GitHubResponseSuccess response) ->
-      gitHubGetUser (response ^. field @"access_token") >>= \case
+      gitHubGetUser (response ^. #access_token) >>= \case
         Left _ ->
           pure Nothing
 

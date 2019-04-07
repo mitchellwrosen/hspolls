@@ -72,14 +72,14 @@ main = do
     env =
       Env
         { httpManager = httpManager
-        , gitHubClientId = config ^. field @"gitHub" . field @"clientId"
-        , gitHubClientSecret = config ^. field @"gitHub" . field @"clientSecret"
+        , gitHubClientId = config ^. #gitHub . #clientId
+        , gitHubClientSecret = config ^. #gitHub . #clientSecret
         , jwk = jwk
         , postgresPool = pgPool
         }
 
   Warp.run
-    (fromIntegral (config ^. field @"port"))
+    (fromIntegral (config ^. #port))
     (application env)
 
 application ::
@@ -97,7 +97,7 @@ application env = do
       , postPollRoute = handlePostPoll
       }
     (Servant.defaultCookieSettings
-      :. Servant.defaultJWTSettings (env ^. field @"jwk")
+      :. Servant.defaultJWTSettings (env ^. #jwk)
       :. Servant.EmptyContext)
   where
     η :: ∀ a. _ a -> Servant.Handler a

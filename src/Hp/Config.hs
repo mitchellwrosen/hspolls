@@ -54,10 +54,10 @@ validateConfig config =
     { gitHub =
         GitHubConfig
           { clientId =
-              GitHubClientId (config ^. field @"gitHub" . field @"clientId")
+              GitHubClientId (config ^. #gitHub . #clientId)
           , clientSecret =
-              GitHubClientSecret (config ^. field @"gitHub" . field @"clientSecret")
+              GitHubClientSecret (config ^. #gitHub . #clientSecret)
           }
     , port =
-        config ^. field @"port"
+        config ^. #port
     }

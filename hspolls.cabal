@@ -57,6 +57,7 @@ library
     LambdaCase
     MultiParamTypeClasses
     NamedFieldPuns
+    OverloadedLabels
     OverloadedStrings
     PartialTypeSignatures
     QuantifiedConstraints
