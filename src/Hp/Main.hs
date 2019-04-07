@@ -8,12 +8,14 @@ import Hp.API
 import Hp.Eff.GitHubAuth      (GitHubAuthEffect, gitHubAuth)
 import Hp.Eff.GitHubAuth.Http (runGitHubAuthHttp)
 import Hp.Eff.HttpClient      (runHttpManager)
-import Hp.Eff.SavePoll        (SavePoll, savePoll, runSavePollPrint)
+import Hp.Eff.ManagePoll      (ManagePoll, ManagePollDBC(..), savePoll)
+import Hp.Eff.DB              (runDBC)
 import Hp.Env
 import Hp.GitHub.ClientId     (GitHubClientId(..))
 import Hp.GitHub.ClientSecret (GitHubClientSecret(..))
 import Hp.GitHub.Code         (GitHubCode)
 import Hp.Poll
+import Hp.PostgresConfig      (PostgresConfig, acquirePostgresPool)
 
 import Control.Effect
 -- import Control.Effect.Error
@@ -23,6 +25,8 @@ import System.IO (readFile)
 
 import qualified Data.ByteString             as ByteString
 import qualified Data.Text                   as Text
+import qualified Dhall                       as Dhall
+import qualified Hasql.Pool                  as Hasql
 import qualified Network.HTTP.Client         as Http
 import qualified Network.HTTP.Client.TLS     as Http (tlsManagerSettings)
 import qualified Network.Wai                 as Wai
@@ -40,6 +44,10 @@ main = do
   clientSecret :: [Char] <-
     readFile "github-client-secret" <|> pure "0xDEADBEEF"
 
+  pgConfig :: PostgresConfig <- Dhall.input Dhall.auto "./pg.dhall"
+
+  pgPool <- acquirePostgresPool pgConfig
+
   putStrLn "Running on port 8000"
   putStrLn ("Using GitHub client secret: " ++ clientSecret)
 
@@ -50,15 +58,17 @@ main = do
     8000
     (application
       httpManager
-      (GitHubClientSecret (Text.pack clientSecret)))
+      (GitHubClientSecret (Text.pack clientSecret))
+      pgPool)
 
 application ::
      Http.Manager
   -> GitHubClientSecret
+  -> Hasql.Pool
   -> Wai.Request
   -> (Wai.Response -> IO Wai.ResponseReceived)
   -> IO Wai.ResponseReceived
-application httpManager clientSecret =
+application httpManager clientSecret pgPool =
   Servant.genericServeTWithContext
     η
     API
@@ -71,8 +81,9 @@ application httpManager clientSecret =
     η :: ∀ a. _ a -> Servant.Handler a
     η = runGitHubAuthHttp @Env
       >>> runHttpManager @Env
+      >>> unManagePollDBC
+      >>> runDBC @Env
       >>> runReader env
-      >>> runSavePollPrint
       -- >>> runError @Servant.ClientError
       >>> runM @IO
       -- >>> over (mapped . _Left) toServerError
@@ -87,6 +98,7 @@ application httpManager clientSecret =
           -- TODO don't hard code client id even though it's not a secret
         , gitHubClientId = GitHubClientId "0708940f1632f7a953e8"
         , gitHubClientSecret = clientSecret
+        , postgresPool = pgPool
         }
 
 
@@ -131,10 +143,11 @@ handleGetLoginGitHub code =
 
 handlePostPoll ::
      ( Carrier sig m
-     , Member SavePoll sig
+     , Member ManagePoll sig
+     , MonadIO m
      )
   => Poll
   -> m Servant.NoContent
 handlePostPoll poll = do
-  savePoll poll
+  _ <- savePoll poll
   pure Servant.NoContent

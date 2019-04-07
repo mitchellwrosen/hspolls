@@ -1,12 +1,12 @@
 module Hp.PollFormElement where
 
-import Data.Aeson (FromJSON)
+import Data.Aeson (FromJSON, ToJSON)
 
 
 -- TODO proper markdown type
 newtype Markdown
   = Markdown Text
-  deriving newtype (FromJSON, Show)
+  deriving newtype (FromJSON, ToJSON, Show)
 
 -- TODO checkbox
 -- TODO text field
@@ -20,3 +20,6 @@ data PollFormElement
 
 -- TODO FromJSON PollFormElement
 instance FromJSON PollFormElement where
+
+-- TODO ToJSON PollFormElement
+instance ToJSON PollFormElement where

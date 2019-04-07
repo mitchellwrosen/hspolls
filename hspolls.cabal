@@ -12,7 +12,13 @@ library
     containers,
     free,
     fused-effects ^>= 0.3,
+    dhall ^>= 1.19,
     generic-lens ^>= 1.1,
+    hasql ^>= 1.3.0.3,
+    hasql-pool ^>= 0.5.0.1,
+    hasql-transaction ^>= 0.7,
+    hasql-cursor-transaction ^>= 0.6.3.1,
+    hasql-cursor-query ^>= 0.4.4.2,
     http-api-data ^>= 0.4,
     http-client,
     http-client-tls ^>= 0.3,
@@ -26,6 +32,7 @@ library
     transformers,
     text,
     time ^>= 1.8 || ^>= 1.9,
+    uuid ^>= 1.3,
     wai ^>= 3.2,
     warp ^>= 3.2,
 
@@ -48,7 +55,9 @@ library
     OverloadedStrings
     PartialTypeSignatures
     QuantifiedConstraints
+    RankNTypes
     ScopedTypeVariables
+    StandaloneDeriving
     StrictData
     TypeApplications
     TypeOperators
@@ -59,11 +68,12 @@ library
 
   exposed-modules:
     Hp.API
+    Hp.Eff.DB
     Hp.Eff.FirstOrder
     Hp.Eff.GitHubAuth
     Hp.Eff.GitHubAuth.Http
     Hp.Eff.HttpClient
-    Hp.Eff.SavePoll
+    Hp.Eff.ManagePoll
     Hp.Env
     Hp.GitHub
     Hp.GitHub.AccessToken
@@ -78,6 +88,7 @@ library
     Hp.Main
     Hp.Poll
     Hp.PollFormElement
+    Hp.PostgresConfig
     Prelude
 
   ghc-options:

@@ -1,16 +1,18 @@
-PRAGMA foreign_keys = ON;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-create table if not exists polls(
-    id INTEGER PRIMARY KEY AUTOINCREMENT
-  , questions BLOB not null
-  , startTime TEXT not null
-  , endTime TEXT not null
+CREATE TABLE polls (
+  id                              uuid DEFAULT uuid_generate_v4(),
+  form                            jsonb NOT NULL,
+  end_time                        timestamp with time zone NOT NULL,
+  created_at                      timestamp with time zone NOT NULL DEFAULT current_timestamp,
+  PRIMARY KEY (id)
 );
 
-create table if not exists answers(
-    id INTEGER PRIMARY KEY AUTOINCREMENT
-  , answers BLOB not null
-  , poll INTEGER not null
-  , time TEXT not null
-  , FOREIGN KEY (poll) REFERENCES polls(id)
+CREATE TABLE poll_responses (
+  id                              uuid DEFAULT uuid_generate_v4(),
+  response                        jsonb NOT NULL,
+  created_at                      timestamp with time zone NOT NULL DEFAULT current_timestamp,
+  poll                            uuid NOT NULL,
+  FOREIGN KEY (poll) REFERENCES polls(id),
+  PRIMARY KEY (id)
 );

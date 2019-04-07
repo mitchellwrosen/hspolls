@@ -16,4 +16,12 @@ in
   servant-client-core = super.servant-client-core_0_16;
   servant-client = super.servant-client_0_16;
   servant-blaze = super.servant-blaze_0_9;
+
+  # tests require database connection
+  hasql-pool =
+    let p = super.callPackage ./pkgs/hasql-pool.nix {};
+    in dontCheck p;
+  hasql-cursor-query =
+    let p = super.callPackage ./pkgs/hasql-cursor-query.nix {};
+    in dontCheck p;
 }
