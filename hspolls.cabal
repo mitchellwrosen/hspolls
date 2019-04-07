@@ -86,6 +86,7 @@ library
     Hp.GitHub.PostLoginOauthAccessTokenResponse
     Hp.GitHub.Response
     Hp.GitHub.User
+    Hp.Handler.Root.GET
     Hp.Main
     Hp.Poll
     Hp.PollFormElement

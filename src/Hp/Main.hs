@@ -14,6 +14,7 @@ import Hp.Env
 import Hp.GitHub.ClientId     (GitHubClientId(..))
 import Hp.GitHub.ClientSecret (GitHubClientSecret(..))
 import Hp.GitHub.Code         (GitHubCode)
+import Hp.Handler.Root.GET    (handleGetRoot)
 import Hp.Poll
 import Hp.PostgresConfig      (PostgresConfig, acquirePostgresPool)
 
@@ -74,7 +75,8 @@ application env =
   Servant.genericServeTWithContext
     η
     API
-      { getLoginRoute = handleGetLogin
+      { getRootRoute = handleGetRoot
+      , getLoginRoute = handleGetLogin
       , getLoginGitHubRoute = handleGetLoginGitHub
       , postPollRoute = handlePostPoll
       }

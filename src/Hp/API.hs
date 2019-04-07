@@ -12,7 +12,11 @@ import qualified Text.Blaze.Html as Blaze
 
 data API route
   = API
-  { getLoginRoute
+  { getRootRoute
+      :: route
+      :- Get '[HTML] Blaze.Html
+
+  , getLoginRoute
       :: route
       :- "login"
       :> Get '[HTML] Blaze.Html
