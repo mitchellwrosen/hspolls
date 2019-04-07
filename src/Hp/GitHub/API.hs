@@ -19,7 +19,7 @@ data GitHubAPI route
       :: route
       :- "user"
       :> Header' '[Required, Strict] "User-Agent" Text
-      :> QueryParam' '[Required, Strict] "access_token" GitHubAccessToken
+      :> Header' '[Required, Strict] "Authorization" GitHubAccessToken
       :> Get '[JSON] GitHubUser
 
     -- | https://developer.github.com/apps/building-oauth-apps/authorizing-oauth-apps/#2-users-are-redirected-back-to-your-site-by-github
