@@ -5,5 +5,4 @@ import Web.HttpApiData
 
 newtype GitHubClientId
   = GitHubClientId { unGitHubClientId :: Text }
-  deriving stock (Show)
-  deriving newtype (ToHttpApiData)
+  deriving newtype (Show, ToHttpApiData)

@@ -5,7 +5,7 @@
 module Hp.Main where
 
 import Hp.API
-import Hp.Config              (Config(..), readConfigFile)
+import Hp.Config              (Config(..), prettyPrintConfig, readConfigFile)
 import Hp.Eff.DB              (runDBC)
 import Hp.Eff.GitHubAuth      (GitHubAuthEffect, gitHubAuth)
 import Hp.Eff.GitHubAuth.Http (runGitHubAuthHttp)
@@ -21,9 +21,8 @@ import Control.Effect
 -- import Control.Effect.Error
 import Control.Effect.Reader
 -- import Control.Monad.Trans.Except (ExceptT(..))
-import Crypto.JOSE.JWK (JWK)
-import Servant         (Context((:.)))
-import System.Exit     (exitFailure)
+import Servant     (Context((:.)))
+import System.Exit (exitFailure)
 
 import qualified Data.ByteString             as ByteString
 import qualified Data.Text.IO                as Text
@@ -34,8 +33,7 @@ import qualified Network.Wai                 as Wai
 import qualified Network.Wai.Handler.Warp    as Warp
 import qualified Servant                     as Servant
 import qualified Servant.Auth.Server         as Servant (defaultCookieSettings,
-                                                         defaultJWTSettings,
-                                                         generateKey)
+                                                         defaultJWTSettings)
 import qualified Servant.Client              as Servant
 import qualified Servant.Server.Generic      as Servant
 import qualified Text.Blaze.Html             as Blaze
@@ -54,15 +52,11 @@ main = do
       Right config ->
         pure config
 
-  print config
+  prettyPrintConfig config
 
   pgConfig :: PostgresConfig <- Dhall.input Dhall.auto "./pg.dhall"
 
   pgPool <- acquirePostgresPool pgConfig
-
-  -- TODO persist JWT
-  jwk :: JWK <-
-    Servant.generateKey
 
   httpManager :: Http.Manager <-
     Http.newManager Http.tlsManagerSettings
@@ -74,7 +68,7 @@ main = do
         { httpManager = httpManager
         , gitHubClientId = config ^. #gitHub . #clientId
         , gitHubClientSecret = config ^. #gitHub . #clientSecret
-        , jwk = jwk
+        , jwk = config ^. #jwk
         , postgresPool = pgPool
         }
 
