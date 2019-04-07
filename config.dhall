@@ -20,7 +20,7 @@
 
       -- The session cookie name.
       name =
-        "hspolls-session",
+        "Session",
 
       -- Only send session cookie over TLS.
       secure =
