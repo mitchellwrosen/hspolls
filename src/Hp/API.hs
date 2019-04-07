@@ -25,7 +25,7 @@ data API route
       :- "login"
       :> Get '[HTML] Blaze.Html
 
-    -- Callback URL used for GitHub OAuth
+    -- Callback URL used for GitHub OAuth.
   , getLoginGitHubRoute
       :: route
       :- "login"
@@ -33,13 +33,16 @@ data API route
       :> QueryParam' '[Required, Strict] "code" GitHubCode
       -- TODO required "state" query param
       -- TODO just returning html for now, but should redirect
-      :> Get
+      :> Verb
+           'GET
+           302
            '[HTML]
            (Headers
-             '[ Header "Set-Cookie" SetCookie
+             '[ Header "Location" Text
+              , Header "Set-Cookie" SetCookie
               , Header "Set-Cookie" SetCookie
               ]
-           Blaze.Html)
+           NoContent)
 
   , postPollRoute
       :: route

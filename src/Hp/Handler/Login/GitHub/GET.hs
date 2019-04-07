@@ -10,11 +10,10 @@ import Hp.UserId         (UserId(..))
 
 import Control.Effect
 import Control.Effect.Reader
-import Servant               (Header, Headers, noHeader)
+import Servant               (Header, Headers, NoContent(..), addHeader,
+                              noHeader)
 import Servant.Auth.Server   (CookieSettings, JWTSettings, SetCookie,
                               acceptLogin)
-import Text.Blaze.Html5      (Html, toHtml)
-
 
 handleGetLoginGitHub ::
      ∀ env m sig.
@@ -27,14 +26,15 @@ handleGetLoginGitHub ::
      )
   => GitHubCode
   -> m (Headers
-         '[ Header "Set-Cookie" SetCookie
+         '[ Header "Location" Text
+          , Header "Set-Cookie" SetCookie
           , Header "Set-Cookie" SetCookie
           ]
-       Html)
+       NoContent)
 handleGetLoginGitHub code =
   gitHubAuth code >>= \case
     Nothing ->
-      pure (noHeader (noHeader "Couldn't auth"))
+      authFailure
 
     Just user -> do
       cookieSettings :: CookieSettings <-
@@ -45,7 +45,13 @@ handleGetLoginGitHub code =
 
       liftIO (acceptLogin cookieSettings jwtSettings (UserId (user ^. #login))) >>= \case
         Nothing ->
-          pure (noHeader (noHeader ("Couldn't auth" :: Html)))
+          authFailure
 
         Just applyCookies ->
-          pure (applyCookies ("Hi " <> toHtml (user ^. #login)))
+          pure (redirect (applyCookies NoContent))
+  where
+    redirect =
+      addHeader "/"
+
+    authFailure =
+      pure (redirect (noHeader (noHeader NoContent)))
