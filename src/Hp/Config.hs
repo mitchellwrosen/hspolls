@@ -2,6 +2,7 @@
 
 module Hp.Config
   ( Config(..)
+  , PostgresConfig(..)
   , readConfigFile
   , prettyPrintConfig
   ) where
@@ -29,6 +30,7 @@ data UnvalidatedConfig
   = UnvalidatedConfig
   { gitHub :: UnvalidatedGitHubConfig
   , port :: Natural
+  , postgres :: UnvalidatedPostgresConfig
   , session :: UnvalidatedSessionConfig
   } deriving stock (Generic)
     deriving anyclass (Dhall.Interpret)
@@ -38,6 +40,18 @@ data UnvalidatedGitHubConfig
   { clientId :: Text
   , clientSecret :: Text
   } deriving stock (Generic)
+    deriving anyclass (Dhall.Interpret)
+
+data UnvalidatedPostgresConfig
+  = UnvalidatedPostgresConfig
+  { host :: Text
+  , port :: Natural
+  , user :: Text
+  , password :: Text
+  , dbName :: Text
+  , poolSize :: Natural
+  , poolTimeout :: Natural
+  } deriving stock (Generic, Show)
     deriving anyclass (Dhall.Interpret)
 
 data UnvalidatedSessionConfig
@@ -54,6 +68,7 @@ data Config
   = Config
   { gitHub :: GitHubConfig
   , port :: Natural
+  , postgres :: PostgresConfig
   , session :: SessionConfig
   } deriving stock (Generic)
 
@@ -61,6 +76,17 @@ data GitHubConfig
   = GitHubConfig
   { clientId :: GitHubClientId
   , clientSecret :: GitHubClientSecret
+  } deriving stock (Generic, Show)
+
+data PostgresConfig
+  = PostgresConfig
+  { host :: Text
+  , port :: Natural
+  , user :: Text
+  , password :: Text
+  , dbName :: Text
+  , poolSize :: Natural
+  , poolTimeout :: Natural
   } deriving stock (Generic, Show)
 
 data SessionConfig
@@ -78,6 +104,9 @@ readConfigFile path = do
 
 validateConfig :: UnvalidatedConfig -> Validation [Text] Config
 validateConfig config = do
+  postgres :: PostgresConfig <-
+    validatePostgres (config ^. #postgres)
+
   session :: SessionConfig <-
     validateSession (config ^. #session)
 
@@ -93,6 +122,9 @@ validateConfig config = do
       -- TODO validate port is < 2^6
     , port =
         config ^. #port
+
+    , postgres =
+        postgres
 
     , session =
         session
@@ -161,6 +193,20 @@ validateSession config =
     <$> validateCookieSettings config
     <*> validateJWTSettings config
 
+validatePostgres ::
+     UnvalidatedPostgresConfig
+  -> Validation [Text] PostgresConfig
+validatePostgres config =
+  pure PostgresConfig
+    { host = config ^. #host
+    , port = config ^. #port
+    , user = config ^. #user
+    , password = config ^. #password
+    , dbName = config ^. #dbName
+    , poolSize = config ^. #poolSize
+    , poolTimeout = config ^. #poolTimeout
+    }
+
 prettyPrintConfig :: Config -> IO ()
 prettyPrintConfig config = do
   Text.putStrLn $
@@ -169,6 +215,8 @@ prettyPrintConfig config = do
     "github_client_secret = " <>
       config ^. #gitHub . #clientSecret . to show . packed
   Text.putStrLn ("port = " <> config ^. #port . to show . packed)
+  -- TODO prettier postgres config printing
+  Text.putStrLn ("postgres = " <> config ^. #postgres . to show . packed)
   Text.putStrLn "session_jwk = <JWK>"
   Text.putStrLn $
     "session_name = " <>

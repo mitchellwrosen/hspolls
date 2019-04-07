@@ -1,25 +1,14 @@
+-- TODO Mitchell moved PostgresConfig into Hp.Config, now this module has a
+-- werid name!
 module Hp.PostgresConfig
-  ( PostgresConfig(..)
-  , acquirePostgresPool
+  ( acquirePostgresPool
   ) where
 
-import Dhall (Interpret)
+import Hp.Config (PostgresConfig(..))
 
 import qualified Hasql.Connection as Hasql
 import qualified Hasql.Pool       as Pool
 
-
-data PostgresConfig
-  = PostgresConfig
-  { host :: Text
-  , port :: Natural
-  , user :: Text
-  , password :: Text
-  , dbName :: Text
-  , poolSize :: Natural
-  , poolTimeout :: Natural
-  } deriving stock (Generic, Show)
-    deriving anyclass (Interpret)
 
 acquirePostgresPool :: MonadIO m => PostgresConfig -> m Pool.Pool
 acquirePostgresPool PostgresConfig{..} = liftIO $ Pool.acquire settings

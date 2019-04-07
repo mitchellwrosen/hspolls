@@ -16,7 +16,7 @@ import Hp.Handler.Login.GET        (handleGetLogin)
 import Hp.Handler.Login.GitHub.GET (handleGetLoginGitHub)
 import Hp.Handler.Root.GET         (handleGetRoot)
 import Hp.Poll
-import Hp.PostgresConfig           (PostgresConfig, acquirePostgresPool)
+import Hp.PostgresConfig           (acquirePostgresPool)
 
 import Control.Effect
 -- import Control.Effect.Error
@@ -26,7 +26,6 @@ import Servant     (Context((:.)))
 import System.Exit (exitFailure)
 
 import qualified Data.Text.IO             as Text
-import qualified Dhall                    as Dhall
 import qualified Network.HTTP.Client      as Http
 import qualified Network.HTTP.Client.TLS  as Http (tlsManagerSettings)
 import qualified Network.Wai              as Wai
@@ -36,6 +35,7 @@ import qualified Servant.Client           as Servant (ClientError)
 import qualified Servant.Server.Generic   as Servant (genericServeTWithContext)
 
 import Servant.Auth.Server as Servant
+
 
 main :: IO ()
 main = do
@@ -50,9 +50,7 @@ main = do
 
   prettyPrintConfig config
 
-  pgConfig :: PostgresConfig <- Dhall.input Dhall.auto "./pg.dhall"
-
-  pgPool <- acquirePostgresPool pgConfig
+  pgPool <- acquirePostgresPool (config ^. #postgres)
 
   httpManager :: Http.Manager <-
     Http.newManager Http.tlsManagerSettings
