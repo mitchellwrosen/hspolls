@@ -12,7 +12,6 @@ import Hp.Eff.GitHubAuth.Http      (runGitHubAuthHttp)
 import Hp.Eff.HttpClient           (runHttpManager)
 import Hp.Eff.ManagePoll           (ManagePoll, ManagePollDBC(..), savePoll)
 import Hp.Env
-import Hp.Handler.Login.GET        (handleGetLogin)
 import Hp.Handler.Login.GitHub.GET (handleGetLoginGitHub)
 import Hp.Handler.Root.GET         (handleGetRoot)
 import Hp.Poll
@@ -83,7 +82,6 @@ application env = do
     η
     API
       { getRootRoute = handleGetRoot
-      , getLoginRoute = handleGetLogin
       , getLoginGitHubRoute = handleGetLoginGitHub @Env
       , postPollRoute = handlePostPoll
       }

@@ -17,7 +17,7 @@ import Control.Monad.IO.Class     as X
 import Data.ByteString            as X (ByteString)
 import Data.ByteString.Lens       as X (packedBytes, packedChars)
 import Data.Coerce                as X (Coercible, coerce)
-import Data.Foldable              as X (asum, for_)
+import Data.Foldable              as X (asum, fold, for_)
 import Data.Functor.Contravariant as X ((>$<))
 import Data.Generics.Labels       as X ()
 import Data.Generics.Product      as X (HasType, typed)

@@ -5,8 +5,10 @@ module Hp.Handler.Root.GET
 import Hp.UserId (UserId)
 
 import Control.Effect
-import Servant.Auth.Server (AuthResult(..))
+import Prelude                     hiding (div)
+import Servant.Auth.Server         (AuthResult(..))
 import Text.Blaze.Html5
+import Text.Blaze.Html5.Attributes
 
 
 handleGetRoot ::
@@ -15,4 +17,16 @@ handleGetRoot ::
   => AuthResult UserId
   -> m Html
 handleGetRoot auth =
-  pure ("Hello, world! You are: " <> toHtml (show auth))
+  (pure . fold)
+    [ div ("Hello, world! You are: " <> toHtml (show auth))
+      -- TODO set state get param
+      -- TODO set redirect_uri get param
+    , a "Log in with GitHub" !
+        href
+          (unsafeByteStringValue
+            (fold
+              [ "https://github.com/login/oauth/authorize?"
+              , "allow_signup=false&"
+              , "client_id=0708940f1632f7a953e8"
+              ]))
+    ]

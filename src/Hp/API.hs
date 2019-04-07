@@ -20,11 +20,6 @@ data API route
       :- Auth '[Cookie] UserId
       :> Get '[HTML] Blaze.Html
 
-  , getLoginRoute
-      :: route
-      :- "login"
-      :> Get '[HTML] Blaze.Html
-
     -- Callback URL used for GitHub OAuth.
   , getLoginGitHubRoute
       :: route
