@@ -46,6 +46,7 @@ data UnvalidatedSessionConfig
   , name :: Text
   , secure :: Bool
   , ttl :: Maybe Natural
+  , xsrf :: Bool
   } deriving stock (Generic)
     deriving anyclass (Dhall.Interpret)
 
@@ -123,7 +124,9 @@ validateCookieSettings config =
         SameSiteLax
 
     , cookieXsrfSetting =
-        Just defaultXsrfCookieSettings
+        if config ^. #xsrf
+          then Just defaultXsrfCookieSettings
+          else Nothing
 
     , sessionCookieName =
         config ^. #name . re utf8
@@ -176,6 +179,11 @@ prettyPrintConfig config = do
   Text.putStrLn $
     "session_ttl = " <>
       config ^. #session . #cookieSettings . to cookieMaxAge . to show . packed
+  Text.putStrLn $
+    "session_xsrf = " <>
+      (case config ^. #session . #cookieSettings . to cookieXsrfSetting of
+        Nothing -> "false"
+        Just _ -> "true")
 
   where
     renderIsSecure :: IsSecure -> Text

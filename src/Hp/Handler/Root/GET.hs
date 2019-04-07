@@ -14,5 +14,5 @@ handleGetRoot ::
      )
   => AuthResult UserId
   -> m Html
-handleGetRoot _ =
-  pure "Hello, world!"
+handleGetRoot auth =
+  pure ("Hello, world! You are: " <> toHtml (show auth))

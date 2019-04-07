@@ -29,6 +29,10 @@
       -- How long the session cookie lasts (in seconds). If None, the cookie
       -- will last until the user's browser is closed.
       ttl =
-        None Natural
+        None Natural,
+
+      -- Whether or not to use XSRF as implemented by servant-auth.
+      xsrf =
+        False
     }
 }

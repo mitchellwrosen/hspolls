@@ -35,6 +35,7 @@ import qualified Servant
 import qualified Servant.Client           as Servant (ClientError)
 import qualified Servant.Server.Generic   as Servant (genericServeTWithContext)
 
+import Servant.Auth.Server as Servant
 
 main :: IO ()
 main = do
@@ -56,6 +57,8 @@ main = do
   httpManager :: Http.Manager <-
     Http.newManager Http.tlsManagerSettings
 
+  jwk <- Servant.generateKey
+
   let
     env :: Env
     env =
@@ -64,7 +67,7 @@ main = do
         , httpManager = httpManager
         , gitHubClientId = config ^. #gitHub . #clientId
         , gitHubClientSecret = config ^. #gitHub . #clientSecret
-        , jwtSettings = config ^. #session . #jwtSettings
+        , jwtSettings = Servant.defaultJWTSettings jwk -- (config ^. #session . #jwtSettings)
         , postgresPool = pgPool
         }
 
@@ -83,7 +86,7 @@ application env = do
     API
       { getRootRoute = handleGetRoot
       , getLoginRoute = handleGetLogin
-      , getLoginGitHubRoute = handleGetLoginGitHub
+      , getLoginGitHubRoute = handleGetLoginGitHub @Env
       , postPollRoute = handlePostPoll
       }
     ((env ^. #cookieSettings)
