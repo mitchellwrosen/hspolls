@@ -22,9 +22,12 @@ library
     http-api-data ^>= 0.4,
     http-client,
     http-client-tls ^>= 0.3,
+    jose ^>= 0.8,
     lens ^>= 4.17,
     safe-exceptions,
     servant ^>= 0.16,
+    servant-auth ^>= 0.3,
+    servant-auth-server ^>= 0.4,
     servant-blaze ^>= 0.9,
     servant-client ^>= 0.16,
     servant-client-core ^>= 0.16,
@@ -91,6 +94,7 @@ library
     Hp.Poll
     Hp.PollFormElement
     Hp.PostgresConfig
+    Hp.UserId
     Prelude
 
   ghc-options:

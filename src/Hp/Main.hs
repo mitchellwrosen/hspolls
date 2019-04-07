@@ -22,7 +22,9 @@ import Control.Effect
 -- import Control.Effect.Error
 import Control.Effect.Reader
 -- import Control.Monad.Trans.Except (ExceptT(..))
-import System.IO (readFile)
+import Crypto.JOSE.JWK (JWK)
+import Servant         (Context((:.)))
+import System.IO       (readFile)
 
 import qualified Data.ByteString             as ByteString
 import qualified Dhall                       as Dhall
@@ -31,6 +33,9 @@ import qualified Network.HTTP.Client.TLS     as Http (tlsManagerSettings)
 import qualified Network.Wai                 as Wai
 import qualified Network.Wai.Handler.Warp    as Warp
 import qualified Servant                     as Servant
+import qualified Servant.Auth.Server         as Servant (defaultCookieSettings,
+                                                         defaultJWTSettings,
+                                                         generateKey)
 import qualified Servant.Client              as Servant
 import qualified Servant.Server.Generic      as Servant
 import qualified Text.Blaze.Html             as Blaze
@@ -47,6 +52,10 @@ main = do
 
   pgPool <- acquirePostgresPool pgConfig
 
+  -- TODO persist JWT
+  jwk :: JWK <-
+    Servant.generateKey
+
   putStrLn "Running on port 8000"
   putStrLn ("Using GitHub client secret: " ++ gitHubClientSecret)
 
@@ -61,6 +70,7 @@ main = do
           -- TODO don't hard code client id even though it's not a secret
         , gitHubClientId = GitHubClientId "0708940f1632f7a953e8"
         , gitHubClientSecret = GitHubClientSecret (gitHubClientSecret ^. packed)
+        , jwk = jwk
         , postgresPool = pgPool
         }
 
@@ -71,7 +81,7 @@ application ::
   -> Wai.Request
   -> (Wai.Response -> IO Wai.ResponseReceived)
   -> IO Wai.ResponseReceived
-application env =
+application env = do
   Servant.genericServeTWithContext
     η
     API
@@ -80,7 +90,9 @@ application env =
       , getLoginGitHubRoute = handleGetLoginGitHub
       , postPollRoute = handlePostPoll
       }
-    Servant.EmptyContext
+    (Servant.defaultCookieSettings
+      :. Servant.defaultJWTSettings (env ^. field @"jwk")
+      :. Servant.EmptyContext)
   where
     η :: ∀ a. _ a -> Servant.Handler a
     η = runGitHubAuthHttp @Env

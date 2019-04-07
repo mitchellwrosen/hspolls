@@ -2,9 +2,11 @@ module Hp.API where
 
 import Hp.GitHub.Code (GitHubCode)
 import Hp.Poll        (Poll)
+import Hp.UserId      (UserId)
 
 import Servant
 import Servant.API.Generic
+import Servant.Auth        (Auth, JWT)
 import Servant.HTML.Blaze
 
 import qualified Text.Blaze.Html as Blaze
@@ -14,7 +16,8 @@ data API route
   = API
   { getRootRoute
       :: route
-      :- Get '[HTML] Blaze.Html
+      :- Auth '[JWT] UserId
+      :> Get '[HTML] Blaze.Html
 
   , getLoginRoute
       :: route
