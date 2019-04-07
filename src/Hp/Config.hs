@@ -11,7 +11,11 @@ import Hp.GitHub.ClientSecret (GitHubClientSecret(..))
 
 import Crypto.JOSE.JWK         (JWK)
 import Data.ByteArray.Encoding (Base(..), convertFromBase)
+import Data.Text.Encoding      (decodeUtf8)
 import Data.Validation
+import Servant.Auth.Server     (CookieSettings(..), IsSecure(..),
+                                JWTSettings(..), SameSite(..),
+                                defaultJWTSettings, defaultXsrfCookieSettings)
 
 import qualified Crypto.JOSE.JWK as JWK
 import qualified Data.ByteString as ByteString
@@ -24,8 +28,8 @@ import qualified Dhall
 data UnvalidatedConfig
   = UnvalidatedConfig
   { gitHub :: UnvalidatedGitHubConfig
-  , jwk :: Text
   , port :: Natural
+  , session :: UnvalidatedSessionConfig
   } deriving stock (Generic)
     deriving anyclass (Dhall.Interpret)
 
@@ -36,18 +40,33 @@ data UnvalidatedGitHubConfig
   } deriving stock (Generic)
     deriving anyclass (Dhall.Interpret)
 
+data UnvalidatedSessionConfig
+  = UnvalidatedSessionConfig
+  { jwk :: Text
+  , name :: Text
+  , secure :: Bool
+  , ttl :: Maybe Natural
+  } deriving stock (Generic)
+    deriving anyclass (Dhall.Interpret)
+
 data Config
   = Config
   { gitHub :: GitHubConfig
-  , jwk :: JWK
   , port :: Natural
-  } deriving stock (Generic, Show)
+  , session :: SessionConfig
+  } deriving stock (Generic)
 
 data GitHubConfig
   = GitHubConfig
   { clientId :: GitHubClientId
   , clientSecret :: GitHubClientSecret
   } deriving stock (Generic, Show)
+
+data SessionConfig
+  = SessionConfig
+  { cookieSettings :: CookieSettings
+  , jwtSettings :: JWTSettings
+  } deriving stock (Generic)
 
 readConfigFile :: FilePath -> IO (Either [Text] Config)
 readConfigFile path = do
@@ -58,8 +77,8 @@ readConfigFile path = do
 
 validateConfig :: UnvalidatedConfig -> Validation [Text] Config
 validateConfig config = do
-  jwk :: JWK <-
-    validateJWK (config ^. #jwk)
+  session :: SessionConfig <-
+    validateSession (config ^. #session)
 
   pure Config
     { gitHub =
@@ -70,12 +89,44 @@ validateConfig config = do
               GitHubClientSecret (config ^. #gitHub . #clientSecret)
           }
 
-    , jwk =
-        jwk
-
       -- TODO validate port is < 2^6
     , port =
         config ^. #port
+
+    , session =
+        session
+    }
+
+validateCookieSettings ::
+     UnvalidatedSessionConfig
+  -> Validation [Text] CookieSettings
+validateCookieSettings config =
+  pure CookieSettings
+    { cookieDomain =
+        Nothing
+
+    , cookieExpires =
+        Nothing
+
+    , cookieIsSecure =
+        if config ^. #secure
+          then Secure
+          else NotSecure
+
+    , cookieMaxAge =
+        fromIntegral <$> (config ^. #ttl)
+
+    , cookiePath =
+        Just "/"
+
+    , cookieSameSite =
+        SameSiteLax
+
+    , cookieXsrfSetting =
+        Just defaultXsrfCookieSettings
+
+    , sessionCookieName =
+        config ^. #name . re utf8
     }
 
 validateJWK :: Text -> Validation [Text] JWK
@@ -92,14 +143,42 @@ validateJWK bytes =
         _ ->
           Failure ["Invalid JWK (expected 256 base64-encoded bytes)"]
 
+validateJWTSettings ::
+     UnvalidatedSessionConfig
+  -> Validation [Text] JWTSettings
+validateJWTSettings config = do
+  jwk :: JWK <-
+    validateJWK (config ^. #jwk)
+
+  pure (defaultJWTSettings jwk)
+
+validateSession :: UnvalidatedSessionConfig -> Validation [Text] SessionConfig
+validateSession config =
+  SessionConfig
+    <$> validateCookieSettings config
+    <*> validateJWTSettings config
+
 prettyPrintConfig :: Config -> IO ()
 prettyPrintConfig config = do
-  prettyPrintGitHubConfig (config ^. #gitHub)
-  Text.putStrLn "jwk = <JWK>"
-  Text.putStrLn ("port = " <> (config ^. #port . to show . packed))
+  Text.putStrLn $
+    "github_client_id = " <> config ^. #gitHub . #clientId . to show . packed
+  Text.putStrLn $
+    "github_client_secret = " <>
+      config ^. #gitHub . #clientSecret . to show . packed
+  Text.putStrLn ("port = " <> config ^. #port . to show . packed)
+  Text.putStrLn "session_jwk = <JWK>"
+  Text.putStrLn $
+    "session_name = " <>
+      config ^. #session . #cookieSettings . to sessionCookieName . to decodeUtf8
+  Text.putStrLn $
+    "session_secure = " <>
+      config ^. #session . #cookieSettings . to cookieIsSecure . to renderIsSecure
+  Text.putStrLn $
+    "session_ttl = " <>
+      config ^. #session . #cookieSettings . to cookieMaxAge . to show . packed
 
   where
-    prettyPrintGitHubConfig :: GitHubConfig -> IO ()
-    prettyPrintGitHubConfig config = do
-      Text.putStrLn ("GitHub client id = " <> (config ^. #clientId . to show . packed))
-      Text.putStrLn ("GitHub client secret = " <> (config ^. #clientSecret . to show . packed))
+    renderIsSecure :: IsSecure -> Text
+    renderIsSecure = \case
+      Secure -> "true"
+      NotSecure -> "false"

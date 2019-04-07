@@ -31,12 +31,9 @@ import qualified Network.HTTP.Client         as Http
 import qualified Network.HTTP.Client.TLS     as Http (tlsManagerSettings)
 import qualified Network.Wai                 as Wai
 import qualified Network.Wai.Handler.Warp    as Warp
-import qualified Servant                     as Servant
-import qualified Servant.Auth.Server         as Servant (defaultCookieSettings,
-                                                         defaultJWTSettings)
-import qualified Servant.Client              as Servant
-import qualified Servant.Server.Generic      as Servant
-import qualified Text.Blaze.Html             as Blaze
+import qualified Servant
+import qualified Servant.Client              as Servant (ClientError)
+import qualified Servant.Server.Generic      as Servant (genericServeTWithContext)
 import qualified Text.Blaze.Html5            as Blaze
 import qualified Text.Blaze.Html5.Attributes as Blaze
 
@@ -65,10 +62,11 @@ main = do
     env :: Env
     env =
       Env
-        { httpManager = httpManager
+        { cookieSettings = config ^. #session . #cookieSettings
+        , httpManager = httpManager
         , gitHubClientId = config ^. #gitHub . #clientId
         , gitHubClientSecret = config ^. #gitHub . #clientSecret
-        , jwk = config ^. #jwk
+        , jwtSettings = config ^. #session . #jwtSettings
         , postgresPool = pgPool
         }
 
@@ -90,8 +88,8 @@ application env = do
       , getLoginGitHubRoute = handleGetLoginGitHub
       , postPollRoute = handlePostPoll
       }
-    (Servant.defaultCookieSettings
-      :. Servant.defaultJWTSettings (env ^. #jwk)
+    ((env ^. #cookieSettings)
+      :. (env ^. #jwtSettings)
       :. Servant.EmptyContext)
   where
     η :: ∀ a. _ a -> Servant.Handler a
