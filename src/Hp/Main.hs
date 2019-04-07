@@ -72,8 +72,8 @@ main = do
     env =
       Env
         { httpManager = httpManager
-        , gitHubClientId = config ^. field @"gitHubClientId"
-        , gitHubClientSecret = config ^. field @"gitHubClientSecret"
+        , gitHubClientId = config ^. field @"gitHub" . field @"clientId"
+        , gitHubClientSecret = config ^. field @"gitHub" . field @"clientSecret"
         , jwk = jwk
         , postgresPool = pgPool
         }
