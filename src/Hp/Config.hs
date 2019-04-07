@@ -215,12 +215,28 @@ prettyPrintConfig config = do
     "github_client_secret = " <>
       config ^. #gitHub . #clientSecret . to show . packed
   Text.putStrLn ("port = " <> config ^. #port . to show . packed)
-  -- TODO prettier postgres config printing
-  Text.putStrLn ("postgres = " <> config ^. #postgres . to show . packed)
+  Text.putStrLn $
+    "postgres_db_name = \"" <> config ^. #postgres . #dbName <> "\""
+  Text.putStrLn $
+    "postgres_host = \"" <> config ^. #postgres . #host <> "\""
+  Text.putStrLn $
+    "postgres_password = \"" <> config ^. #postgres . #password <> "\""
+  Text.putStrLn $
+    "postgres_pool_size = " <>
+      config ^. #postgres . #poolSize . to show . packed
+  Text.putStrLn $
+    "postgres_pool_timeout = " <>
+      config ^. #postgres . #poolTimeout . to show . packed
+  Text.putStrLn $
+    "postgres_port = " <>
+      config ^. #postgres . #port . to show . packed
+  Text.putStrLn $
+    "postgres_user = \"" <> config ^. #postgres . #user <> "\""
   Text.putStrLn "session_jwk = <JWK>"
   Text.putStrLn $
-    "session_name = " <>
-      config ^. #session . #cookieSettings . to sessionCookieName . to decodeUtf8
+    "session_name = \"" <>
+      config ^. #session . #cookieSettings . to sessionCookieName . to decodeUtf8 <>
+      "\""
   Text.putStrLn $
     "session_secure = " <>
       config ^. #session . #cookieSettings . to cookieIsSecure . to renderIsSecure
