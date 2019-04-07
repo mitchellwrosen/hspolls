@@ -13,7 +13,6 @@ import Hp.Eff.HttpClient      (runHttpManager)
 import Hp.Eff.ManagePoll      (ManagePoll, ManagePollDBC(..), savePoll)
 import Hp.Env
 import Hp.GitHub.ClientId     (GitHubClientId(..))
-import Hp.GitHub.ClientSecret (GitHubClientSecret(..))
 import Hp.GitHub.Code         (GitHubCode)
 import Hp.Handler.Root.GET    (handleGetRoot)
 import Hp.Poll
@@ -26,7 +25,6 @@ import Control.Effect.Reader
 import Crypto.JOSE.JWK (JWK)
 import Servant         (Context((:.)))
 import System.Exit     (exitFailure)
-import System.IO       (readFile)
 
 import qualified Data.ByteString             as ByteString
 import qualified Data.Text.IO                as Text
@@ -49,15 +47,15 @@ import qualified Text.Blaze.Html5.Attributes as Blaze
 main :: IO ()
 main = do
   config :: Config <-
-    readConfigFile "config.dhall" >>= \case
+    readConfigFile "./config.dhall" >>= \case
       Left errs -> do
         for_ errs Text.putStrLn
         exitFailure
+
       Right config ->
         pure config
 
-  gitHubClientSecret :: [Char] <-
-    readFile "github-client-secret" <|> pure "0xDEADBEEF"
+  print config
 
   pgConfig :: PostgresConfig <- Dhall.input Dhall.auto "./pg.dhall"
 
@@ -66,9 +64,6 @@ main = do
   -- TODO persist JWT
   jwk :: JWK <-
     Servant.generateKey
-
-  putStrLn "Running on port 8000"
-  putStrLn ("Using GitHub client secret: " ++ gitHubClientSecret)
 
   httpManager :: Http.Manager <-
     Http.newManager Http.tlsManagerSettings
@@ -80,12 +75,14 @@ main = do
         { httpManager = httpManager
           -- TODO don't hard code client id even though it's not a secret
         , gitHubClientId = GitHubClientId "0708940f1632f7a953e8"
-        , gitHubClientSecret = GitHubClientSecret (gitHubClientSecret ^. packed)
+        , gitHubClientSecret = config ^. field @"gitHubClientSecret"
         , jwk = jwk
         , postgresPool = pgPool
         }
 
-  Warp.run 8000 (application env)
+  Warp.run
+    (fromIntegral (config ^. field @"port"))
+    (application env)
 
 application ::
      Env

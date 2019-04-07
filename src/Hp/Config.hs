@@ -3,6 +3,8 @@ module Hp.Config
   , readConfigFile
   ) where
 
+import Hp.GitHub.ClientSecret (GitHubClientSecret(..))
+
 import Data.Validation
 
 import qualified Dhall
@@ -12,14 +14,16 @@ import qualified Dhall
 -- values (e.g. the JWT must be a certain length string).
 data UnvalidatedConfig
   = UnvalidatedConfig
-  { port :: Natural
+  { gitHubClientSecret :: Text
+  , port :: Natural
   } deriving stock (Generic)
     deriving anyclass (Dhall.Interpret)
 
 data Config
   = Config
-  { port :: Natural
-  } deriving stock (Generic)
+  { gitHubClientSecret :: GitHubClientSecret
+  , port :: Natural
+  } deriving stock (Generic, Show)
 
 readConfigFile :: FilePath -> IO (Either [Text] Config)
 readConfigFile path = do
@@ -29,7 +33,9 @@ readConfigFile path = do
   pure (toEither (validateConfig unvalidatedConfig))
 
 validateConfig :: UnvalidatedConfig -> Validation [Text] Config
-validateConfig UnvalidatedConfig { port } =
+validateConfig UnvalidatedConfig { gitHubClientSecret, port } =
+  -- TODO validate port is < 2^6
   pure Config
-    { port = port
+    { gitHubClientSecret = GitHubClientSecret gitHubClientSecret
+    , port = port
     }

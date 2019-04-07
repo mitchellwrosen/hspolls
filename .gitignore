@@ -3,5 +3,4 @@
 .ghcid
 dist-newstyle/
 pg.dhall
-
-github-client-secret
+secrets/
