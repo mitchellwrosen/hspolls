@@ -12,7 +12,6 @@ import Hp.Eff.GitHubAuth.Http (runGitHubAuthHttp)
 import Hp.Eff.HttpClient      (runHttpManager)
 import Hp.Eff.ManagePoll      (ManagePoll, ManagePollDBC(..), savePoll)
 import Hp.Env
-import Hp.GitHub.ClientId     (GitHubClientId(..))
 import Hp.GitHub.Code         (GitHubCode)
 import Hp.Handler.Root.GET    (handleGetRoot)
 import Hp.Poll
@@ -73,8 +72,7 @@ main = do
     env =
       Env
         { httpManager = httpManager
-          -- TODO don't hard code client id even though it's not a secret
-        , gitHubClientId = GitHubClientId "0708940f1632f7a953e8"
+        , gitHubClientId = config ^. field @"gitHubClientId"
         , gitHubClientSecret = config ^. field @"gitHubClientSecret"
         , jwk = jwk
         , postgresPool = pgPool
