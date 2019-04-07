@@ -5,11 +5,11 @@
 module Hp.Main where
 
 import Hp.API
+import Hp.Eff.DB              (runDBC)
 import Hp.Eff.GitHubAuth      (GitHubAuthEffect, gitHubAuth)
 import Hp.Eff.GitHubAuth.Http (runGitHubAuthHttp)
 import Hp.Eff.HttpClient      (runHttpManager)
 import Hp.Eff.ManagePoll      (ManagePoll, ManagePollDBC(..), savePoll)
-import Hp.Eff.DB              (runDBC)
 import Hp.Env
 import Hp.GitHub.ClientId     (GitHubClientId(..))
 import Hp.GitHub.ClientSecret (GitHubClientSecret(..))
@@ -24,9 +24,7 @@ import Control.Effect.Reader
 import System.IO (readFile)
 
 import qualified Data.ByteString             as ByteString
-import qualified Data.Text                   as Text
 import qualified Dhall                       as Dhall
-import qualified Hasql.Pool                  as Hasql
 import qualified Network.HTTP.Client         as Http
 import qualified Network.HTTP.Client.TLS     as Http (tlsManagerSettings)
 import qualified Network.Wai                 as Wai
@@ -41,7 +39,7 @@ import qualified Text.Blaze.Html5.Attributes as Blaze
 
 main :: IO ()
 main = do
-  clientSecret :: [Char] <-
+  gitHubClientSecret :: [Char] <-
     readFile "github-client-secret" <|> pure "0xDEADBEEF"
 
   pgConfig :: PostgresConfig <- Dhall.input Dhall.auto "./pg.dhall"
@@ -49,26 +47,30 @@ main = do
   pgPool <- acquirePostgresPool pgConfig
 
   putStrLn "Running on port 8000"
-  putStrLn ("Using GitHub client secret: " ++ clientSecret)
+  putStrLn ("Using GitHub client secret: " ++ gitHubClientSecret)
 
   httpManager :: Http.Manager <-
     Http.newManager Http.tlsManagerSettings
 
-  Warp.run
-    8000
-    (application
-      httpManager
-      (GitHubClientSecret (Text.pack clientSecret))
-      pgPool)
+  let
+    env :: Env
+    env =
+      Env
+        { httpManager = httpManager
+          -- TODO don't hard code client id even though it's not a secret
+        , gitHubClientId = GitHubClientId "0708940f1632f7a953e8"
+        , gitHubClientSecret = GitHubClientSecret (gitHubClientSecret ^. packed)
+        , postgresPool = pgPool
+        }
+
+  Warp.run 8000 (application env)
 
 application ::
-     Http.Manager
-  -> GitHubClientSecret
-  -> Hasql.Pool
+     Env
   -> Wai.Request
   -> (Wai.Response -> IO Wai.ResponseReceived)
   -> IO Wai.ResponseReceived
-application httpManager clientSecret pgPool =
+application env =
   Servant.genericServeTWithContext
     η
     API
@@ -90,16 +92,6 @@ application httpManager clientSecret pgPool =
       -- >>> ExceptT
       >>> liftIO
       >>> Servant.Handler
-
-    env :: Env
-    env =
-      Env
-        { manager = httpManager
-          -- TODO don't hard code client id even though it's not a secret
-        , gitHubClientId = GitHubClientId "0708940f1632f7a953e8"
-        , gitHubClientSecret = clientSecret
-        , postgresPool = pgPool
-        }
 
 
 -- TODO Generalize to ApplicationException

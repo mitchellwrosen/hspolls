@@ -9,7 +9,7 @@ import qualified Hasql.Pool as HPool
 
 data Env
   = Env
-  { manager :: Http.Manager
+  { httpManager :: Http.Manager
   , gitHubClientId :: GitHubClientId
   , gitHubClientSecret :: GitHubClientSecret
   , postgresPool :: HPool.Pool
