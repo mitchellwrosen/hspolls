@@ -31,6 +31,7 @@ instance
      , HasType GitHubClientSecret env
      , Member HttpClient sig
      , Member (Reader env) sig
+     , MonadIO m -- TODO replace MonadIO with logging effect
      )
   => Carrier (GitHubAuthEffect :+: sig) (GitHubAuthCarrierHttp env m) where
 
@@ -51,6 +52,7 @@ doGitHubAuth ::
      , HasType GitHubClientSecret env
      , Member HttpClient sig
      , Member (Reader env) sig
+     , MonadIO m
      )
   => GitHubCode
   -> m (Maybe GitHubUser)
@@ -75,15 +77,18 @@ doGitHubAuth code = do
         Nothing
 
   doPost >>= \case
-    Left _ ->
+    Left ex -> do
+      liftIO (print ex)
       pure Nothing
 
-    Right (GitHubResponseError _) ->
+    Right (GitHubResponseError err) -> do
+      liftIO (print err)
       pure Nothing
 
     Right (GitHubResponseSuccess response) ->
       gitHubGetUser (response ^. #access_token) >>= \case
-        Left _ ->
+        Left ex -> do
+          liftIO (print ex)
           pure Nothing
 
         Right user ->
