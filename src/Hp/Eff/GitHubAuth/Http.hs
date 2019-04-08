@@ -1,13 +1,10 @@
 {-# LANGUAGE AllowAmbiguousTypes, UndecidableInstances #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-
 module Hp.Eff.GitHubAuth.Http
   ( runGitHubAuthHttp
   ) where
 
-import Hp.Eff.GitHubAuth                           (GitHubAuthCarrier(..),
-                                                    GitHubAuthEffect(..))
+import Hp.Eff.GitHubAuth                           (GitHubAuthEffect(..))
 import Hp.Eff.HttpClient                           (HttpClient)
 import Hp.GitHub                                   (gitHubGetUser, gitHubPostLoginOauthAccessToken)
 import Hp.GitHub.ClientId                          (GitHubClientId)
@@ -24,6 +21,10 @@ import Control.Effect.Sum
 
 -- TODO log failures instead of discarding them
 
+newtype GitHubAuthCarrierHttp env m a
+  = GitHubAuthCarrierHttp (m a)
+  deriving newtype (Applicative, Functor, Monad, MonadIO)
+
 instance
      ( Carrier sig m
      , HasType GitHubClientId env
@@ -31,17 +32,17 @@ instance
      , Member HttpClient sig
      , Member (Reader env) sig
      )
-  => Carrier (GitHubAuthEffect :+: sig) (GitHubAuthCarrier "http" env m) where
+  => Carrier (GitHubAuthEffect :+: sig) (GitHubAuthCarrierHttp env m) where
 
   eff ::
-       (GitHubAuthEffect :+: sig) (GitHubAuthCarrier "http" env m) (GitHubAuthCarrier "http" env m a)
-    -> GitHubAuthCarrier "http" env m a
+       (GitHubAuthEffect :+: sig) (GitHubAuthCarrierHttp env m) (GitHubAuthCarrierHttp env m a)
+    -> GitHubAuthCarrierHttp env m a
   eff = \case
     L (GitHubAuth code next) ->
-      GitHubAuthCarrier (doGitHubAuth @env code) >>= next
+      GitHubAuthCarrierHttp (doGitHubAuth @env code) >>= next
 
     R other ->
-      GitHubAuthCarrier (eff (handleCoercible other))
+      GitHubAuthCarrierHttp (eff (handleCoercible other))
 
 doGitHubAuth ::
      ∀ env sig m.
@@ -90,7 +91,7 @@ doGitHubAuth code = do
 
 runGitHubAuthHttp ::
      ∀ env m a.
-     GitHubAuthCarrier "http" env m a
+     GitHubAuthCarrierHttp env m a
   -> m a
-runGitHubAuthHttp (GitHubAuthCarrier m) =
+runGitHubAuthHttp (GitHubAuthCarrierHttp m) =
   m

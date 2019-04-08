@@ -1,7 +1,6 @@
 module Hp.Eff.GitHubAuth
   ( GitHubAuthEffect(..)
   , gitHubAuth
-  , GitHubAuthCarrier(..)
   ) where
 
 import Hp.Eff.FirstOrder (FirstOrderEffect(..))
@@ -10,7 +9,6 @@ import Hp.GitHub.User    (GitHubUser)
 
 import Control.Effect
 import Control.Effect.Carrier
-import GHC.TypeLits           (Symbol)
 
 
 data GitHubAuthEffect (m :: Type -> Type) (k :: Type) where
@@ -31,12 +29,3 @@ gitHubAuth ::
   -> m (Maybe GitHubUser)
 gitHubAuth code =
   send (GitHubAuth code pure)
-
--- TODO remove this, move to .Http
-newtype GitHubAuthCarrier
-          (name :: Symbol)
-          (env :: Type)
-          (m :: Type -> Type)
-          (a :: Type)
-  = GitHubAuthCarrier (m a)
-  deriving newtype (Applicative, Functor, Monad, MonadIO)
