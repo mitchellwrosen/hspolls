@@ -8,11 +8,11 @@ import Control.Exception.Safe     as X (SomeException, throwIO)
 import Control.Lens               as X (Fold, Getter, Lens, Lens', Traversal,
                                         Traversal', at, each, foldMapOf, folded,
                                         foldlOf, foldrOf, ix, mapped, over,
-                                        preview, re, review, reviews, set, to,
-                                        toListOf, view, (%~), (.~), (^.), (^..),
-                                        (^?), _1, _2, _3, _4, _5, _Just, _Left,
-                                        _Nothing, _Right, _head, _init, _last,
-                                        _tail)
+                                        preview, re, review, reviews, set,
+                                        strict, to, toListOf, view, (%~), (.~),
+                                        (^.), (^..), (^?), (^?!), _1, _2, _3,
+                                        _4, _5, _Just, _Left, _Nothing, _Right,
+                                        _head, _init, _last, _tail)
 import Control.Monad.IO.Class     as X
 import Data.ByteString            as X (ByteString)
 import Data.ByteString.Lens       as X (packedBytes, packedChars)

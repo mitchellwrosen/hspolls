@@ -12,7 +12,6 @@ import Hp.GitHub.ClientSecret (GitHubClientSecret(..))
 
 import Crypto.JOSE.JWK         (JWK)
 import Data.ByteArray.Encoding (Base(..), convertFromBase)
-import Data.Text.Encoding      (decodeUtf8)
 import Data.Validation
 import Servant.Auth.Server     (CookieSettings(..), IsSecure(..),
                                 JWTSettings(..), SameSite(..),
@@ -240,7 +239,7 @@ prettyPrintConfig config = do
   Text.putStrLn "session_jwk = <JWK>"
   Text.putStrLn $
     "session_name = \"" <>
-      config ^. #session . #cookie . to sessionCookieName . to decodeUtf8 <>
+      config ^?! #session . #cookie . to sessionCookieName . utf8 <>
       "\""
   Text.putStrLn $
     "session_secure = " <>

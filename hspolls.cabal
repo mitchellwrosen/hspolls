@@ -25,6 +25,7 @@ library
     jose ^>= 0.8,
     lens ^>= 4.17,
     memory ^>= 0.14,
+    prometheus-client ^>= 1.0,
     safe-exceptions,
     servant ^>= 0.16,
     servant-auth ^>= 0.3,
@@ -98,6 +99,7 @@ library
     Hp.GitHub.User
     Hp.GitHub.UserName
     Hp.Handler.Login.GitHub.GET
+    Hp.Handler.Metrics.GET
     Hp.Handler.Root.GET
     Hp.Main
     Hp.Poll

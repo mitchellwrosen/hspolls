@@ -40,6 +40,11 @@ data API route
               ]
            NoContent)
 
+  , getMetricsRoute
+      :: route
+      :- "metrics"
+      :> Get '[PlainText] Text
+
   , postPollRoute
       :: route
       :- "poll"

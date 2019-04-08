@@ -14,6 +14,7 @@ import Hp.Eff.ManagePoll           (ManagePoll, ManagePollDBC(..), savePoll)
 import Hp.Eff.PersistUser.DB       (runPersistUserDB)
 import Hp.Env
 import Hp.Handler.Login.GitHub.GET (handleGetLoginGitHub)
+import Hp.Handler.Metrics.GET      (handleGetMetrics)
 import Hp.Handler.Root.GET         (handleGetRoot)
 import Hp.Poll
 import Hp.PostgresConfig           (acquirePostgresPool)
@@ -85,6 +86,7 @@ application env = do
     API
       { getRootRoute = handleGetRoot
       , getLoginGitHubRoute = handleGetLoginGitHub @Env
+      , getMetricsRoute = handleGetMetrics
       , postPollRoute = handlePostPoll
       }
     ((env ^. #cookieSettings)
