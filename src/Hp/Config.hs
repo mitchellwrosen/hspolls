@@ -16,7 +16,7 @@ import Data.Text.Encoding      (decodeUtf8)
 import Data.Validation
 import Servant.Auth.Server     (CookieSettings(..), IsSecure(..),
                                 JWTSettings(..), SameSite(..),
-                                defaultJWTSettings, defaultXsrfCookieSettings)
+                                generateKey, defaultJWTSettings, defaultXsrfCookieSettings)
 
 import qualified Crypto.JOSE.JWK as JWK
 import qualified Data.ByteString as ByteString
@@ -56,7 +56,7 @@ data UnvalidatedPostgresConfig
 
 data UnvalidatedSessionConfig
   = UnvalidatedSessionConfig
-  { jwk :: Text
+  { jwk :: Maybe Text
   , name :: Text
   , secure :: Bool
   , ttl :: Maybe Natural
@@ -91,8 +91,8 @@ data PostgresConfig
 
 data SessionConfig
   = SessionConfig
-  { cookieSettings :: CookieSettings
-  , jwtSettings :: JWTSettings
+  { cookie :: CookieSettings
+  , jwt :: Either (IO JWTSettings) JWTSettings
   } deriving stock (Generic)
 
 readConfigFile :: FilePath -> IO (Either [Text] Config)
@@ -180,12 +180,17 @@ validateJWK bytes =
 
 validateJWTSettings ::
      UnvalidatedSessionConfig
-  -> Validation [Text] JWTSettings
-validateJWTSettings config = do
-  jwk :: JWK <-
-    validateJWK (config ^. #jwk)
+  -> Validation [Text] (Either (IO JWTSettings) JWTSettings)
+validateJWTSettings config =
+  case config ^. #jwk of
+    Nothing ->
+      pure (Left (defaultJWTSettings <$> generateKey))
 
-  pure (defaultJWTSettings jwk)
+    Just bytes -> do
+      jwk :: JWK <-
+        validateJWK bytes
+
+      pure (Right (defaultJWTSettings jwk))
 
 validateSession :: UnvalidatedSessionConfig -> Validation [Text] SessionConfig
 validateSession config =
@@ -235,17 +240,17 @@ prettyPrintConfig config = do
   Text.putStrLn "session_jwk = <JWK>"
   Text.putStrLn $
     "session_name = \"" <>
-      config ^. #session . #cookieSettings . to sessionCookieName . to decodeUtf8 <>
+      config ^. #session . #cookie . to sessionCookieName . to decodeUtf8 <>
       "\""
   Text.putStrLn $
     "session_secure = " <>
-      config ^. #session . #cookieSettings . to cookieIsSecure . to renderIsSecure
+      config ^. #session . #cookie . to cookieIsSecure . to renderIsSecure
   Text.putStrLn $
     "session_ttl = " <>
-      config ^. #session . #cookieSettings . to cookieMaxAge . to show . packed
+      config ^. #session . #cookie . to cookieMaxAge . to show . packed
   Text.putStrLn $
     "session_xsrf = " <>
-      (case config ^. #session . #cookieSettings . to cookieXsrfSetting of
+      (case config ^. #session . #cookie . to cookieXsrfSetting of
         Nothing -> "false"
         Just _ -> "true")
 

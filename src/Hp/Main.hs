@@ -55,17 +55,18 @@ main = do
   httpManager :: Http.Manager <-
     Http.newManager Http.tlsManagerSettings
 
-  jwk <- Servant.generateKey
+  jwtSettings :: JWTSettings <-
+    either id pure (config ^. #session . #jwt)
 
   let
     env :: Env
     env =
       Env
-        { cookieSettings = config ^. #session . #cookieSettings
+        { cookieSettings = config ^. #session . #cookie
         , httpManager = httpManager
         , gitHubClientId = config ^. #gitHub . #clientId
         , gitHubClientSecret = config ^. #gitHub . #clientSecret
-        , jwtSettings = Servant.defaultJWTSettings jwk -- (config ^. #session . #jwtSettings)
+        , jwtSettings = jwtSettings
         , postgresPool = pgPool
         }
 
