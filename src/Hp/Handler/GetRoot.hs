@@ -1,4 +1,4 @@
-module Hp.Handler.Root.GET
+module Hp.Handler.GetRoot
   ( handleGetRoot
   ) where
 

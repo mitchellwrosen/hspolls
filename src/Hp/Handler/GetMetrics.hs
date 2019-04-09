@@ -1,4 +1,6 @@
-module Hp.Handler.Metrics.GET where
+module Hp.Handler.GetMetrics
+  ( handleGetMetrics
+  ) where
 
 import Control.Effect
 import Prometheus

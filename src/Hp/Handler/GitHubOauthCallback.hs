@@ -1,5 +1,5 @@
-module Hp.Handler.Login.GitHub.GET
-  ( handleGetLoginGitHub
+module Hp.Handler.GitHubOauthCallback
+  ( handleGitHubOauthCallback
   ) where
 
 import Hp.Eff.GitHubAuth  (GitHubAuthEffect, gitHubAuth)
@@ -13,7 +13,7 @@ import Control.Effect
 import Servant             (Header, Headers, NoContent(..), addHeader, noHeader)
 import Servant.Auth.Server (SetCookie)
 
-handleGetLoginGitHub ::
+handleGitHubOauthCallback ::
      ∀ m sig.
      ( Carrier sig m
      , Member GitHubAuthEffect sig
@@ -28,7 +28,7 @@ handleGetLoginGitHub ::
           , Header "Set-Cookie" SetCookie
           ]
        NoContent)
-handleGetLoginGitHub code =
+handleGitHubOauthCallback code =
   gitHubAuth code >>= \case
     Nothing ->
       pure (redirect (noHeader (noHeader NoContent)))
@@ -42,3 +42,4 @@ handleGetLoginGitHub code =
   where
     redirect =
       addHeader "/"
+

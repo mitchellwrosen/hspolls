@@ -5,23 +5,23 @@
 module Hp.Main where
 
 import Hp.API
-import Hp.Config                   (Config(..), prettyPrintConfig,
-                                    readConfigFile)
-import Hp.Eff.DB                   (runDBC)
-import Hp.Eff.GitHubAuth.Http      (runGitHubAuthHttp)
-import Hp.Eff.HttpRequest.IO       (runHttpRequestIO)
-import Hp.Eff.HttpSession.IO       (runHttpSessionIO)
-import Hp.Eff.ManagePoll           (ManagePoll, ManagePollDBC(..), savePoll)
-import Hp.Eff.PersistUser.DB       (runPersistUserDB)
-import Hp.GitHub.ClientId          (GitHubClientId)
-import Hp.GitHub.ClientSecret      (GitHubClientSecret)
-import Hp.Handler.AnswerPoll       (handleAnswerPoll)
-import Hp.Handler.Login.GitHub.GET (handleGetLoginGitHub)
-import Hp.Handler.Metrics.GET      (handleGetMetrics)
-import Hp.Handler.Root.GET         (handleGetRoot)
-import Hp.Metrics                  (requestCounter)
-import Hp.Poll
-import Hp.PostgresConfig           (acquirePostgresPool)
+import Hp.Config                      (Config(..), prettyPrintConfig,
+                                       readConfigFile)
+import Hp.Eff.DB                      (runDBC)
+import Hp.Eff.GitHubAuth.Http         (runGitHubAuthHttp)
+import Hp.Eff.HttpRequest.IO          (runHttpRequestIO)
+import Hp.Eff.HttpSession.IO          (runHttpSessionIO)
+import Hp.Eff.ManagePoll              (ManagePollDBC(..))
+import Hp.Eff.PersistUser.DB          (runPersistUserDB)
+import Hp.GitHub.ClientId             (GitHubClientId)
+import Hp.GitHub.ClientSecret         (GitHubClientSecret)
+import Hp.Handler.AnswerPoll          (handleAnswerPoll)
+import Hp.Handler.CreatePoll          (handleCreatePoll)
+import Hp.Handler.GitHubOauthCallback (handleGitHubOauthCallback)
+import Hp.Handler.GetMetrics         (handleGetMetrics)
+import Hp.Handler.GetRoot            (handleGetRoot)
+import Hp.Metrics                     (requestCounter)
+import Hp.PostgresConfig              (acquirePostgresPool)
 
 import Control.Effect
 -- import Control.Effect.Error
@@ -108,10 +108,10 @@ application
     η
     API
       { answerPollRoute = handleAnswerPoll
+      , createPollRoute = handleCreatePoll
       , getRootRoute = handleGetRoot
-      , getLoginGitHubRoute = handleGetLoginGitHub
       , getMetricsRoute = handleGetMetrics
-      , postPollRoute = handlePostPoll
+      , gitHubOauthCallbackRoute = handleGitHubOauthCallback
       }
     (cookieSettings
       :. jwtSettings
@@ -139,14 +139,3 @@ toServerError
   :: Servant.ClientError
   -> Servant.ServerError
 toServerError = undefined
-
-handlePostPoll ::
-     ( Carrier sig m
-     , Member ManagePoll sig
-     , MonadIO m
-     )
-  => Poll
-  -> m Servant.NoContent
-handlePostPoll poll = do
-  _ <- savePoll poll
-  pure Servant.NoContent

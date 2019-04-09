@@ -17,15 +17,33 @@ import qualified Text.Blaze.Html as Blaze
 
 data API route
   = API
-  { getRootRoute
+  { answerPollRoute
+      :: route
+      :- "poll"
+      :> Capture "Poll ID" PollId
+      :> ReqBody '[JSON] AnswerPollEvent
+      :> Post '[JSON] NoContent
+
+  , createPollRoute
+      :: route
+      :- "poll"
+      :> ReqBody '[JSON] Poll
+      :> Post '[JSON] NoContent
+
+  , getMetricsRoute
+      :: route
+      :- "metrics"
+      :> Get '[PlainText] Text
+
+  , getRootRoute
       :: route
       :- Auth '[Cookie] (User UserId)
       :> Get '[HTML] Blaze.Html
 
     -- Callback URL used for GitHub OAuth.
-  , getLoginGitHubRoute
+  , gitHubOauthCallbackRoute
       :: route
-      :- "login"
+      :- "oauth"
       :> "github"
       :> QueryParam' '[Required, Strict] "code" GitHubCode
       -- TODO required "state" query param
@@ -40,22 +58,4 @@ data API route
               , Header "Set-Cookie" SetCookie
               ]
            NoContent)
-
-  , getMetricsRoute
-      :: route
-      :- "metrics"
-      :> Get '[PlainText] Text
-
-  , postPollRoute
-      :: route
-      :- "poll"
-      :> ReqBody '[JSON] Poll
-      :> Post '[JSON] NoContent
-
-  , answerPollRoute
-      :: route
-      :- "poll"
-      :> Capture "Poll ID" PollId
-      :> ReqBody '[JSON] AnswerPollEvent
-      :> Post '[JSON] NoContent
   } deriving stock (Generic)

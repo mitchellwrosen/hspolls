@@ -88,7 +88,7 @@ doGitHubAuth clientId clientSecret code =
         clientSecret
         code
         -- TODO type safe link, and get this from the environment
-        (Just "http://localhost:8000/login/github")
+        (Just "http://localhost:8000/oauth/github")
         -- TODO send random state
         Nothing
 

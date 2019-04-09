@@ -102,9 +102,10 @@ library
     Hp.GitHub.User
     Hp.GitHub.UserName
     Hp.Handler.AnswerPoll
-    Hp.Handler.Login.GitHub.GET
-    Hp.Handler.Metrics.GET
-    Hp.Handler.Root.GET
+    Hp.Handler.CreatePoll
+    Hp.Handler.GetMetrics
+    Hp.Handler.GetRoot
+    Hp.Handler.GitHubOauthCallback
     Hp.Main
     Hp.Metrics
     Hp.Poll
