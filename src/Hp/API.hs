@@ -1,9 +1,10 @@
 module Hp.API where
 
-import Hp.GitHub.Code (GitHubCode)
-import Hp.Poll        (Poll)
-import Hp.User        (User)
-import Hp.UserId      (UserId)
+import Hp.Event.AnswerPoll (AnswerPollEvent)
+import Hp.GitHub.Code      (GitHubCode)
+import Hp.Poll             (Poll, PollId)
+import Hp.User             (User)
+import Hp.UserId           (UserId)
 
 import Servant
 import Servant.API.Generic
@@ -49,5 +50,12 @@ data API route
       :: route
       :- "poll"
       :> ReqBody '[JSON] Poll
+      :> Post '[JSON] NoContent
+
+  , answerPollRoute
+      :: route
+      :- "poll"
+      :> Capture "Poll ID" PollId
+      :> ReqBody '[JSON] AnswerPollEvent
       :> Post '[JSON] NoContent
   } deriving stock (Generic)

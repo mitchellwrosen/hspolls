@@ -5,13 +5,15 @@ module Hp.Poll
 
 import Hp.PollFormElement
 
-import Data.UUID (UUID)
-import Data.Aeson (FromJSON)
-import Data.Time  (UTCTime)
+import Data.Aeson      (FromJSON)
+import Data.Time       (UTCTime)
+import Data.UUID       (UUID)
+import Web.HttpApiData (FromHttpApiData)
 
 
 newtype PollId
-  = PollId UUID
+  = PollId { unPollId :: UUID }
+  deriving newtype (FromHttpApiData)
 
 data Poll
   = Poll

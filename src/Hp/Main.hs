@@ -15,6 +15,7 @@ import Hp.Eff.ManagePoll           (ManagePoll, ManagePollDBC(..), savePoll)
 import Hp.Eff.PersistUser.DB       (runPersistUserDB)
 import Hp.GitHub.ClientId          (GitHubClientId)
 import Hp.GitHub.ClientSecret      (GitHubClientSecret)
+import Hp.Handler.AnswerPoll       (handleAnswerPoll)
 import Hp.Handler.Login.GitHub.GET (handleGetLoginGitHub)
 import Hp.Handler.Metrics.GET      (handleGetMetrics)
 import Hp.Handler.Root.GET         (handleGetRoot)
@@ -106,7 +107,8 @@ application
   Servant.genericServeTWithContext
     η
     API
-      { getRootRoute = handleGetRoot
+      { answerPollRoute = handleAnswerPoll
+      , getRootRoute = handleGetRoot
       , getLoginGitHubRoute = handleGetLoginGitHub
       , getMetricsRoute = handleGetMetrics
       , postPollRoute = handlePostPoll

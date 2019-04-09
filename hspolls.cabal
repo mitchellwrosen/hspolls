@@ -89,6 +89,7 @@ library
     Hp.Eff.ManagePoll
     Hp.Eff.PersistUser
     Hp.Eff.PersistUser.DB
+    Hp.Event.AnswerPoll
     Hp.GitHub
     Hp.GitHub.AccessToken
     Hp.GitHub.API
@@ -100,6 +101,7 @@ library
     Hp.GitHub.Response
     Hp.GitHub.User
     Hp.GitHub.UserName
+    Hp.Handler.AnswerPoll
     Hp.Handler.Login.GitHub.GET
     Hp.Handler.Metrics.GET
     Hp.Handler.Root.GET
