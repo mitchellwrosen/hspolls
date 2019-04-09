@@ -98,7 +98,7 @@ application env = do
       >>> runHttpRequestIO (env ^. #httpManager)
       >>> unManagePollDBC
       >>> runPersistUserDB
-      >>> runDBC @Env
+      >>> runDBC (env ^. #postgresPool)
       >>> runReader env
       -- >>> runError @Servant.ClientError
       >>> runM @IO

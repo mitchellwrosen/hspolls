@@ -29,21 +29,19 @@ instance Effect DB where
 runDB :: (Member DB sig, Carrier sig m) => Session a -> m (Either HPool.UsageError a)
 runDB sess = send (RunDB sess pure)
 
-newtype DBC env m a
+newtype DBC m a
   = DBC
-  { unDBC :: m a
+  { unDBC :: ReaderC HPool.Pool m a
   } deriving newtype (Functor, Applicative, Monad, MonadIO)
 
-runDBC :: ∀ env m a. DBC env m a -> m a
-runDBC = unDBC
+runDBC :: ∀ m a. HPool.Pool -> DBC m a -> m a
+runDBC pool = runReader pool . unDBC
 
 instance ( Carrier sig m
-         , Member (Reader env) sig
-         , HasType HPool.Pool env
          , MonadIO m
-         ) => Carrier (DB :+: sig) (DBC env m) where
+         ) => Carrier (DB :+: sig) (DBC m) where
   eff = DBC . \case
     L (RunDB sess k) -> do
-      pool :: HPool.Pool <- asks @env (^. typed)
+      pool :: HPool.Pool <- ask
       unDBC . k =<< liftIO (HPool.use pool sess)
-    R other -> eff (handleCoercible other)
+    R other -> eff (R (handleCoercible other))
