@@ -9,7 +9,7 @@ import Hp.Config                   (Config(..), prettyPrintConfig,
                                     readConfigFile)
 import Hp.Eff.DB                   (runDBC)
 import Hp.Eff.GitHubAuth.Http      (runGitHubAuthHttp)
-import Hp.Eff.HttpClient           (runHttpManager)
+import Hp.Eff.HttpRequest.IO       (runHttpRequestIO)
 import Hp.Eff.ManagePoll           (ManagePoll, ManagePollDBC(..), savePoll)
 import Hp.Eff.PersistUser.DB       (runPersistUserDB)
 import Hp.Env
@@ -95,7 +95,7 @@ application env = do
   where
     η :: ∀ a. _ a -> Servant.Handler a
     η = runGitHubAuthHttp (env ^. #gitHubClientId) (env ^. #gitHubClientSecret)
-      >>> runHttpManager @Env
+      >>> runHttpRequestIO (env ^. #httpManager)
       >>> unManagePollDBC
       >>> runPersistUserDB
       >>> runDBC @Env

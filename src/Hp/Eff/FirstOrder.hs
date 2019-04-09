@@ -1,5 +1,15 @@
 {-# LANGUAGE UndecidableInstances #-}
 
+-- | A newtype wrapper used to derive 'Effect' and 'HFunctor' for first-order
+-- effects.
+--
+-- Used like so:
+--
+-- @
+-- data MyEffect (m :: Type -> Type) (k :: Type) where ...
+--   deriving (Effect, HFunctor) via (FirstOrderEffect MyEffect)
+-- @
+
 module Hp.Eff.FirstOrder
   ( FirstOrderEffect(..)
   ) where

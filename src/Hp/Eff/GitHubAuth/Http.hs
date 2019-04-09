@@ -5,7 +5,7 @@ module Hp.Eff.GitHubAuth.Http
   ) where
 
 import Hp.Eff.GitHubAuth                           (GitHubAuthEffect(..))
-import Hp.Eff.HttpClient                           (HttpClient)
+import Hp.Eff.HttpRequest                          (HttpRequestEffect)
 import Hp.GitHub                                   (gitHubGetUser, gitHubPostLoginOauthAccessToken)
 import Hp.GitHub.ClientId                          (GitHubClientId)
 import Hp.GitHub.ClientSecret                      (GitHubClientSecret)
@@ -30,7 +30,7 @@ newtype GitHubAuthCarrierHttp m a
 
 instance
      ( Carrier sig m
-     , Member HttpClient sig
+     , Member HttpRequestEffect sig
      , MonadIO m -- TODO replace MonadIO with logging effect
      )
   => Carrier (GitHubAuthEffect :+: sig) (GitHubAuthCarrierHttp m) where
@@ -53,7 +53,7 @@ instance
 doGitHubAuth ::
      ∀ m sig.
      ( Carrier sig m
-     , Member HttpClient sig
+     , Member HttpRequestEffect sig
      , MonadIO m
      )
   => GitHubClientId

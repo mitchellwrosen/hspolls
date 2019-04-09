@@ -3,7 +3,7 @@ module Hp.GitHub
   , gitHubPostLoginOauthAccessToken
   ) where
 
-import Hp.Eff.HttpClient                           (HttpClient,
+import Hp.Eff.HttpRequest                          (HttpRequestEffect,
                                                     fromServantClient)
 import Hp.GitHub.AccessToken                       (GitHubAccessToken)
 import Hp.GitHub.API                               (GitHubAPI)
@@ -62,7 +62,7 @@ servantClient =
 
 gitHubGetUser ::
      ( Carrier sig m
-     , Member HttpClient sig
+     , Member HttpRequestEffect sig
      )
   => GitHubAccessToken
   -> m (Either SomeException GitHubUser)
@@ -76,7 +76,7 @@ gitHubGetUser accessToken =
 
 gitHubPostLoginOauthAccessToken ::
      ( Carrier sig m
-     , Member HttpClient sig
+     , Member HttpRequestEffect sig
      )
   => GitHubClientId
   -> GitHubClientSecret
