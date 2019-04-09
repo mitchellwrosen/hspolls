@@ -2,6 +2,7 @@ module Hp.Handler.AnswerPoll where
 
 import Hp.Eff.Event              (EventEffect, emitEvent)
 import Hp.Eff.ManagePoll         (ManagePoll, getPoll)
+import Hp.Eff.PersistPollAnswer  (PersistPollAnswerEffect, putPollAnswer)
 import Hp.Event.AnswerPoll       (AnswerPollEvent(..))
 import Hp.Poll                   (PollId)
 import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody(..))
@@ -17,12 +18,13 @@ handleAnswerPoll ::
      ( Carrier sig m
      , Member (EventEffect AnswerPollEvent) sig
      , Member ManagePoll sig
+     , Member PersistPollAnswerEffect sig
      )
   => AuthResult (User UserId)
   -> PollId
   -> AnswerPollRequestBody
   -> m NoContent
-handleAnswerPoll auth pollId body =
+handleAnswerPoll authResult pollId body =
   getPoll pollId >>= \case
     Nothing ->
       pure NoContent -- TODO 404
@@ -31,22 +33,23 @@ handleAnswerPoll auth pollId body =
       -- TODO check if poll is expired
       -- TODO validate poll answer
 
-      let
-        answerPollEvent :: AnswerPollEvent
-        answerPollEvent =
-          AnswerPollEvent
-            { id =
-                pollId
-            , answer =
-                body ^. #answer
-            , user =
-                case auth of
-                  Authenticated user ->
-                    Just (user ^. #id)
-                  _ ->
-                    Nothing
+      putPollAnswer pollId (body ^. #answer) userId >>= \case
+        Nothing ->
+          -- TODO some error code
+          pure ()
+
+        Just pollAnswerId ->
+          emitEvent AnswerPollEvent
+            { answer = body ^. #answer
+            , id = pollAnswerId
+            , pollId = pollId
+            , userId = userId
             }
 
-      emitEvent answerPollEvent
-
       pure NoContent
+
+  where
+    userId :: Maybe UserId
+    userId = do
+      Authenticated user <- pure authResult
+      pure (user ^. #id)

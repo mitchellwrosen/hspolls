@@ -13,6 +13,7 @@ import Hp.Eff.GitHubAuth.Http         (runGitHubAuthHttp)
 import Hp.Eff.HttpRequest.IO          (runHttpRequestIO)
 import Hp.Eff.HttpSession.IO          (runHttpSessionIO)
 import Hp.Eff.ManagePoll              (ManagePollDBC(..))
+import Hp.Eff.PersistPollAnswer.DB    (runPersistPollAnswerDB)
 import Hp.Eff.PersistUser.DB          (runPersistUserDB)
 import Hp.Event.AnswerPoll            (AnswerPollEvent)
 import Hp.GitHub.ClientId             (GitHubClientId)
@@ -124,6 +125,7 @@ application
     η = runGitHubAuthHttp gitHubClientId gitHubClientSecret
       >>> runHttpRequestIO httpManager
       >>> unManagePollDBC
+      >>> runPersistPollAnswerDB
       >>> runPersistUserDB
       >>> runDBC postgresPool
       >>> runHttpSessionIO cookieSettings jwtSettings

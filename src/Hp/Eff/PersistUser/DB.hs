@@ -8,9 +8,10 @@ module Hp.Eff.PersistUser.DB
 
 import Hp.Eff.DB          (DB, runDB)
 import Hp.Eff.PersistUser
-import Hp.GitHub.UserName (GitHubUserName(..))
-import Hp.User            (User(..))
-import Hp.UserId          (UserId(..))
+import Hp.GitHub.UserName (GitHubUserName(..), gitHubUserNameDecoder,
+                           gitHubUserNameEncoder)
+import Hp.User            (User(..), userEncoder)
+import Hp.UserId          (UserId(..), userIdDecoder)
 
 import Control.Effect
 import Control.Effect.Carrier
@@ -40,18 +41,18 @@ instance
     -> PersistUserCarrierDB m a
   eff = \case
     L (PutUserByGitHubUserName name next) ->
-      PersistUserCarrierDB (doPersistUserByGitHubUserName name) >>= next
+      PersistUserCarrierDB (doPutUserByGitHubUserName name) >>= next
 
     R other ->
       PersistUserCarrierDB (eff (handleCoercible other))
 
-doPersistUserByGitHubUserName ::
+doPutUserByGitHubUserName ::
      ( Carrier sig m
      , Member DB sig
      )
   => GitHubUserName
   -> m (User UserId)
-doPersistUserByGitHubUserName name =
+doPutUserByGitHubUserName name =
   runDB session >>= \case
     Left err ->
       -- TODO deal with Hasql.Pool.UsageError how?
@@ -127,29 +128,3 @@ sqlPutUser =
     decoder :: Decoder.Result UserId
     decoder =
       Decoder.singleRow (Decoder.column userIdDecoder)
-
-
---------------------------------------------------------------------------------
--- Encoders
---------------------------------------------------------------------------------
-
-gitHubUserNameEncoder :: Encoder.Value GitHubUserName
-gitHubUserNameEncoder =
-  coerce Encoder.text
-
-userEncoder :: Encoder.Params (User ())
-userEncoder =
-  (^. #gitHub) >$< Encoder.nullableParam gitHubUserNameEncoder
-
-
---------------------------------------------------------------------------------
--- Decoders
---------------------------------------------------------------------------------
-
-gitHubUserNameDecoder :: Decoder.Value GitHubUserName
-gitHubUserNameDecoder =
-  GitHubUserName <$> Decoder.text
-
-userIdDecoder :: Decoder.Value UserId
-userIdDecoder =
-  UserId <$> Decoder.uuid

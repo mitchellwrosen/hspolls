@@ -89,6 +89,8 @@ library
     Hp.Eff.HttpSession
     Hp.Eff.HttpSession.IO
     Hp.Eff.ManagePoll
+    Hp.Eff.PersistPollAnswer
+    Hp.Eff.PersistPollAnswer.DB
     Hp.Eff.PersistUser
     Hp.Eff.PersistUser.DB
     Hp.Event.AnswerPoll
@@ -113,6 +115,7 @@ library
     Hp.RequestBody.AnswerPoll
     Hp.Poll
     Hp.PollAnswer
+    Hp.PollAnswerId
     Hp.PollFormElement
     Hp.PollItemAnswer
     Hp.PostgresConfig

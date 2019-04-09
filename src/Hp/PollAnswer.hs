@@ -1,4 +1,8 @@
-module Hp.PollAnswer where
+-- TODO PollAnswer -> PollResponse everywhere
+
+module Hp.PollAnswer
+  ( PollAnswer(..)
+  ) where
 
 import Hp.PollItemAnswer (PollItemAnswer)
 
