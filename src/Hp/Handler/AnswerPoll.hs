@@ -1,5 +1,6 @@
 module Hp.Handler.AnswerPoll where
 
+import Hp.Eff.Event              (EventEffect, emitEvent)
 import Hp.Eff.ManagePoll         (ManagePoll, getPoll)
 import Hp.Event.AnswerPoll       (AnswerPollEvent(..))
 import Hp.Poll                   (PollId)
@@ -14,6 +15,7 @@ import Servant.Auth.Server (AuthResult(..))
 
 handleAnswerPoll ::
      ( Carrier sig m
+     , Member (EventEffect AnswerPollEvent) sig
      , Member ManagePoll sig
      )
   => AuthResult (User UserId)
@@ -45,6 +47,6 @@ handleAnswerPoll auth pollId body =
                     Nothing
             }
 
-      -- TODO emit answerPollEvent
+      emitEvent answerPollEvent
 
       pure NoContent

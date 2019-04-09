@@ -8,11 +8,13 @@ import Hp.API
 import Hp.Config                      (Config(..), prettyPrintConfig,
                                        readConfigFile)
 import Hp.Eff.DB                      (runDBC)
+import Hp.Eff.Event.Print             (runEventPrint)
 import Hp.Eff.GitHubAuth.Http         (runGitHubAuthHttp)
 import Hp.Eff.HttpRequest.IO          (runHttpRequestIO)
 import Hp.Eff.HttpSession.IO          (runHttpSessionIO)
 import Hp.Eff.ManagePoll              (ManagePollDBC(..))
 import Hp.Eff.PersistUser.DB          (runPersistUserDB)
+import Hp.Event.AnswerPoll            (AnswerPollEvent)
 import Hp.GitHub.ClientId             (GitHubClientId)
 import Hp.GitHub.ClientSecret         (GitHubClientSecret)
 import Hp.Handler.AnswerPoll          (handleAnswerPoll)
@@ -125,6 +127,7 @@ application
       >>> runPersistUserDB
       >>> runDBC postgresPool
       >>> runHttpSessionIO cookieSettings jwtSettings
+      >>> runEventPrint @AnswerPollEvent
       -- >>> runError @Servant.ClientError
       >>> runM @IO
       -- >>> over (mapped . _Left) toServerError

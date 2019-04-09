@@ -79,6 +79,8 @@ library
     Hp.API
     Hp.Config
     Hp.Eff.DB
+    Hp.Eff.Event
+    Hp.Eff.Event.Print
     Hp.Eff.FirstOrder
     Hp.Eff.GitHubAuth
     Hp.Eff.GitHubAuth.Http

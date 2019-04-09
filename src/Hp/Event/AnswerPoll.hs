@@ -5,9 +5,10 @@ import Hp.PollAnswer (PollAnswer)
 import Hp.UserId     (UserId)
 
 
+-- | A poll was answered.
 data AnswerPollEvent
   = AnswerPollEvent
   { answer :: PollAnswer
   , id :: PollId
   , user :: Maybe UserId
-  } deriving stock (Generic)
+  } deriving stock (Generic, Show)

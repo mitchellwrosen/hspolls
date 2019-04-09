@@ -7,4 +7,5 @@ import Data.Aeson (FromJSON)
 
 newtype PollAnswer
   = PollAnswer { unPollAnswer :: Seq PollItemAnswer }
+  deriving stock (Show)
   deriving newtype (FromJSON)
