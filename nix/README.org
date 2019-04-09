@@ -1,0 +1,9 @@
+** Building a postgresql docker image for development:
+
+#+begin_src bash
+nix-build -A postgres.dev ./docker.nix
+# now we can load the image
+cat ./result | docker load
+# and we can run the image
+docker run --rm -it -p 5432:5432 postgres:dev
+#+end_src
