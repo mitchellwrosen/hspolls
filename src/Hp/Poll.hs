@@ -13,7 +13,7 @@ import Web.HttpApiData (FromHttpApiData)
 
 newtype PollId
   = PollId { unPollId :: UUID }
-  deriving newtype (FromHttpApiData)
+  deriving newtype (FromHttpApiData, FromJSON)
 
 data Poll
   = Poll

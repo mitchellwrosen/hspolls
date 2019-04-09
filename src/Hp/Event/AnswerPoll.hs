@@ -1,9 +1,13 @@
 module Hp.Event.AnswerPoll where
 
-import Data.Aeson (FromJSON)
+import Hp.Poll       (PollId)
+import Hp.PollAnswer (PollAnswer)
+import Hp.UserId     (UserId)
 
 
 data AnswerPollEvent
   = AnswerPollEvent
-  deriving stock (Generic)
-  deriving anyclass (FromJSON)
+  { answer :: PollAnswer
+  , id :: PollId
+  , user :: Maybe UserId
+  } deriving stock (Generic)

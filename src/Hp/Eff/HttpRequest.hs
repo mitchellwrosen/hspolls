@@ -66,3 +66,10 @@ fromServantClient baseUrl = \case
 
           Free (Servant.Throw err) ->
             pure (Left (toException err))
+
+          Free Servant.RunRequest{} ->
+            undefined
+
+  Pure _ -> undefined
+  Free Servant.Throw{} -> undefined
+

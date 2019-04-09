@@ -108,8 +108,11 @@ library
     Hp.Handler.GitHubOauthCallback
     Hp.Main
     Hp.Metrics
+    Hp.RequestBody.AnswerPoll
     Hp.Poll
+    Hp.PollAnswer
     Hp.PollFormElement
+    Hp.PollItemAnswer
     Hp.PostgresConfig
     Hp.User
     Hp.UserId

@@ -1,3 +1,5 @@
+-- TODO rename to PersistPoll
+
 {-# LANGUAGE UndecidableInstances #-}
 
 module Hp.Eff.ManagePoll

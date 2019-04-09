@@ -1,10 +1,10 @@
 module Hp.API where
 
-import Hp.Event.AnswerPoll (AnswerPollEvent)
-import Hp.GitHub.Code      (GitHubCode)
-import Hp.Poll             (Poll, PollId)
-import Hp.User             (User)
-import Hp.UserId           (UserId)
+import Hp.GitHub.Code            (GitHubCode)
+import Hp.Poll                   (Poll, PollId)
+import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody)
+import Hp.User                   (User)
+import Hp.UserId                 (UserId)
 
 import Servant
 import Servant.API.Generic
@@ -19,9 +19,10 @@ data API route
   = API
   { answerPollRoute
       :: route
-      :- "poll"
+      :- Auth '[Cookie] (User UserId)
+      :> "poll"
       :> Capture "Poll ID" PollId
-      :> ReqBody '[JSON] AnswerPollEvent
+      :> ReqBody '[JSON] AnswerPollRequestBody
       :> Post '[JSON] NoContent
 
   , createPollRoute
