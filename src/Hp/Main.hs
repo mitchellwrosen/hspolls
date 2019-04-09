@@ -94,7 +94,7 @@ application env = do
       :. Servant.EmptyContext)
   where
     η :: ∀ a. _ a -> Servant.Handler a
-    η = runGitHubAuthHttp @Env
+    η = runGitHubAuthHttp (env ^. #gitHubClientId) (env ^. #gitHubClientSecret)
       >>> runHttpManager @Env
       >>> unManagePollDBC
       >>> runPersistUserDB

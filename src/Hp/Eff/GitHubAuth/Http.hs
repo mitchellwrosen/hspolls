@@ -1,4 +1,4 @@
-{-# LANGUAGE AllowAmbiguousTypes, UndecidableInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Hp.Eff.GitHubAuth.Http
   ( runGitHubAuthHttp
@@ -21,61 +21,46 @@ import Control.Effect.Sum
 
 -- TODO log failures instead of discarding them
 
-newtype GitHubAuthCarrierHttp env m a
-  = GitHubAuthCarrierHttp (m a)
+newtype GitHubAuthCarrierHttp m a
+  = GitHubAuthCarrierHttp
+  { unGitHubAuthCarrierHttp ::
+      ReaderC (GitHubClientId, GitHubClientSecret) m a
+  }
   deriving newtype (Applicative, Functor, Monad, MonadIO)
 
 instance
      ( Carrier sig m
-     , HasType GitHubClientId env
-     , HasType GitHubClientSecret env
      , Member HttpClient sig
-     , Member (Reader env) sig
      , MonadIO m -- TODO replace MonadIO with logging effect
      )
-  => Carrier (GitHubAuthEffect :+: sig) (GitHubAuthCarrierHttp env m) where
+  => Carrier (GitHubAuthEffect :+: sig) (GitHubAuthCarrierHttp m) where
 
   eff ::
-       (GitHubAuthEffect :+: sig) (GitHubAuthCarrierHttp env m) (GitHubAuthCarrierHttp env m a)
-    -> GitHubAuthCarrierHttp env m a
+       (GitHubAuthEffect :+: sig) (GitHubAuthCarrierHttp m) (GitHubAuthCarrierHttp m a)
+    -> GitHubAuthCarrierHttp m a
   eff = \case
     L (GitHubAuth code next) ->
-      GitHubAuthCarrierHttp (doGitHubAuth @env code) >>= next
+      GitHubAuthCarrierHttp $ do
+        (clientId, clientSecret) <-
+          ask
+
+        doGitHubAuth clientId clientSecret code >>=
+          unGitHubAuthCarrierHttp . next
 
     R other ->
-      GitHubAuthCarrierHttp (eff (handleCoercible other))
+      GitHubAuthCarrierHttp (eff (R (handleCoercible other)))
 
 doGitHubAuth ::
-     ∀ env sig m.
+     ∀ m sig.
      ( Carrier sig m
-     , HasType GitHubClientId env
-     , HasType GitHubClientSecret env
      , Member HttpClient sig
-     , Member (Reader env) sig
      , MonadIO m
      )
-  => GitHubCode
+  => GitHubClientId
+  -> GitHubClientSecret
+  -> GitHubCode
   -> m (Maybe GitHubUser)
-doGitHubAuth code = do
-  clientId :: GitHubClientId <-
-    asks @env (^. typed)
-
-  clientSecret :: GitHubClientSecret <-
-    asks @env (^. typed)
-
-  let
-    doPost ::
-          m (Either SomeException (GitHubResponse GitHubPostLoginOauthAccessTokenResponse))
-    doPost =
-      gitHubPostLoginOauthAccessToken
-        clientId
-        clientSecret
-        code
-        -- TODO type safe link, and get this from the environment
-        (Just "http://localhost:8000/login/github")
-        -- TODO send random state
-        Nothing
-
+doGitHubAuth clientId clientSecret code =
   doPost >>= \case
     Left ex -> do
       liftIO (print ex)
@@ -94,9 +79,24 @@ doGitHubAuth code = do
         Right user ->
           pure (Just user)
 
+  where
+    doPost ::
+          m (Either SomeException (GitHubResponse GitHubPostLoginOauthAccessTokenResponse))
+    doPost =
+      gitHubPostLoginOauthAccessToken
+        clientId
+        clientSecret
+        code
+        -- TODO type safe link, and get this from the environment
+        (Just "http://localhost:8000/login/github")
+        -- TODO send random state
+        Nothing
+
+
 runGitHubAuthHttp ::
-     ∀ env m a.
-     GitHubAuthCarrierHttp env m a
+     GitHubClientId
+  -> GitHubClientSecret
+  -> GitHubAuthCarrierHttp m a
   -> m a
-runGitHubAuthHttp (GitHubAuthCarrierHttp m) =
-  m
+runGitHubAuthHttp clientId clientSecret =
+  runReader (clientId, clientSecret) . unGitHubAuthCarrierHttp
