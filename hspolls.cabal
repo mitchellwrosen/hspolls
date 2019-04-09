@@ -87,7 +87,6 @@ library
     Hp.Eff.ManagePoll
     Hp.Eff.PersistUser
     Hp.Eff.PersistUser.DB
-    Hp.Env
     Hp.GitHub
     Hp.GitHub.AccessToken
     Hp.GitHub.API

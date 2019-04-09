@@ -12,7 +12,8 @@ import Hp.Eff.GitHubAuth.Http      (runGitHubAuthHttp)
 import Hp.Eff.HttpRequest.IO       (runHttpRequestIO)
 import Hp.Eff.ManagePoll           (ManagePoll, ManagePollDBC(..), savePoll)
 import Hp.Eff.PersistUser.DB       (runPersistUserDB)
-import Hp.Env
+import Hp.GitHub.ClientId          (GitHubClientId)
+import Hp.GitHub.ClientSecret      (GitHubClientSecret)
 import Hp.Handler.Login.GitHub.GET (handleGetLoginGitHub)
 import Hp.Handler.Metrics.GET      (handleGetMetrics)
 import Hp.Handler.Root.GET         (handleGetRoot)
@@ -27,6 +28,7 @@ import Servant     (Context((:.)))
 import System.Exit (exitFailure)
 
 import qualified Data.Text.IO             as Text
+import qualified Hasql.Pool               as Hasql (Pool)
 import qualified Network.HTTP.Client      as Http
 import qualified Network.HTTP.Client.TLS  as Http (tlsManagerSettings)
 import qualified Network.Wai              as Wai
@@ -59,47 +61,54 @@ main = do
   jwtSettings :: JWTSettings <-
     either id pure (config ^. #session . #jwt)
 
-  let
-    env :: Env
-    env =
-      Env
-        { cookieSettings = config ^. #session . #cookie
-        , httpManager = httpManager
-        , gitHubClientId = config ^. #gitHub . #clientId
-        , gitHubClientSecret = config ^. #gitHub . #clientSecret
-        , jwtSettings = jwtSettings
-        , postgresPool = pgPool
-        }
-
   Warp.run
     (fromIntegral (config ^. #port))
-    (application env)
+    (application
+      (config ^. #session . #cookie)
+      (config ^. #gitHub . #clientId)
+      (config ^. #gitHub . #clientSecret)
+      httpManager
+      jwtSettings
+      pgPool)
 
 application ::
-     Env
+     CookieSettings
+  -> GitHubClientId
+  -> GitHubClientSecret
+  -> Http.Manager
+  -> JWTSettings
+  -> Hasql.Pool
   -> Wai.Request
   -> (Wai.Response -> IO Wai.ResponseReceived)
   -> IO Wai.ResponseReceived
-application env = do
+application
+    cookieSettings
+    gitHubClientId
+    gitHubClientSecret
+    httpManager
+    jwtSettings
+    postgresPool = do
+
   Servant.genericServeTWithContext
     η
     API
       { getRootRoute = handleGetRoot
-      , getLoginGitHubRoute = handleGetLoginGitHub @Env
+      , getLoginGitHubRoute = handleGetLoginGitHub
       , getMetricsRoute = handleGetMetrics
       , postPollRoute = handlePostPoll
       }
-    ((env ^. #cookieSettings)
-      :. (env ^. #jwtSettings)
+    (cookieSettings
+      :. jwtSettings
       :. Servant.EmptyContext)
   where
     η :: ∀ a. _ a -> Servant.Handler a
-    η = runGitHubAuthHttp (env ^. #gitHubClientId) (env ^. #gitHubClientSecret)
-      >>> runHttpRequestIO (env ^. #httpManager)
+    η = runGitHubAuthHttp gitHubClientId gitHubClientSecret
+      >>> runHttpRequestIO httpManager
       >>> unManagePollDBC
       >>> runPersistUserDB
-      >>> runDBC (env ^. #postgresPool)
-      >>> runReader env
+      >>> runDBC postgresPool
+      >>> runReader cookieSettings
+      >>> runReader jwtSettings
       -- >>> runError @Servant.ClientError
       >>> runM @IO
       -- >>> over (mapped . _Left) toServerError

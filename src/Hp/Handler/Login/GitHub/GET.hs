@@ -18,13 +18,12 @@ import Servant.Auth.Server   (CookieSettings, JWTSettings, SetCookie,
                               acceptLogin)
 
 handleGetLoginGitHub ::
-     ∀ env m sig.
+     ∀ m sig.
      ( Carrier sig m
-     , HasType CookieSettings env
-     , HasType JWTSettings env
      , Member GitHubAuthEffect sig
-     , Member (Reader env) sig
      , Member PersistUserEffect sig
+     , Member (Reader CookieSettings) sig
+     , Member (Reader JWTSettings) sig
      , MonadIO m -- TODO Unfortunate, get rid of this MonadIO
      )
   => GitHubCode
@@ -41,10 +40,10 @@ handleGetLoginGitHub code =
 
     Just user -> do
       cookieSettings :: CookieSettings <-
-        asks @env (^. typed)
+        ask
 
       jwtSettings :: JWTSettings <-
-        asks @env (^. typed)
+        ask
 
       user :: User UserId <-
         putUserByGitHubUserName (user ^. #login)
