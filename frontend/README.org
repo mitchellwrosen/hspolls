@@ -1,0 +1,25 @@
+* Instructions for building
+
+** Building the purescript frontend with pulp:
+
+#+begin_src bash
+pulp -w build --to static/app.js
+#+end_src
+
+** Starting an nginx server for development use:
+
+We can build an nginx config file and get a bash executable starting
+nginx with that config by first building the nginx nix expression
+with:
+
+#+begin_src
+nix-build nginx.nix --argstr nginxRoot "$PWD"
+#+end_src
+
+then running the built executable with:
+
+#+begin_src bash
+./result/bin/nginx-run
+#+end_src
+
+The server is configured to listen on port ~8888~

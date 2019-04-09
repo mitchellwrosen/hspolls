@@ -4,3 +4,8 @@
 dist-newstyle/
 pg.dhall
 secrets/
+**/*/app.js
+**/*/bower_components
+**/*/node_modules
+**/*/output
+**/*/result
