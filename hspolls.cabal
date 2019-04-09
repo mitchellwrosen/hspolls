@@ -104,6 +104,7 @@ library
     Hp.Handler.Metrics.GET
     Hp.Handler.Root.GET
     Hp.Main
+    Hp.Metrics
     Hp.Poll
     Hp.PollFormElement
     Hp.PostgresConfig

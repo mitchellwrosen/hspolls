@@ -18,6 +18,7 @@ import Hp.GitHub.ClientSecret      (GitHubClientSecret)
 import Hp.Handler.Login.GitHub.GET (handleGetLoginGitHub)
 import Hp.Handler.Metrics.GET      (handleGetMetrics)
 import Hp.Handler.Root.GET         (handleGetRoot)
+import Hp.Metrics                  (requestCounter)
 import Hp.Poll
 import Hp.PostgresConfig           (acquirePostgresPool)
 
@@ -33,6 +34,7 @@ import qualified Network.HTTP.Client      as Http
 import qualified Network.HTTP.Client.TLS  as Http (tlsManagerSettings)
 import qualified Network.Wai              as Wai
 import qualified Network.Wai.Handler.Warp as Warp
+import qualified Prometheus
 import qualified Servant
 import qualified Servant.Client           as Servant (ClientError)
 import qualified Servant.Server.Generic   as Servant (genericServeTWithContext)
@@ -63,13 +65,25 @@ main = do
 
   Warp.run
     (fromIntegral (config ^. #port))
-    (application
-      (config ^. #session . #cookie)
-      (config ^. #gitHub . #clientId)
-      (config ^. #gitHub . #clientSecret)
-      httpManager
-      jwtSettings
-      pgPool)
+    (middleware
+      (application
+        (config ^. #session . #cookie)
+        (config ^. #gitHub . #clientId)
+        (config ^. #gitHub . #clientSecret)
+        httpManager
+        jwtSettings
+        pgPool))
+
+middleware ::
+     (  Wai.Request
+     -> (Wai.Response -> IO Wai.ResponseReceived)
+     -> IO Wai.ResponseReceived)
+  -> Wai.Request
+  -> (Wai.Response -> IO Wai.ResponseReceived)
+  -> IO Wai.ResponseReceived
+middleware app request respond = do
+  Prometheus.incCounter requestCounter
+  app request respond
 
 application ::
      CookieSettings
@@ -100,6 +114,7 @@ application
     (cookieSettings
       :. jwtSettings
       :. Servant.EmptyContext)
+
   where
     η :: ∀ a. _ a -> Servant.Handler a
     η = runGitHubAuthHttp gitHubClientId gitHubClientSecret
