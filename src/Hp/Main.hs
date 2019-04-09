@@ -10,6 +10,7 @@ import Hp.Config                   (Config(..), prettyPrintConfig,
 import Hp.Eff.DB                   (runDBC)
 import Hp.Eff.GitHubAuth.Http      (runGitHubAuthHttp)
 import Hp.Eff.HttpRequest.IO       (runHttpRequestIO)
+import Hp.Eff.HttpSession.IO       (runHttpSessionIO)
 import Hp.Eff.ManagePoll           (ManagePoll, ManagePollDBC(..), savePoll)
 import Hp.Eff.PersistUser.DB       (runPersistUserDB)
 import Hp.GitHub.ClientId          (GitHubClientId)
@@ -22,7 +23,6 @@ import Hp.PostgresConfig           (acquirePostgresPool)
 
 import Control.Effect
 -- import Control.Effect.Error
-import Control.Effect.Reader
 -- import Control.Monad.Trans.Except (ExceptT(..))
 import Servant     (Context((:.)))
 import System.Exit (exitFailure)
@@ -107,8 +107,7 @@ application
       >>> unManagePollDBC
       >>> runPersistUserDB
       >>> runDBC postgresPool
-      >>> runReader cookieSettings
-      >>> runReader jwtSettings
+      >>> runHttpSessionIO cookieSettings jwtSettings
       -- >>> runError @Servant.ClientError
       >>> runM @IO
       -- >>> over (mapped . _Left) toServerError

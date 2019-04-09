@@ -84,6 +84,8 @@ library
     Hp.Eff.GitHubAuth.Http
     Hp.Eff.HttpRequest
     Hp.Eff.HttpRequest.IO
+    Hp.Eff.HttpSession
+    Hp.Eff.HttpSession.IO
     Hp.Eff.ManagePoll
     Hp.Eff.PersistUser
     Hp.Eff.PersistUser.DB
