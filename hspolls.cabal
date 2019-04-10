@@ -116,6 +116,7 @@ library
     Hp.Metrics
     Hp.RequestBody.AnswerPoll
     Hp.RequestBody.CreatePoll
+    Hp.Poll
     Hp.PollAnswer
     Hp.PollAnswerId
     Hp.PollFormElement
