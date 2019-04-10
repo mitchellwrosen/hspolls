@@ -6,7 +6,7 @@ module Hp.Entity
 
 import Hp.IsEntity (EntityId)
 
--- | An entity is a value (value) paired with its persistent entity (key).
+-- | An entity is a value (value) paired with its persistent identity (key).
 data Entity a
   = Entity
   { key :: EntityId a

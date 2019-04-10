@@ -14,12 +14,10 @@ import Servant             (Header, Headers, NoContent(..), addHeader, noHeader)
 import Servant.Auth.Server (SetCookie)
 
 handleGitHubOauthCallback ::
-     ∀ m sig.
      ( Carrier sig m
      , Member GitHubAuthEffect sig
      , Member HttpSessionEffect sig
      , Member PersistUserEffect sig
-     , MonadIO m -- TODO Unfortunate, get rid of this MonadIO
      )
   => GitHubCode
   -> m (Headers
@@ -42,4 +40,3 @@ handleGitHubOauthCallback code =
   where
     redirect =
       addHeader "/"
-
