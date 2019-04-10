@@ -4,16 +4,16 @@ module Hp.PollAnswer
   ( PollAnswer(..)
   ) where
 
-import Hp.IsEntity       (IsEntity(..))
-import Hp.PollAnswerId   (PollAnswerId)
-import Hp.PollId         (PollId)
-import Hp.PollItemAnswer (PollItemAnswer)
-import Hp.UserId         (UserId)
+import Hp.IsEntity           (IsEntity(..))
+import Hp.PollAnswerId       (PollAnswerId)
+import Hp.PollId             (PollId)
+import Hp.PollQuestionAnswer (PollQuestionAnswer)
+import Hp.UserId             (UserId)
 
 
 data PollAnswer
   = PollAnswer
-  { answers :: Seq PollItemAnswer
+  { answers :: Seq PollQuestionAnswer
   , pollId :: PollId
   , userId :: Maybe UserId
   } deriving stock (Generic, Show)

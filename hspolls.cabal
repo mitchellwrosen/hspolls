@@ -127,7 +127,8 @@ library
     Hp.PollAnswerId
     Hp.PollFormElement
     Hp.PollId
-    Hp.PollItemAnswer
+    Hp.PollQuestion
+    Hp.PollQuestionAnswer
     Hp.PostgresConfig
     Hp.User
     Hp.UserId

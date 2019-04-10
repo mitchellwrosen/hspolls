@@ -1,4 +1,8 @@
-module Hp.PollFormElement where
+module Hp.PollFormElement
+  ( PollFormElement(..)
+  ) where
+
+import Hp.PollQuestion (PollQuestion)
 
 import Data.Aeson (FromJSON, ToJSON)
 
@@ -8,14 +12,9 @@ newtype Markdown
   = Markdown Text
   deriving newtype (FromJSON, ToJSON, Show)
 
--- TODO checkbox
--- TODO text field
--- TODO text area
--- TODO dropdown
--- TODO numeric input
 data PollFormElement
   = MarkdownElement Markdown
-  | RadioElement Text [Text]
+  | QuestionElement PollQuestion
   deriving stock (Generic, Show)
 
 -- TODO FromJSON PollFormElement
