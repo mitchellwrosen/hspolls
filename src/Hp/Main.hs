@@ -5,10 +5,10 @@
 module Hp.Main where
 
 import Hp.API
-import Hp.Config                      (Config(..), prettyPrintConfig,
-                                       readConfigFile)
-import Hp.Eff.DB                      (runDBC)
-import Hp.Eff.Event.Print             (runEventPrint)
+import Hp.Config         (Config(..), prettyPrintConfig, readConfigFile)
+import Hp.Eff.DB         (runDBC)
+import Hp.Eff.Event.Chan (runEventChan)
+-- import Hp.Eff.Event.Print             (runEventPrint)
 import Hp.Eff.GitHubAuth.Http         (runGitHubAuthHttp)
 import Hp.Eff.HttpRequest.IO          (runHttpRequestIO)
 import Hp.Eff.HttpSession.IO          (runHttpSessionIO)
@@ -27,6 +27,8 @@ import Hp.Handler.GitHubOauthCallback (handleGitHubOauthCallback)
 import Hp.Metrics                     (requestCounter)
 import Hp.PostgresConfig              (acquirePostgresPool)
 
+import Control.Concurrent     (forkIO)
+import Control.Concurrent.STM
 import Control.Effect
 -- import Control.Effect.Error
 -- import Control.Monad.Trans.Except (ExceptT(..))
@@ -60,13 +62,28 @@ main = do
 
   prettyPrintConfig config
 
-  pgPool <- acquirePostgresPool (config ^. #postgres)
-
   httpManager :: Http.Manager <-
     Http.newManager Http.tlsManagerSettings
 
   jwtSettings :: JWTSettings <-
     either id pure (config ^. #session . #jwt)
+
+  pgPool <- acquirePostgresPool (config ^. #postgres)
+
+  answerPollEventChan :: TChan AnswerPollEvent <-
+    atomically newBroadcastTChan
+
+  createPollEventChan :: TChan CreatePollEvent <-
+    atomically newBroadcastTChan
+
+  do
+    -- Lazy! Just print these events forever
+    let go eventChan =
+          void . forkIO $ do
+            chan <- atomically (dupTChan eventChan)
+            forever (atomically (readTChan chan) >>= print)
+    go answerPollEventChan
+    go createPollEventChan
 
   Warp.run
     (fromIntegral (config ^. #port))
@@ -77,7 +94,9 @@ main = do
         (config ^. #gitHub . #clientSecret)
         httpManager
         jwtSettings
-        pgPool))
+        pgPool
+        answerPollEventChan
+        createPollEventChan))
 
 middleware ::
      (  Wai.Request
@@ -97,6 +116,8 @@ application ::
   -> Http.Manager
   -> JWTSettings
   -> Hasql.Pool
+  -> TChan AnswerPollEvent
+  -> TChan CreatePollEvent
   -> Wai.Request
   -> (Wai.Response -> IO Wai.ResponseReceived)
   -> IO Wai.ResponseReceived
@@ -106,7 +127,9 @@ application
     gitHubClientSecret
     httpManager
     jwtSettings
-    postgresPool = do
+    postgresPool
+    answerPollEventChan
+    createPollEventChan = do
 
   Servant.genericServeTWithContext
     η
@@ -137,8 +160,8 @@ application
       >>> runHttpSessionIO cookieSettings jwtSettings
 
           -- Event handlers
-      >>> runEventPrint @AnswerPollEvent
-      >>> runEventPrint @CreatePollEvent
+      >>> runEventChan answerPollEventChan
+      >>> runEventChan createPollEventChan
 
           -- IO boilerplate
       >>> runM @IO

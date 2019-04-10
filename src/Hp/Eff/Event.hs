@@ -19,6 +19,7 @@ data EventEffect (event :: Type) (m :: Type -> Type) (k :: Type) where
   deriving (Effect, HFunctor)
        via (FirstOrderEffect (EventEffect event))
 
+-- | Emit an event to anonymous upstream listeners.
 emitEvent ::
      ( Carrier sig m
      , Member (EventEffect event) sig
