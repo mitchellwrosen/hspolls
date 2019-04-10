@@ -15,6 +15,7 @@ import Hp.Eff.HttpSession.IO          (runHttpSessionIO)
 import Hp.Eff.PersistPoll.DB          (PersistPollDBC(..))
 import Hp.Eff.PersistPollAnswer.DB    (runPersistPollAnswerDB)
 import Hp.Eff.PersistUser.DB          (runPersistUserDB)
+import Hp.Eff.SendEmail.AmazonSES     (runSendEmailAmazonSES)
 import Hp.Eff.Yield.Chan              (runYieldChan)
 import Hp.Email                       (Email)
 import Hp.Event.PollAnswered          (PollAnsweredEvent)
@@ -28,6 +29,7 @@ import Hp.Handler.GetRoot             (handleGetRoot)
 import Hp.Handler.GitHubOauthCallback (handleGitHubOauthCallback)
 import Hp.Metrics                     (requestCounter)
 import Hp.PostgresConfig              (acquirePostgresPool)
+import Hp.Worker.SendEmail            (sendEmailWorker)
 import Hp.Worker.SendPollCreatedEmail (sendPollCreatedEmailWorker)
 
 import Control.Concurrent     (forkIO)
@@ -92,6 +94,15 @@ main = do
       & runPersistUserDB
       & runDBC pgPool
       & runYieldChan emailChan
+      & runM
+
+  void . SlaveThread.fork $ do
+    chan :: TChan Email <-
+      atomically (dupTChan emailChan)
+
+    sendEmailWorker
+      & runAwaitChan chan
+      & runSendEmailAmazonSES undefined
       & runM
 
   do

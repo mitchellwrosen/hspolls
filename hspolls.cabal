@@ -29,6 +29,7 @@ library
     memory ^>= 0.14,
     prometheus-client ^>= 1.0,
     prometheus-metrics-ghc ^>= 1.0,
+    resourcet ^>= 1.2,
     safe-exceptions,
     servant ^>= 0.16,
     servant-auth ^>= 0.3,
@@ -101,6 +102,7 @@ library
     Hp.Eff.PersistUser
     Hp.Eff.PersistUser.DB
     Hp.Eff.SendEmail
+    Hp.Eff.SendEmail.AmazonSES
     Hp.Eff.Yield
     Hp.Eff.Yield.Chan
     Hp.Eff.Yield.Print
