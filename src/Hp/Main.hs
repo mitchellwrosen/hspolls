@@ -12,7 +12,7 @@ import Hp.Eff.Event.Print             (runEventPrint)
 import Hp.Eff.GitHubAuth.Http         (runGitHubAuthHttp)
 import Hp.Eff.HttpRequest.IO          (runHttpRequestIO)
 import Hp.Eff.HttpSession.IO          (runHttpSessionIO)
-import Hp.Eff.ManagePoll.DB           (ManagePollDBC(..))
+import Hp.Eff.PersistPoll.DB          (PersistPollDBC(..))
 import Hp.Eff.PersistPollAnswer.DB    (runPersistPollAnswerDB)
 import Hp.Eff.PersistUser.DB          (runPersistUserDB)
 import Hp.Event.AnswerPoll            (AnswerPollEvent)
@@ -128,7 +128,7 @@ application
       >>> runHttpRequestIO httpManager
 
           -- Persistence layer
-      >>> unManagePollDBC
+      >>> unPersistPollDBC
       >>> runPersistPollAnswerDB
       >>> runPersistUserDB
       >>> runDBC postgresPool

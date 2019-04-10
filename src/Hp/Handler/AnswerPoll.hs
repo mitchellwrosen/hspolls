@@ -1,7 +1,7 @@
 module Hp.Handler.AnswerPoll where
 
 import Hp.Eff.Event              (EventEffect, emitEvent)
-import Hp.Eff.ManagePoll         (ManagePoll, getPoll)
+import Hp.Eff.PersistPoll        (PersistPollEffect, getPoll)
 import Hp.Eff.PersistPollAnswer  (PersistPollAnswerEffect, putPollAnswer)
 import Hp.Entity                 (Entity(..))
 import Hp.Event.AnswerPoll       (AnswerPollEvent(..))
@@ -18,7 +18,7 @@ import Servant.Auth.Server (AuthResult(..))
 handleAnswerPoll ::
      ( Carrier sig m
      , Member (EventEffect AnswerPollEvent) sig
-     , Member ManagePoll sig
+     , Member PersistPollEffect sig
      , Member PersistPollAnswerEffect sig
      )
   => AuthResult (Entity User)

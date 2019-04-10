@@ -3,7 +3,7 @@ module Hp.Handler.CreatePoll
   ) where
 
 import Hp.Eff.Event              (EventEffect, emitEvent)
-import Hp.Eff.ManagePoll         (ManagePoll, savePoll)
+import Hp.Eff.PersistPoll        (PersistPollEffect, savePoll)
 import Hp.Entity                 (Entity(..))
 import Hp.Event.CreatePoll       (CreatePollEvent(..))
 import Hp.Poll                   (Poll(..))
@@ -18,7 +18,7 @@ import Servant        (NoContent(..))
 handleCreatePoll ::
      ( Carrier sig m
      , Member (EventEffect CreatePollEvent) sig
-     , Member ManagePoll sig
+     , Member PersistPollEffect sig
      , MonadIO m
      )
   => CreatePollRequestBody
