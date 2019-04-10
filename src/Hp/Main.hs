@@ -16,6 +16,7 @@ import Hp.Eff.ManagePoll              (ManagePollDBC(..))
 import Hp.Eff.PersistPollAnswer.DB    (runPersistPollAnswerDB)
 import Hp.Eff.PersistUser.DB          (runPersistUserDB)
 import Hp.Event.AnswerPoll            (AnswerPollEvent)
+import Hp.Event.CreatePoll            (CreatePollEvent)
 import Hp.GitHub.ClientId             (GitHubClientId)
 import Hp.GitHub.ClientSecret         (GitHubClientSecret)
 import Hp.Handler.AnswerPoll          (handleAnswerPoll)
@@ -130,6 +131,7 @@ application
       >>> runDBC postgresPool
       >>> runHttpSessionIO cookieSettings jwtSettings
       >>> runEventPrint @AnswerPollEvent
+      >>> runEventPrint @CreatePollEvent
       -- >>> runError @Servant.ClientError
       >>> runM @IO
       -- >>> over (mapped . _Left) toServerError

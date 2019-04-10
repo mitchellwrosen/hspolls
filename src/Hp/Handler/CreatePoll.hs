@@ -2,8 +2,10 @@ module Hp.Handler.CreatePoll
   ( handleCreatePoll
   ) where
 
-import Hp.Eff.ManagePoll (ManagePoll, savePoll)
-import Hp.Poll           (Poll)
+import Hp.Eff.Event        (EventEffect, emitEvent)
+import Hp.Eff.ManagePoll   (ManagePoll, savePoll)
+import Hp.Event.CreatePoll (CreatePollEvent(..))
+import Hp.Poll             (Poll, PollId)
 
 import Control.Effect
 import Servant        (NoContent(..))
@@ -11,11 +13,20 @@ import Servant        (NoContent(..))
 
 handleCreatePoll ::
      ( Carrier sig m
+     , Member (EventEffect CreatePollEvent) sig
      , Member ManagePoll sig
      , MonadIO m
      )
   => Poll
   -> m NoContent
 handleCreatePoll poll = do
-  _ <- savePoll poll
+  pollId :: PollId <-
+    savePoll poll
+
+  emitEvent CreatePollEvent
+    { elements = poll ^. #elements
+    , endTime = poll ^. #endTime
+    , id = pollId
+    }
+
   pure NoContent

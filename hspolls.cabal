@@ -94,6 +94,7 @@ library
     Hp.Eff.PersistUser
     Hp.Eff.PersistUser.DB
     Hp.Event.AnswerPoll
+    Hp.Event.CreatePoll
     Hp.GitHub
     Hp.GitHub.AccessToken
     Hp.GitHub.API

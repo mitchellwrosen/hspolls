@@ -48,7 +48,7 @@ doPutPollAnswer ::
   -> PollAnswer
   -> Maybe UserId
   -> m (Maybe PollAnswerId)
-doPutPollAnswer pollId pollAnswer userId =
+doPutPollAnswer _pollId _pollAnswer _userId =
   runDB session >>= \case
     Left err ->
       -- TODO deal with Hasql.Pool.UsageError how?

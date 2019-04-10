@@ -1,4 +1,4 @@
-{-# LANGUAGE UndecidableInstances, AllowAmbiguousTypes #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Hp.Eff.DB
   ( DB(..)
