@@ -19,7 +19,7 @@ data YieldEffect (value :: Type) (m :: Type -> Type) (k :: Type) where
   deriving (Effect, HFunctor)
        via (FirstOrderEffect (YieldEffect value))
 
--- | Yield a value to an anonymous listener.
+-- | Yield a value to an anonymous consumer.
 yield ::
      ( Carrier sig m
      , Member (YieldEffect value) sig

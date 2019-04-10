@@ -7,6 +7,7 @@ module Hp.Main where
 import Hp.API
 import Hp.Config                      (Config(..), prettyPrintConfig,
                                        readConfigFile)
+import Hp.Eff.Await.Chan              (runAwaitChan)
 import Hp.Eff.DB                      (runDBC)
 import Hp.Eff.GitHubAuth.Http         (runGitHubAuthHttp)
 import Hp.Eff.HttpRequest.IO          (runHttpRequestIO)
@@ -15,6 +16,7 @@ import Hp.Eff.PersistPoll.DB          (PersistPollDBC(..))
 import Hp.Eff.PersistPollAnswer.DB    (runPersistPollAnswerDB)
 import Hp.Eff.PersistUser.DB          (runPersistUserDB)
 import Hp.Eff.Yield.Chan              (runYieldChan)
+import Hp.Email                       (Email)
 import Hp.Event.PollAnswered          (PollAnsweredEvent)
 import Hp.Event.PollCreated           (PollCreatedEvent)
 import Hp.GitHub.ClientId             (GitHubClientId)
@@ -26,6 +28,7 @@ import Hp.Handler.GetRoot             (handleGetRoot)
 import Hp.Handler.GitHubOauthCallback (handleGitHubOauthCallback)
 import Hp.Metrics                     (requestCounter)
 import Hp.PostgresConfig              (acquirePostgresPool)
+import Hp.Worker.SendPollCreatedEmail (sendPollCreatedEmailWorker)
 
 import Control.Concurrent     (forkIO)
 import Control.Concurrent.STM
@@ -45,6 +48,7 @@ import qualified Prometheus
 import qualified Servant
 import qualified Servant.Client           as Servant (ClientError)
 import qualified Servant.Server.Generic   as Servant (genericServeTWithContext)
+import qualified SlaveThread
 
 import Servant.Auth.Server as Servant
 
@@ -75,6 +79,20 @@ main = do
 
   pollCreatedEventChan :: TChan PollCreatedEvent <-
     atomically newBroadcastTChan
+
+  emailChan :: TChan Email <-
+    atomically newBroadcastTChan
+
+  void . SlaveThread.fork $ do
+    chan :: TChan PollCreatedEvent <-
+      atomically (dupTChan pollCreatedEventChan)
+
+    sendPollCreatedEmailWorker
+      & runAwaitChan chan
+      & runPersistUserDB
+      & runDBC pgPool
+      & runYieldChan emailChan
+      & runM
 
   do
     -- Lazy! Just print these events forever

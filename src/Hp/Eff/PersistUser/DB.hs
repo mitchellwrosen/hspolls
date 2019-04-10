@@ -40,11 +40,22 @@ instance
        (PersistUserEffect :+: sig) (PersistUserCarrierDB m) (PersistUserCarrierDB m a)
     -> PersistUserCarrierDB m a
   eff = \case
+    L (GetUserEmailsSubscribedToPollCreatedEvents next) ->
+      PersistUserCarrierDB doGetUserEmailsSubscribedToPollCreatedEvents >>= next
+
     L (PutUserByGitHubUserName name next) ->
       PersistUserCarrierDB (doPutUserByGitHubUserName name) >>= next
 
     R other ->
       PersistUserCarrierDB (eff (handleCoercible other))
+
+doGetUserEmailsSubscribedToPollCreatedEvents ::
+     ( Carrier sig m
+     , Member DB sig
+     )
+  => m [Text]
+doGetUserEmailsSubscribedToPollCreatedEvents =
+  pure ["frank@example.com"] -- TODO implement this
 
 doPutUserByGitHubUserName ::
      ( Carrier sig m

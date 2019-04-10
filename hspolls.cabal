@@ -37,6 +37,7 @@ library
     servant-client ^>= 0.16,
     servant-client-core ^>= 0.16,
     servant-server ^>= 0.16,
+    slave-thread ^>= 1.0,
     stm ^>= 2.5,
     transformers,
     text,
@@ -83,6 +84,8 @@ library
   exposed-modules:
     Hp.API
     Hp.Config
+    Hp.Eff.Await
+    Hp.Eff.Await.Chan
     Hp.Eff.DB
     Hp.Eff.FirstOrder
     Hp.Eff.GitHubAuth
@@ -97,9 +100,11 @@ library
     Hp.Eff.PersistPollAnswer.DB
     Hp.Eff.PersistUser
     Hp.Eff.PersistUser.DB
+    Hp.Eff.SendEmail
     Hp.Eff.Yield
     Hp.Eff.Yield.Chan
     Hp.Eff.Yield.Print
+    Hp.Email
     Hp.Entity
     Hp.Event.PollAnswered
     Hp.Event.PollCreated
@@ -134,7 +139,8 @@ library
     Hp.RequestBody.CreatePoll
     Hp.User
     Hp.UserId
-    Hp.Worker.PollCreatedEmail
+    Hp.Worker.SendEmail
+    Hp.Worker.SendPollCreatedEmail
     Prelude
 
   ghc-options:

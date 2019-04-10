@@ -1,0 +1,49 @@
+module Hp.Worker.SendPollCreatedEmail where
+
+import Hp.Eff.Await         (AwaitEffect, await)
+import Hp.Eff.PersistUser   (PersistUserEffect,
+                             getUserEmailsSubscribedToPollCreatedEvents)
+import Hp.Eff.Yield         (YieldEffect, yield)
+import Hp.Email             (Email(..), TransactionalEmail(..))
+import Hp.Event.PollCreated (PollCreatedEvent)
+
+import Control.Effect
+
+
+sendPollCreatedEmailWorker ::
+     ( Carrier sig m
+     , Member (AwaitEffect PollCreatedEvent) sig
+     , Member PersistUserEffect sig
+     , Member (YieldEffect Email) sig
+     )
+  => m void
+sendPollCreatedEmailWorker =
+  forever $ do
+    event :: PollCreatedEvent <-
+      await
+
+    emailAddresses :: [Text] <-
+      getUserEmailsSubscribedToPollCreatedEvents
+
+    case handlePollCreatedEvent event emailAddresses of
+      Nothing ->
+        pure ()
+
+      Just email ->
+        yield email
+
+handlePollCreatedEvent ::
+     PollCreatedEvent
+  -> [Text]
+  -> Maybe Email
+handlePollCreatedEvent event addresses = do
+  guard (not (null addresses))
+
+  pure $ EmailTransactional TransactionalEmail
+    { bcc = addresses
+    , body =
+        "Poll " <> event ^. #poll . #key . Prelude.to show . packed <>
+        " created"
+    , from = ""
+    , subject = ""
+    }
