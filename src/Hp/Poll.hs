@@ -12,4 +12,4 @@ data Poll id
   { id :: id
   , elements :: Seq PollFormElement
   , endTime :: UTCTime
-  } deriving stock (Generic)
+  } deriving stock (Generic, Show)

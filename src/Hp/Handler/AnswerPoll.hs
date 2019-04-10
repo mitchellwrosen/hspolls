@@ -29,11 +29,11 @@ handleAnswerPoll authResult pollId body =
     Nothing ->
       pure NoContent -- TODO 404
 
-    Just _poll -> do
+    Just poll -> do
       -- TODO check if poll is expired
       -- TODO validate poll answer
 
-      putPollAnswer pollId (body ^. #answer) userId >>= \case
+      putPollAnswer pollId (body ^. #answer) (view #id <$> user) >>= \case
         Nothing ->
           -- TODO some error code
           pure ()
@@ -42,14 +42,14 @@ handleAnswerPoll authResult pollId body =
           emitEvent AnswerPollEvent
             { answer = body ^. #answer
             , id = pollAnswerId
-            , pollId = pollId
-            , userId = userId
+            , poll = poll
+            , user = user
             }
 
       pure NoContent
 
   where
-    userId :: Maybe UserId
-    userId = do
+    user :: Maybe (User UserId)
+    user = do
       Authenticated user <- pure authResult
-      pure (user ^. #id)
+      pure user

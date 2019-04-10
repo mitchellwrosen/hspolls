@@ -123,19 +123,25 @@ application
 
   where
     η :: ∀ a. _ a -> Servant.Handler a
-    η = runGitHubAuthHttp gitHubClientId gitHubClientSecret
+    η =   -- Outgoing HTTP requests
+          runGitHubAuthHttp gitHubClientId gitHubClientSecret
       >>> runHttpRequestIO httpManager
+
+          -- Persistence layer
       >>> unManagePollDBC
       >>> runPersistPollAnswerDB
       >>> runPersistUserDB
       >>> runDBC postgresPool
+
+          -- HTTP session
       >>> runHttpSessionIO cookieSettings jwtSettings
+
+          -- Event handlers
       >>> runEventPrint @AnswerPollEvent
       >>> runEventPrint @CreatePollEvent
-      -- >>> runError @Servant.ClientError
+
+          -- IO boilerplate
       >>> runM @IO
-      -- >>> over (mapped . _Left) toServerError
-      -- >>> ExceptT
       >>> liftIO
       >>> Servant.Handler
 
