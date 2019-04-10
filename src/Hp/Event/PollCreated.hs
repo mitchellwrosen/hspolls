@@ -1,11 +1,11 @@
-module Hp.Event.CreatePoll where
+module Hp.Event.PollCreated where
 
 import Hp.Entity (Entity)
 import Hp.Poll   (Poll)
 
 
 -- | A poll was created.
-data CreatePollEvent
-  = CreatePollEvent
+data PollCreatedEvent
+  = PollCreatedEvent
   { poll :: Entity Poll
   } deriving stock (Generic, Show)

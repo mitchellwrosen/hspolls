@@ -15,8 +15,8 @@ import Hp.Eff.PersistPoll.DB          (PersistPollDBC(..))
 import Hp.Eff.PersistPollAnswer.DB    (runPersistPollAnswerDB)
 import Hp.Eff.PersistUser.DB          (runPersistUserDB)
 import Hp.Eff.Yield.Chan              (runYieldChan)
-import Hp.Event.AnswerPoll            (AnswerPollEvent)
-import Hp.Event.CreatePoll            (CreatePollEvent)
+import Hp.Event.PollAnswered          (PollAnsweredEvent)
+import Hp.Event.PollCreated           (PollCreatedEvent)
 import Hp.GitHub.ClientId             (GitHubClientId)
 import Hp.GitHub.ClientSecret         (GitHubClientSecret)
 import Hp.Handler.AnswerPoll          (handleAnswerPoll)
@@ -70,10 +70,10 @@ main = do
 
   pgPool <- acquirePostgresPool (config ^. #postgres)
 
-  answerPollEventChan :: TChan AnswerPollEvent <-
+  pollAnsweredEventChan :: TChan PollAnsweredEvent <-
     atomically newBroadcastTChan
 
-  createPollEventChan :: TChan CreatePollEvent <-
+  pollCreatedEventChan :: TChan PollCreatedEvent <-
     atomically newBroadcastTChan
 
   do
@@ -82,8 +82,8 @@ main = do
           void . forkIO $ do
             chan <- atomically (dupTChan eventChan)
             forever (atomically (readTChan chan) >>= print)
-    go answerPollEventChan
-    go createPollEventChan
+    go pollAnsweredEventChan
+    go pollCreatedEventChan
 
   Warp.run
     (fromIntegral (config ^. #port))
@@ -95,8 +95,8 @@ main = do
         httpManager
         jwtSettings
         pgPool
-        answerPollEventChan
-        createPollEventChan))
+        pollAnsweredEventChan
+        pollCreatedEventChan))
 
 middleware ::
      (  Wai.Request
@@ -116,8 +116,8 @@ application ::
   -> Http.Manager
   -> JWTSettings
   -> Hasql.Pool
-  -> TChan AnswerPollEvent
-  -> TChan CreatePollEvent
+  -> TChan PollAnsweredEvent
+  -> TChan PollCreatedEvent
   -> Wai.Request
   -> (Wai.Response -> IO Wai.ResponseReceived)
   -> IO Wai.ResponseReceived
@@ -128,8 +128,8 @@ application
     httpManager
     jwtSettings
     postgresPool
-    answerPollEventChan
-    createPollEventChan = do
+    pollAnsweredEventChan
+    pollCreatedEventChan = do
 
   Servant.genericServeTWithContext
     η
@@ -160,8 +160,8 @@ application
       >>> runHttpSessionIO cookieSettings jwtSettings
 
           -- Event handlers
-      >>> runYieldChan answerPollEventChan
-      >>> runYieldChan createPollEventChan
+      >>> runYieldChan pollAnsweredEventChan
+      >>> runYieldChan pollCreatedEventChan
 
           -- IO boilerplate
       >>> runM @IO

@@ -4,7 +4,7 @@ import Hp.Eff.PersistPoll        (PersistPollEffect, getPoll)
 import Hp.Eff.PersistPollAnswer  (PersistPollAnswerEffect, putPollAnswer)
 import Hp.Eff.Yield              (YieldEffect, yield)
 import Hp.Entity                 (Entity(..))
-import Hp.Event.AnswerPoll       (AnswerPollEvent(..))
+import Hp.Event.PollAnswered     (PollAnsweredEvent(..))
 import Hp.PollAnswer             (PollAnswer(..))
 import Hp.PollId                 (PollId)
 import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody(..))
@@ -17,7 +17,7 @@ import Servant.Auth.Server (AuthResult(..))
 
 handleAnswerPoll ::
      ( Carrier sig m
-     , Member (YieldEffect AnswerPollEvent) sig
+     , Member (YieldEffect PollAnsweredEvent) sig
      , Member PersistPollEffect sig
      , Member PersistPollAnswerEffect sig
      )
@@ -49,7 +49,7 @@ handleAnswerPoll authResult pollId body =
           pure ()
 
         Just pollAnswerId ->
-          yield AnswerPollEvent
+          yield PollAnsweredEvent
             { answer = Entity pollAnswerId pollAnswer }
 
       pure NoContent
