@@ -4,9 +4,9 @@ module Hp.Eff.PersistPollAnswer
   ) where
 
 import Hp.Eff.FirstOrder (FirstOrderEffect(..))
-import Hp.Poll           (PollId)
 import Hp.PollAnswer     (PollAnswer)
 import Hp.PollAnswerId   (PollAnswerId)
+import Hp.PollId         (PollId)
 import Hp.UserId         (UserId)
 
 import Control.Effect

@@ -8,16 +8,16 @@ module Hp.Eff.PersistPollAnswer.DB
 
 import Hp.Eff.DB                (DB, runDB)
 import Hp.Eff.PersistPollAnswer (PersistPollAnswerEffect(..))
-import Hp.Poll                  (PollId)
 import Hp.PollAnswer            (PollAnswer)
 import Hp.PollAnswerId          (PollAnswerId)
+import Hp.PollId                (PollId)
 import Hp.UserId                (UserId(..))
 
 import Control.Effect
 import Control.Effect.Carrier
 import Control.Effect.Sum
-import Hasql.Session              (Session)
-import Prelude                    hiding (id)
+import Hasql.Session          (Session)
+import Prelude                hiding (id)
 
 
 newtype PersistPollAnswerCarrierDB m a

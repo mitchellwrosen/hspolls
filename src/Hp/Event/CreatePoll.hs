@@ -1,7 +1,7 @@
 module Hp.Event.CreatePoll where
 
-import Hp.Poll            (PollId)
 import Hp.PollFormElement (PollFormElement)
+import Hp.PollId          (PollId)
 
 import Data.Time (UTCTime)
 

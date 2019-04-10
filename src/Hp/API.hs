@@ -1,8 +1,9 @@
 module Hp.API where
 
 import Hp.GitHub.Code            (GitHubCode)
-import Hp.Poll                   (Poll, PollId)
+import Hp.PollId                 (PollId)
 import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody)
+import Hp.RequestBody.CreatePoll (CreatePollRequestBody)
 import Hp.User                   (User)
 import Hp.UserId                 (UserId)
 
@@ -28,7 +29,7 @@ data API route
   , createPollRoute
       :: route
       :- "poll"
-      :> ReqBody '[JSON] Poll
+      :> ReqBody '[JSON] CreatePollRequestBody
       :> Post '[JSON] NoContent
 
   , getMetricsRoute

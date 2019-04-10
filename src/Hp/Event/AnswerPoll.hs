@@ -1,8 +1,8 @@
 module Hp.Event.AnswerPoll where
 
-import Hp.Poll         (PollId)
 import Hp.PollAnswer   (PollAnswer)
 import Hp.PollAnswerId (PollAnswerId)
+import Hp.PollId       (PollId)
 import Hp.UserId       (UserId)
 
 

@@ -24,20 +24,21 @@ import qualified Hasql.Decoders as D
 import Hp.Eff.FirstOrder (FirstOrderEffect(..))
 import Hp.Eff.DB
 import Hp.Poll
+import Hp.PollId (PollId(..))
 import Hp.PollFormElement (PollFormElement)
 
 data ManagePoll (m :: Type -> Type) (k :: Type) where
-  GetPoll :: PollId -> (Maybe Poll -> k) -> ManagePoll m k
-  SavePoll :: Poll -> (PollId -> k) -> ManagePoll m k
+  GetPoll :: PollId -> (Maybe (Poll PollId) -> k) -> ManagePoll m k
+  SavePoll :: Poll () -> (PollId -> k) -> ManagePoll m k
   deriving stock (Functor)
   deriving (Effect, HFunctor)
        via (FirstOrderEffect ManagePoll)
 
-savePoll :: (Carrier sig m, Member ManagePoll sig) => Poll -> m PollId
+savePoll :: (Carrier sig m, Member ManagePoll sig) => Poll () -> m PollId
 savePoll poll =
   send $ SavePoll poll pure
 
-getPoll :: (Carrier sig m, Member ManagePoll sig) => PollId -> m (Maybe Poll)
+getPoll :: (Carrier sig m, Member ManagePoll sig) => PollId -> m (Maybe (Poll PollId))
 getPoll pollId = send $ GetPoll pollId pure
 
 newtype ManagePollDBC m a
@@ -57,22 +58,23 @@ instance ( Carrier sig m
         Right pollId -> unManagePollDBC $ k pollId
     L (GetPoll pollId k) -> do
       let sql = "SELECT form, end_time FROM polls WHERE id = $1"
-      runDB (H.statement pollId (H.Statement sql encodePollId (D.rowMaybe decodePoll) True)) >>= \case
+      runDB (H.statement pollId (H.Statement sql encodePollId (D.rowMaybe (decodePoll pollId)) True)) >>= \case
         Left err -> error (show err)
         -- TODO handle error
         Right x -> unManagePollDBC $ k x
     R other -> eff (handleCoercible other)
     where
 
-encodePoll :: E.Params Poll
+encodePoll :: E.Params (Poll ())
 encodePoll = mconcat
   [ toJSON . elements >$< E.param E.jsonb
   , endTime >$< E.param E.timestamptz
   ]
 
-decodePoll :: D.Row Poll
-decodePoll = Poll
-  <$> parseForm
+decodePoll :: PollId -> D.Row (Poll PollId)
+decodePoll pollId = Poll
+  <$> pure pollId
+  <*> parseForm
   <*> D.column D.timestamptz
   where
     parseForm :: D.Row (Seq PollFormElement)

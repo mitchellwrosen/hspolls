@@ -114,10 +114,11 @@ library
     Hp.Main
     Hp.Metrics
     Hp.RequestBody.AnswerPoll
-    Hp.Poll
+    Hp.RequestBody.CreatePoll
     Hp.PollAnswer
     Hp.PollAnswerId
     Hp.PollFormElement
+    Hp.PollId
     Hp.PollItemAnswer
     Hp.PostgresConfig
     Hp.User
