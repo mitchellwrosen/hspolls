@@ -2,8 +2,8 @@ module Hp.Handler.CreatePoll
   ( handleCreatePoll
   ) where
 
-import Hp.Eff.Event              (EventEffect, emitEvent)
 import Hp.Eff.PersistPoll        (PersistPollEffect, savePoll)
+import Hp.Eff.Yield              (YieldEffect, yield)
 import Hp.Entity                 (Entity(..))
 import Hp.Event.CreatePoll       (CreatePollEvent(..))
 import Hp.Poll                   (Poll(..))
@@ -17,7 +17,7 @@ import Servant        (NoContent(..))
 
 handleCreatePoll ::
      ( Carrier sig m
-     , Member (EventEffect CreatePollEvent) sig
+     , Member (YieldEffect CreatePollEvent) sig
      , Member PersistPollEffect sig
      , MonadIO m
      )
@@ -27,7 +27,7 @@ handleCreatePoll body = do
   pollId :: PollId <-
     savePoll poll
 
-  emitEvent CreatePollEvent
+  yield CreatePollEvent
     { poll = Entity pollId poll }
 
   pure NoContent

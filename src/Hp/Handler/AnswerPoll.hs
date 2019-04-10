@@ -1,8 +1,8 @@
 module Hp.Handler.AnswerPoll where
 
-import Hp.Eff.Event              (EventEffect, emitEvent)
 import Hp.Eff.PersistPoll        (PersistPollEffect, getPoll)
 import Hp.Eff.PersistPollAnswer  (PersistPollAnswerEffect, putPollAnswer)
+import Hp.Eff.Yield              (YieldEffect, yield)
 import Hp.Entity                 (Entity(..))
 import Hp.Event.AnswerPoll       (AnswerPollEvent(..))
 import Hp.PollAnswer             (PollAnswer(..))
@@ -17,7 +17,7 @@ import Servant.Auth.Server (AuthResult(..))
 
 handleAnswerPoll ::
      ( Carrier sig m
-     , Member (EventEffect AnswerPollEvent) sig
+     , Member (YieldEffect AnswerPollEvent) sig
      , Member PersistPollEffect sig
      , Member PersistPollAnswerEffect sig
      )
@@ -49,7 +49,7 @@ handleAnswerPoll authResult pollId body =
           pure ()
 
         Just pollAnswerId ->
-          emitEvent AnswerPollEvent
+          yield AnswerPollEvent
             { answer = Entity pollAnswerId pollAnswer }
 
       pure NoContent

@@ -18,8 +18,7 @@
 , port = 8000
 
 , session =
-    {
-      -- The JSON Web Key used to sign and verify JSON Web Tokens. If None,
+    { -- The JSON Web Key used to sign and verify JSON Web Tokens. If None,
       -- generates a random JWK at runtime.
       jwk =
         Some ./secrets/jwk.dhall

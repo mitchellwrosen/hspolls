@@ -6,6 +6,8 @@ version: 0
 library
   build-depends:
     aeson ^>= 1.4,
+    amazonka ^>= 1.6,
+    amazonka-ses ^>= 1.6,
     base,
     blaze-html ^>= 0.9,
     bytestring,
@@ -82,9 +84,6 @@ library
     Hp.API
     Hp.Config
     Hp.Eff.DB
-    Hp.Eff.Event
-    Hp.Eff.Event.Chan
-    Hp.Eff.Event.Print
     Hp.Eff.FirstOrder
     Hp.Eff.GitHubAuth
     Hp.Eff.GitHubAuth.Http
@@ -98,12 +97,15 @@ library
     Hp.Eff.PersistPollAnswer.DB
     Hp.Eff.PersistUser
     Hp.Eff.PersistUser.DB
+    Hp.Eff.Yield
+    Hp.Eff.Yield.Chan
+    Hp.Eff.Yield.Print
     Hp.Entity
     Hp.Event.AnswerPoll
     Hp.Event.CreatePoll
     Hp.GitHub
-    Hp.GitHub.AccessToken
     Hp.GitHub.API
+    Hp.GitHub.AccessToken
     Hp.GitHub.ClientId
     Hp.GitHub.ClientSecret
     Hp.GitHub.Code
@@ -120,8 +122,6 @@ library
     Hp.IsEntity
     Hp.Main
     Hp.Metrics
-    Hp.RequestBody.AnswerPoll
-    Hp.RequestBody.CreatePoll
     Hp.Poll
     Hp.PollAnswer
     Hp.PollAnswerId
@@ -130,6 +130,8 @@ library
     Hp.PollQuestion
     Hp.PollQuestionAnswer
     Hp.PostgresConfig
+    Hp.RequestBody.AnswerPoll
+    Hp.RequestBody.CreatePoll
     Hp.User
     Hp.UserId
     Prelude

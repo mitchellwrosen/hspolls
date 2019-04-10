@@ -5,16 +5,16 @@
 module Hp.Main where
 
 import Hp.API
-import Hp.Config         (Config(..), prettyPrintConfig, readConfigFile)
-import Hp.Eff.DB         (runDBC)
-import Hp.Eff.Event.Chan (runEventChan)
--- import Hp.Eff.Event.Print             (runEventPrint)
+import Hp.Config                      (Config(..), prettyPrintConfig,
+                                       readConfigFile)
+import Hp.Eff.DB                      (runDBC)
 import Hp.Eff.GitHubAuth.Http         (runGitHubAuthHttp)
 import Hp.Eff.HttpRequest.IO          (runHttpRequestIO)
 import Hp.Eff.HttpSession.IO          (runHttpSessionIO)
 import Hp.Eff.PersistPoll.DB          (PersistPollDBC(..))
 import Hp.Eff.PersistPollAnswer.DB    (runPersistPollAnswerDB)
 import Hp.Eff.PersistUser.DB          (runPersistUserDB)
+import Hp.Eff.Yield.Chan              (runYieldChan)
 import Hp.Event.AnswerPoll            (AnswerPollEvent)
 import Hp.Event.CreatePoll            (CreatePollEvent)
 import Hp.GitHub.ClientId             (GitHubClientId)
@@ -160,8 +160,8 @@ application
       >>> runHttpSessionIO cookieSettings jwtSettings
 
           -- Event handlers
-      >>> runEventChan answerPollEventChan
-      >>> runEventChan createPollEventChan
+      >>> runYieldChan answerPollEventChan
+      >>> runYieldChan createPollEventChan
 
           -- IO boilerplate
       >>> runM @IO
