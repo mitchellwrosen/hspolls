@@ -89,6 +89,7 @@ library
     Hp.Eff.HttpSession
     Hp.Eff.HttpSession.IO
     Hp.Eff.ManagePoll
+    Hp.Eff.ManagePoll.DB
     Hp.Eff.PersistPollAnswer
     Hp.Eff.PersistPollAnswer.DB
     Hp.Eff.PersistUser
