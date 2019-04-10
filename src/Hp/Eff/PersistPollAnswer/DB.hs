@@ -10,14 +10,11 @@ import Hp.Eff.DB                (DB, runDB)
 import Hp.Eff.PersistPollAnswer (PersistPollAnswerEffect(..))
 import Hp.PollAnswer            (PollAnswer)
 import Hp.PollAnswerId          (PollAnswerId)
-import Hp.PollId                (PollId)
-import Hp.UserId                (UserId(..))
 
 import Control.Effect
 import Control.Effect.Carrier
 import Control.Effect.Sum
 import Hasql.Session          (Session)
-import Prelude                hiding (id)
 
 
 newtype PersistPollAnswerCarrierDB m a
@@ -34,8 +31,8 @@ instance
        (PersistPollAnswerEffect :+: sig) (PersistPollAnswerCarrierDB m) (PersistPollAnswerCarrierDB m a)
     -> PersistPollAnswerCarrierDB m a
   eff = \case
-    L (PutPollAnswer pollId pollAnswer userId next) ->
-      PersistPollAnswerCarrierDB (doPutPollAnswer pollId pollAnswer userId) >>= next
+    L (PutPollAnswer pollAnswer next) ->
+      PersistPollAnswerCarrierDB (doPutPollAnswer pollAnswer) >>= next
 
     R other ->
       PersistPollAnswerCarrierDB (eff (handleCoercible other))
@@ -44,11 +41,9 @@ doPutPollAnswer ::
      ( Carrier sig m
      , Member DB sig
      )
-  => PollId
-  -> PollAnswer
-  -> Maybe UserId
+  => PollAnswer
   -> m (Maybe PollAnswerId)
-doPutPollAnswer _pollId _pollAnswer _userId =
+doPutPollAnswer _pollAnswer =
   runDB session >>= \case
     Left err ->
       -- TODO deal with Hasql.Pool.UsageError how?

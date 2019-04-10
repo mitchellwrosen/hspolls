@@ -1,14 +1,12 @@
 module Hp.RequestBody.AnswerPoll where
 
-import Hp.PollAnswer (PollAnswer)
-import Hp.PollId     (PollId)
+import Hp.PollItemAnswer (PollItemAnswer)
 
 import Data.Aeson (FromJSON)
 
 
 data AnswerPollRequestBody
   = AnswerPollRequestBody
-  { answer :: PollAnswer
-  , id :: PollId
+  { answers :: Seq PollItemAnswer
   } deriving stock (Generic)
     deriving anyclass (FromJSON)

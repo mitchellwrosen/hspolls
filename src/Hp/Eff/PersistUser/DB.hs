@@ -8,9 +8,9 @@ module Hp.Eff.PersistUser.DB
 
 import Hp.Eff.DB          (DB, runDB)
 import Hp.Eff.PersistUser
-import Hp.GitHub.UserName (GitHubUserName(..), gitHubUserNameDecoder,
-                           gitHubUserNameEncoder)
-import Hp.User            (User(..), userEncoder)
+import Hp.Entity          (Entity(..))
+import Hp.GitHub.UserName (GitHubUserName(..), gitHubUserNameEncoder)
+import Hp.User            (User(..), userDecoder, userEncoder)
 import Hp.UserId          (UserId(..), userIdDecoder)
 
 import Control.Effect
@@ -51,7 +51,7 @@ doPutUserByGitHubUserName ::
      , Member DB sig
      )
   => GitHubUserName
-  -> m (User UserId)
+  -> m (Entity User)
 doPutUserByGitHubUserName name =
   runDB session >>= \case
     Left err ->
@@ -62,23 +62,22 @@ doPutUserByGitHubUserName name =
       pure user
 
   where
-    session :: Session (User UserId)
+    session :: Session (Entity User)
     session =
       transaction Serializable Write $
         statement name sqlGetUserByGitHubUserName >>= \case
           Nothing -> do
             let
-              user :: User ()
+              user :: User
               user =
                 User
-                  { id = ()
-                  , gitHub = Just name
+                  { gitHub = Just name
                   }
 
             userId :: UserId <-
               statement user sqlPutUser
 
-            pure user { id = userId }
+            pure (Entity userId user)
 
           Just user ->
             pure user
@@ -92,7 +91,7 @@ runPersistUserDB (PersistUserCarrierDB m) =
 -- Statements
 --------------------------------------------------------------------------------
 
-sqlGetUserByGitHubUserName :: Statement GitHubUserName (Maybe (User UserId))
+sqlGetUserByGitHubUserName :: Statement GitHubUserName (Maybe (Entity User))
 sqlGetUserByGitHubUserName =
   Statement sql encoder decoder True
 
@@ -105,14 +104,14 @@ sqlGetUserByGitHubUserName =
     encoder =
       Encoder.param gitHubUserNameEncoder
 
-    decoder :: Decoder.Result (Maybe (User UserId))
+    decoder :: Decoder.Result (Maybe (Entity User))
     decoder =
       Decoder.rowMaybe
-        (User
+        (Entity
           <$> Decoder.column userIdDecoder
-          <*> Decoder.nullableColumn gitHubUserNameDecoder)
+          <*> userDecoder)
 
-sqlPutUser :: Statement (User ()) UserId
+sqlPutUser :: Statement User UserId
 sqlPutUser =
   Statement sql encoder decoder True
 
@@ -121,7 +120,7 @@ sqlPutUser =
     sql =
       "INSERT INTO users (github) VALUES ($1) RETURNING id"
 
-    encoder :: Encoder.Params (User ())
+    encoder :: Encoder.Params User
     encoder =
       userEncoder
 

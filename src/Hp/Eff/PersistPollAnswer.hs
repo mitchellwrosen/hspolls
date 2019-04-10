@@ -6,8 +6,6 @@ module Hp.Eff.PersistPollAnswer
 import Hp.Eff.FirstOrder (FirstOrderEffect(..))
 import Hp.PollAnswer     (PollAnswer)
 import Hp.PollAnswerId   (PollAnswerId)
-import Hp.PollId         (PollId)
-import Hp.UserId         (UserId)
 
 import Control.Effect
 import Control.Effect.Carrier
@@ -15,9 +13,7 @@ import Control.Effect.Carrier
 
 data PersistPollAnswerEffect (m :: Type -> Type) (k :: Type) where
   PutPollAnswer ::
-       PollId
-    -> PollAnswer
-    -> Maybe UserId
+       PollAnswer
     -> (Maybe PollAnswerId -> k)
     -> PersistPollAnswerEffect m k
 
@@ -32,9 +28,7 @@ putPollAnswer ::
      ( Carrier sig m
      , Member PersistPollAnswerEffect sig
      )
-  => PollId
-  -> PollAnswer
-  -> Maybe UserId
+  => PollAnswer
   -> m (Maybe PollAnswerId)
-putPollAnswer pollId pollAnswer user =
-  send (PutPollAnswer pollId pollAnswer user pure)
+putPollAnswer pollAnswer =
+  send (PutPollAnswer pollAnswer pure)

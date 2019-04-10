@@ -5,9 +5,9 @@ module Hp.Handler.GitHubOauthCallback
 import Hp.Eff.GitHubAuth  (GitHubAuthEffect, gitHubAuth)
 import Hp.Eff.HttpSession (HttpSessionEffect, beginHttpSession)
 import Hp.Eff.PersistUser (PersistUserEffect, putUserByGitHubUserName)
+import Hp.Entity          (Entity)
 import Hp.GitHub.Code     (GitHubCode)
 import Hp.User            (User)
-import Hp.UserId          (UserId(..))
 
 import Control.Effect
 import Servant             (Header, Headers, NoContent(..), addHeader, noHeader)
@@ -34,7 +34,7 @@ handleGitHubOauthCallback code =
       pure (redirect (noHeader (noHeader NoContent)))
 
     Just gitHubUser -> do
-      user :: User UserId <-
+      user :: Entity User <-
         putUserByGitHubUserName (gitHubUser ^. #login)
 
       redirect <$> beginHttpSession user NoContent

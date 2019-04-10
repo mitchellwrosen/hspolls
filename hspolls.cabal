@@ -26,6 +26,7 @@ library
     lens ^>= 4.17,
     memory ^>= 0.14,
     prometheus-client ^>= 1.0,
+    prometheus-metrics-ghc ^>= 1.0,
     safe-exceptions,
     servant ^>= 0.16,
     servant-auth ^>= 0.3,
@@ -69,6 +70,7 @@ library
     StandaloneDeriving
     StrictData
     TypeApplications
+    TypeFamilies
     TypeOperators
     UnicodeSyntax
 
@@ -94,6 +96,7 @@ library
     Hp.Eff.PersistPollAnswer.DB
     Hp.Eff.PersistUser
     Hp.Eff.PersistUser.DB
+    Hp.Entity
     Hp.Event.AnswerPoll
     Hp.Event.CreatePoll
     Hp.GitHub
@@ -112,6 +115,7 @@ library
     Hp.Handler.GetMetrics
     Hp.Handler.GetRoot
     Hp.Handler.GitHubOauthCallback
+    Hp.IsEntity
     Hp.Main
     Hp.Metrics
     Hp.RequestBody.AnswerPoll

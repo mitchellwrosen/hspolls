@@ -8,8 +8,8 @@
 , postgres =
     { host = "127.0.0.1"
     , port = 5432
-    , user = "USERNAME"
-    , password = "PASSWORD"
+    , user = "hspolls"
+    , password = ""
     , dbName = "hspolls"
     , poolSize = 20
     , poolTimeout = 5

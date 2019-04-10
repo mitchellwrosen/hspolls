@@ -6,6 +6,7 @@ module Hp.Eff.ManagePoll.DB
 
 import Hp.Eff.DB
 import Hp.Eff.ManagePoll  (ManagePoll(..))
+import Hp.Entity          (Entity(..))
 import Hp.Poll
 import Hp.PollFormElement (PollFormElement)
 import Hp.PollId          (PollId(..))
@@ -40,23 +41,22 @@ instance ( Carrier sig m
         Right pollId -> unManagePollDBC $ k pollId
     L (GetPoll pollId k) -> do
       let sql = "SELECT form, end_time FROM polls WHERE id = $1"
-      runDB (H.statement pollId (H.Statement sql encodePollId (D.rowMaybe (decodePoll pollId)) True)) >>= \case
+      runDB (H.statement pollId (H.Statement sql encodePollId ((fmap.fmap) (Entity pollId) (D.rowMaybe decodePoll)) True)) >>= \case
         Left err -> error (show err)
         -- TODO handle error
         Right x -> unManagePollDBC $ k x
     R other -> eff (handleCoercible other)
     where
 
-encodePoll :: E.Params (Poll ())
+encodePoll :: E.Params Poll
 encodePoll = mconcat
   [ toJSON . elements >$< E.param E.jsonb
   , endTime >$< E.param E.timestamptz
   ]
 
-decodePoll :: PollId -> D.Row (Poll PollId)
-decodePoll pollId = Poll
-  <$> pure pollId
-  <*> parseForm
+decodePoll :: D.Row Poll
+decodePoll = Poll
+  <$> parseForm
   <*> D.column D.timestamptz
   where
     parseForm :: D.Row (Seq PollFormElement)

@@ -4,12 +4,14 @@ module Hp.Handler.CreatePoll
 
 import Hp.Eff.Event              (EventEffect, emitEvent)
 import Hp.Eff.ManagePoll         (ManagePoll, savePoll)
+import Hp.Entity                 (Entity(..))
 import Hp.Event.CreatePoll       (CreatePollEvent(..))
 import Hp.Poll                   (Poll(..))
 import Hp.PollId                 (PollId)
 import Hp.RequestBody.CreatePoll (CreatePollRequestBody(..))
 
 import Control.Effect
+import Prelude        hiding (id)
 import Servant        (NoContent(..))
 
 
@@ -23,16 +25,17 @@ handleCreatePoll ::
   -> m NoContent
 handleCreatePoll body = do
   pollId :: PollId <-
-    savePoll Poll
-      { id = ()
-      , elements = body ^. #elements
-      , endTime = body ^. #endTime
-      }
+    savePoll poll
 
   emitEvent CreatePollEvent
-    { elements = body ^. #elements
-    , endTime = body ^. #endTime
-    , id = pollId
-    }
+    { poll = Entity pollId poll }
 
   pure NoContent
+
+  where
+    poll :: Poll
+    poll =
+      Poll
+        { elements = body ^. #elements
+        , endTime = body ^. #endTime
+        }

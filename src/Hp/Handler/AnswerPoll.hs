@@ -3,11 +3,12 @@ module Hp.Handler.AnswerPoll where
 import Hp.Eff.Event              (EventEffect, emitEvent)
 import Hp.Eff.ManagePoll         (ManagePoll, getPoll)
 import Hp.Eff.PersistPollAnswer  (PersistPollAnswerEffect, putPollAnswer)
+import Hp.Entity                 (Entity(..))
 import Hp.Event.AnswerPoll       (AnswerPollEvent(..))
+import Hp.PollAnswer             (PollAnswer(..))
 import Hp.PollId                 (PollId)
 import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody(..))
 import Hp.User                   (User)
-import Hp.UserId                 (UserId)
 
 import Control.Effect
 import Servant             (NoContent(..))
@@ -20,7 +21,7 @@ handleAnswerPoll ::
      , Member ManagePoll sig
      , Member PersistPollAnswerEffect sig
      )
-  => AuthResult (User UserId)
+  => AuthResult (Entity User)
   -> PollId
   -> AnswerPollRequestBody
   -> m NoContent
@@ -29,27 +30,32 @@ handleAnswerPoll authResult pollId body =
     Nothing ->
       pure NoContent -- TODO 404
 
-    Just poll -> do
+    Just _poll -> do
       -- TODO check if poll is expired
       -- TODO validate poll answer
 
-      putPollAnswer pollId (body ^. #answer) (view #id <$> user) >>= \case
+      let
+        pollAnswer :: PollAnswer
+        pollAnswer =
+          PollAnswer
+            { answers = body ^. #answers
+            , pollId = pollId
+            , userId = view #key <$> user
+            }
+
+      putPollAnswer pollAnswer >>= \case
         Nothing ->
           -- TODO some error code
           pure ()
 
         Just pollAnswerId ->
           emitEvent AnswerPollEvent
-            { answer = body ^. #answer
-            , id = pollAnswerId
-            , poll = poll
-            , user = user
-            }
+            { answer = Entity pollAnswerId pollAnswer }
 
       pure NoContent
 
   where
-    user :: Maybe (User UserId)
+    user :: Maybe (Entity User)
     user = do
       Authenticated user <- pure authResult
       pure user

@@ -1,15 +1,11 @@
 module Hp.Event.CreatePoll where
 
-import Hp.PollFormElement (PollFormElement)
-import Hp.PollId          (PollId)
-
-import Data.Time (UTCTime)
+import Hp.Entity (Entity)
+import Hp.Poll   (Poll)
 
 
 -- | A poll was created.
 data CreatePollEvent
   = CreatePollEvent
-  { id :: PollId
-  , elements :: Seq PollFormElement
-  , endTime :: UTCTime
+  { poll :: Entity Poll
   } deriving stock (Generic, Show)

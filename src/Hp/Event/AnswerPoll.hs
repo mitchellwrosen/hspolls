@@ -1,18 +1,11 @@
 module Hp.Event.AnswerPoll where
 
-import Hp.Poll         (Poll)
-import Hp.PollAnswer   (PollAnswer)
-import Hp.PollAnswerId (PollAnswerId)
-import Hp.PollId       (PollId)
-import Hp.User         (User)
-import Hp.UserId       (UserId)
+import Hp.Entity     (Entity)
+import Hp.PollAnswer (PollAnswer)
 
 
 -- | A poll was answered.
-data AnswerPollEvent
+newtype AnswerPollEvent
   = AnswerPollEvent
-  { answer :: PollAnswer
-  , id :: PollAnswerId
-  , poll :: Poll PollId
-  , user :: Maybe (User UserId)
+  { answer :: Entity PollAnswer
   } deriving stock (Generic, Show)

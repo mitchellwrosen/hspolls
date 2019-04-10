@@ -1,11 +1,11 @@
 module Hp.API where
 
+import Hp.Entity                 (Entity)
 import Hp.GitHub.Code            (GitHubCode)
 import Hp.PollId                 (PollId)
 import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody)
 import Hp.RequestBody.CreatePoll (CreatePollRequestBody)
 import Hp.User                   (User)
-import Hp.UserId                 (UserId)
 
 import Servant
 import Servant.API.Generic
@@ -20,7 +20,7 @@ data API route
   = API
   { answerPollRoute
       :: route
-      :- Auth '[Cookie] (User UserId)
+      :- Auth '[Cookie] (Entity User)
       :> "poll"
       :> Capture "Poll ID" PollId
       :> ReqBody '[JSON] AnswerPollRequestBody
@@ -39,7 +39,7 @@ data API route
 
   , getRootRoute
       :: route
-      :- Auth '[Cookie] (User UserId)
+      :- Auth '[Cookie] (Entity User)
       :> Get '[HTML] Blaze.Html
 
     -- Callback URL used for GitHub OAuth.

@@ -4,12 +4,20 @@ module Hp.PollAnswer
   ( PollAnswer(..)
   ) where
 
+import Hp.IsEntity       (IsEntity(..))
+import Hp.PollAnswerId   (PollAnswerId)
+import Hp.PollId         (PollId)
 import Hp.PollItemAnswer (PollItemAnswer)
+import Hp.UserId         (UserId)
 
-import Data.Aeson (FromJSON)
 
+data PollAnswer
+  = PollAnswer
+  { answers :: Seq PollItemAnswer
+  , pollId :: PollId
+  , userId :: Maybe UserId
+  } deriving stock (Generic, Show)
 
-newtype PollAnswer
-  = PollAnswer { unPollAnswer :: Seq PollItemAnswer }
-  deriving stock (Show)
-  deriving newtype (FromJSON)
+instance IsEntity PollAnswer where
+  type EntityId PollAnswer
+    = PollAnswerId

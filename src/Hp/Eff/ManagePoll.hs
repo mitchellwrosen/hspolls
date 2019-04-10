@@ -9,20 +9,21 @@ module Hp.Eff.ManagePoll
 import Control.Effect
 import Control.Effect.Carrier
 
+import Hp.Entity         (Entity)
 import Hp.Eff.FirstOrder (FirstOrderEffect(..))
 import Hp.Poll
-import Hp.PollId (PollId(..))
+import Hp.PollId         (PollId(..))
 
 data ManagePoll (m :: Type -> Type) (k :: Type) where
-  GetPoll :: PollId -> (Maybe (Poll PollId) -> k) -> ManagePoll m k
-  SavePoll :: Poll () -> (PollId -> k) -> ManagePoll m k
+  GetPoll :: PollId -> (Maybe (Entity Poll) -> k) -> ManagePoll m k
+  SavePoll :: Poll -> (PollId -> k) -> ManagePoll m k
   deriving stock (Functor)
   deriving (Effect, HFunctor)
        via (FirstOrderEffect ManagePoll)
 
-savePoll :: (Carrier sig m, Member ManagePoll sig) => Poll () -> m PollId
+savePoll :: (Carrier sig m, Member ManagePoll sig) => Poll -> m PollId
 savePoll poll =
   send $ SavePoll poll pure
 
-getPoll :: (Carrier sig m, Member ManagePoll sig) => PollId -> m (Maybe (Poll PollId))
+getPoll :: (Carrier sig m, Member ManagePoll sig) => PollId -> m (Maybe (Entity Poll))
 getPoll pollId = send $ GetPoll pollId pure

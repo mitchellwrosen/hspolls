@@ -6,7 +6,7 @@ module Hp.Eff.PersistUser
 import Hp.Eff.FirstOrder  (FirstOrderEffect(..))
 import Hp.GitHub.UserName (GitHubUserName)
 import Hp.User            (User)
-import Hp.UserId          (UserId)
+import Hp.Entity (Entity)
 
 import Control.Effect
 import Control.Effect.Carrier
@@ -15,7 +15,7 @@ import Control.Effect.Carrier
 data PersistUserEffect (m :: Type -> Type) (k :: Type) where
   PutUserByGitHubUserName ::
        GitHubUserName
-    -> (User UserId -> k)
+    -> (Entity User -> k)
     -> PersistUserEffect m k
 
   deriving stock (Functor)
@@ -29,6 +29,6 @@ putUserByGitHubUserName ::
      , Member PersistUserEffect sig
      )
   => GitHubUserName
-  -> m (User UserId)
+  -> m (Entity User)
 putUserByGitHubUserName name =
   send (PutUserByGitHubUserName name pure)

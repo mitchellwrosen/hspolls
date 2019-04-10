@@ -6,6 +6,13 @@ module Hp.Metrics
 
 import Prometheus
 
+import qualified Prometheus.Metric.GHC
+
+
+ghcMetrics :: Prometheus.Metric.GHC.GHCMetrics
+ghcMetrics =
+  unsafeRegister Prometheus.Metric.GHC.ghcMetrics
+{-# NOINLINE ghcMetrics #-}
 
 -- | HTTP request counter.
 requestCounter :: Counter
