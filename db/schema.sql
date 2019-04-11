@@ -55,10 +55,10 @@ CREATE TABLE poll_responses (
     jsonb
     NOT NULL,
 
-  poll
+  pollId
     uuid
     NOT NULL,
 
-  FOREIGN KEY (poll) REFERENCES polls (id),
+  FOREIGN KEY (pollId) REFERENCES polls (id),
   PRIMARY KEY (id)
 );
