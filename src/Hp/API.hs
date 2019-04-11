@@ -6,6 +6,7 @@ import Hp.PollId                 (PollId)
 import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody)
 import Hp.RequestBody.CreatePoll (CreatePollRequestBody)
 import Hp.User                   (User)
+import Hp.UserProfile            (UserProfile)
 
 import Servant
 import Servant.API.Generic
@@ -41,6 +42,12 @@ data API route
       :: route
       :- Auth '[Cookie] (Entity User)
       :> Get '[HTML] Blaze.Html
+
+  , getUserProfileRoute
+      :: route
+      :- Auth '[Cookie] (Entity User)
+      :> "profile"
+      :> Get '[JSON] UserProfile
 
     -- Callback URL used for GitHub OAuth.
   , gitHubOauthCallbackRoute

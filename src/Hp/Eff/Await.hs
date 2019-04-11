@@ -18,7 +18,7 @@ data AwaitEffect (value :: Type) (m :: Type -> Type) (k :: Type) where
   deriving (Effect, HFunctor)
        via (FirstOrderEffect (AwaitEffect value))
 
--- | Await a value from an anonymous consumer.
+-- | Await a value from an anonymous producer.
 await ::
      ( Carrier sig m
      , Member (AwaitEffect value) sig

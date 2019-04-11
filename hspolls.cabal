@@ -125,6 +125,7 @@ library
     Hp.Handler.CreatePoll
     Hp.Handler.GetMetrics
     Hp.Handler.GetRoot
+    Hp.Handler.GetUserProfile
     Hp.Handler.GitHubOauthCallback
     Hp.IsEntity
     Hp.Main
@@ -142,6 +143,7 @@ library
     Hp.TBroadcastChan
     Hp.User
     Hp.UserId
+    Hp.UserProfile
     Hp.Worker.SendEmail
     Hp.Worker.SendPollCreatedEmail
     Prelude

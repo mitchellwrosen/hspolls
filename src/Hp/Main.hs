@@ -26,6 +26,7 @@ import Hp.Handler.AnswerPoll          (handleAnswerPoll)
 import Hp.Handler.CreatePoll          (handleCreatePoll)
 import Hp.Handler.GetMetrics          (handleGetMetrics)
 import Hp.Handler.GetRoot             (handleGetRoot)
+import Hp.Handler.GetUserProfile      (handleGetUserProfile)
 import Hp.Handler.GitHubOauthCallback (handleGitHubOauthCallback)
 import Hp.Metrics                     (requestCounter)
 import Hp.PostgresConfig              (acquirePostgresPool)
@@ -51,7 +52,6 @@ import qualified Network.Wai              as Wai
 import qualified Network.Wai.Handler.Warp as Warp
 import qualified Prometheus
 import qualified Servant
-import qualified Servant.Client           as Servant (ClientError)
 import qualified Servant.Server.Generic   as Servant (genericServeTWithContext)
 import qualified SlaveThread
 
@@ -85,7 +85,8 @@ main = do
   jwtSettings :: JWTSettings <-
     either id pure (config ^. #session . #jwt)
 
-  pgPool <- acquirePostgresPool (config ^. #postgres)
+  pgPool :: Hasql.Pool <-
+    acquirePostgresPool (config ^. #postgres)
 
   pollAnsweredEventChan :: TBroadcastChan PollAnsweredEvent <-
     newTBroadcastChanIO
@@ -178,6 +179,7 @@ application
       , createPollRoute = handleCreatePoll
       , getRootRoute = handleGetRoot
       , getMetricsRoute = handleGetMetrics
+      , getUserProfileRoute = handleGetUserProfile
       , gitHubOauthCallbackRoute = handleGitHubOauthCallback
       }
     (cookieSettings
@@ -204,14 +206,5 @@ application
       >>> runYieldChan (unsafeTBroadcastChanToTChan pollCreatedEventChan)
 
           -- IO boilerplate
-      >>> runM @IO
-      >>> liftIO
+      >>> runM
       >>> Servant.Handler
-
-
--- TODO Generalize to ApplicationException
--- TODO Implement toServerError
-toServerError
-  :: Servant.ClientError
-  -> Servant.ServerError
-toServerError = undefined

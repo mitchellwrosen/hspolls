@@ -1,4 +1,6 @@
-module Hp.Worker.SendPollCreatedEmail where
+module Hp.Worker.SendPollCreatedEmail
+  ( sendPollCreatedEmailWorker
+  ) where
 
 import Hp.Eff.Await         (AwaitEffect, await)
 import Hp.Eff.PersistUser   (PersistUserEffect,
