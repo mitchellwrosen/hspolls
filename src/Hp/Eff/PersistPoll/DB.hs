@@ -14,14 +14,12 @@ import Hp.PollId          (PollId(..))
 import Control.Effect
 import Control.Effect.Carrier
 import Control.Effect.Sum
-import Data.Aeson             (toJSON)
+import Data.Time              (DiffTime)
 
-import qualified Data.Aeson           as A
-import qualified Data.ByteString.Lazy as BL
-import qualified Hasql.Decoders       as D
-import qualified Hasql.Encoders       as E
-import qualified Hasql.Session        as H
-import qualified Hasql.Statement      as H
+import qualified Hasql.Decoders  as D
+import qualified Hasql.Encoders  as E
+import qualified Hasql.Session   as H
+import qualified Hasql.Statement as H
 
 
 newtype PersistPollDBC m a
@@ -33,36 +31,63 @@ instance ( Carrier sig m
          , Member DB sig
          ) => Carrier (PersistPollEffect :+: sig) (PersistPollDBC m) where
   eff = PersistPollDBC . \case
-    L (SavePoll p k) -> do
-      let sql = "INSERT INTO polls (form, end_time) VALUES ($1, $2) RETURNING id"
-      runDB (H.statement p (H.Statement sql encodePoll (D.singleRow decodePollId) True)) >>= \case
-        Left err -> error (show err)
-        -- TODO handle error
-        Right pollId -> unPersistPollDBC $ k pollId
+    L (SavePoll duration elements k) -> do
+      doSavePoll duration elements >>=
+        unPersistPollDBC . k
     L (GetPoll pollId k) -> do
-      let sql = "SELECT form, end_time FROM polls WHERE id = $1"
-      runDB (H.statement pollId (H.Statement sql encodePollId ((fmap.fmap) (Entity pollId) (D.rowMaybe decodePoll)) True)) >>= \case
+      let sql = "SELECT created_at, duration, form FROM polls WHERE id = $1"
+      runDB (H.statement pollId (H.Statement sql encodePollId ((fmap.fmap) (Entity pollId) (D.rowMaybe pollDecoder)) True)) >>= \case
         Left err -> error (show err)
         -- TODO handle error
         Right x -> unPersistPollDBC $ k x
     R other -> eff (handleCoercible other)
     where
 
-encodePoll :: E.Params Poll
-encodePoll = mconcat
-  [ toJSON . elements >$< E.param E.jsonb
-  , endTime >$< E.param E.timestamptz
-  ]
+doSavePoll ::
+     ( Carrier sig m
+     , Member DB sig
+     )
+  => DiffTime
+  -> Seq PollFormElement
+  -> m (Entity Poll)
+doSavePoll duration elements =
+  runDB session >>= \case
+    -- TODO handle error
+    Left err ->
+      error (show err)
 
-decodePoll :: D.Row Poll
-decodePoll = Poll
-  <$> parseForm
-  <*> D.column D.timestamptz
+    Right poll ->
+      pure poll
+
   where
-    parseForm :: D.Row (Seq PollFormElement)
-    parseForm = D.column
-      . D.jsonbBytes
-      $ over _Left (view packed) . A.eitherDecode . BL.fromStrict
+    session :: H.Session (Entity Poll)
+    session =
+      H.statement
+        (duration, elements)
+        statement
+
+    statement :: H.Statement (DiffTime, Seq PollFormElement) (Entity Poll)
+    statement =
+      H.Statement sql pollEncoder decoder True
+
+      where
+        sql :: ByteString
+        sql =
+          "INSERT INTO polls (duration, form) VALUES ($1, $2) RETURNING created_at, id"
+
+        decoder :: D.Result (Entity Poll)
+        decoder =
+          D.singleRow
+            ((\created pollId ->
+              Entity
+                pollId
+                Poll
+                  { created = created
+                  , duration = duration
+                  , elements = elements
+                  })
+              <$> D.column D.timestamptz
+              <*> decodePollId)
 
 encodePollId :: E.Params PollId
 encodePollId = coerce (E.param E.uuid)

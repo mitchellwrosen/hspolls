@@ -7,7 +7,6 @@ import Hp.Eff.Yield              (YieldEffect, yield)
 import Hp.Entity                 (Entity(..))
 import Hp.Event.PollCreated      (PollCreatedEvent(..))
 import Hp.Poll                   (Poll(..))
-import Hp.PollId                 (PollId)
 import Hp.RequestBody.CreatePoll (CreatePollRequestBody(..))
 
 import Control.Effect
@@ -24,18 +23,10 @@ handleCreatePoll ::
   => CreatePollRequestBody
   -> m NoContent
 handleCreatePoll body = do
-  pollId :: PollId <-
-    savePoll poll
+  poll :: Entity Poll <-
+    savePoll (body ^. #duration) (body ^. #elements)
 
   yield PollCreatedEvent
-    { poll = Entity pollId poll }
+    { poll = poll }
 
   pure NoContent
-
-  where
-    poll :: Poll
-    poll =
-      Poll
-        { elements = body ^. #elements
-        , endTime = body ^. #endTime
-        }

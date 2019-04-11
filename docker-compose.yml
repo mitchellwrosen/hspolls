@@ -8,9 +8,6 @@ services:
       - type: "bind"
         source: "./db/schema.sql"
         target: "/docker-entrypoint-initdb.d/schema.sql"
-      - type: "volume"
-        source: "prometheus"
-        target: "/prometheus"
 
   prometheus:
     image: "prom/prometheus:v2.8.1"
@@ -19,6 +16,9 @@ services:
       - type: "bind"
         source: "./prometheus.yml"
         target: "/etc/prometheus/prometheus.yml"
+      - type: "volume"
+        source: "prometheus"
+        target: "/prometheus"
 
 version:
   '3.7'

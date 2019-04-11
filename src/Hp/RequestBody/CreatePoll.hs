@@ -5,13 +5,12 @@ module Hp.RequestBody.CreatePoll
 import Hp.PollFormElement
 
 import Data.Aeson (FromJSON)
-import Data.Time  (UTCTime)
+import Data.Time  (DiffTime)
 
 
 data CreatePollRequestBody
   = PollRequestBody
-  { elements :: Seq PollFormElement
-  , endTime :: UTCTime
+  { duration :: DiffTime
+  , elements :: Seq PollFormElement
   } deriving stock (Generic, Show)
     deriving anyclass (FromJSON)
-
