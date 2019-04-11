@@ -42,6 +42,8 @@ import System.Exit (exitFailure)
 
 import qualified Data.Text.IO             as Text
 import qualified Hasql.Pool               as Hasql (Pool)
+import qualified Network.AWS              as Aws
+import qualified Network.AWS.Env          as Aws (newEnvWith)
 import qualified Network.HTTP.Client      as Http
 import qualified Network.HTTP.Client.TLS  as Http (tlsManagerSettings)
 import qualified Network.Wai              as Wai
@@ -70,6 +72,14 @@ main = do
 
   httpManager :: Http.Manager <-
     Http.newManager Http.tlsManagerSettings
+
+  awsEnv :: Aws.Env <-
+    Aws.newEnvWith
+      (Aws.FromKeys
+        (config ^. #aws . #accessKeyId)
+        (config ^. #aws . #secretAccessKey))
+      Nothing
+      httpManager
 
   jwtSettings :: JWTSettings <-
     either id pure (config ^. #session . #jwt)
@@ -102,7 +112,7 @@ main = do
 
     sendEmailWorker
       & runAwaitChan chan
-      & runSendEmailAmazonSES undefined
+      & runSendEmailAmazonSES awsEnv
       & runM
 
   do

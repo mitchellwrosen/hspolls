@@ -2,6 +2,7 @@
 
 module Hp.Config
   ( Config(..)
+  , AwsConfig(..)
   , PostgresConfig(..)
   , readConfigFile
   , prettyPrintConfig
@@ -15,22 +16,32 @@ import Data.ByteArray.Encoding (Base(..), convertFromBase)
 import Data.Validation
 import Servant.Auth.Server     (CookieSettings(..), IsSecure(..),
                                 JWTSettings(..), SameSite(..),
-                                generateKey, defaultJWTSettings, defaultXsrfCookieSettings)
+                                defaultJWTSettings, defaultXsrfCookieSettings,
+                                generateKey)
 
 import qualified Crypto.JOSE.JWK as JWK
 import qualified Data.ByteString as ByteString
 import qualified Data.Text.IO    as Text
 import qualified Dhall
+import qualified Network.AWS     as AWS
 
 
 -- | Config parsed straight from a dhall value, with no additional checks on the
 -- values (e.g. the JWT must be a certain length string).
 data UnvalidatedConfig
   = UnvalidatedConfig
-  { gitHub :: UnvalidatedGitHubConfig
+  { aws :: UnvalidatedAwsConfig
+  , gitHub :: UnvalidatedGitHubConfig
   , port :: Natural
   , postgres :: UnvalidatedPostgresConfig
   , session :: UnvalidatedSessionConfig
+  } deriving stock (Generic)
+    deriving anyclass (Dhall.Interpret)
+
+data UnvalidatedAwsConfig
+  = UnvalidatedAwsConfig
+  { accessKeyId :: Text
+  , secretAccessKey :: Text
   } deriving stock (Generic)
     deriving anyclass (Dhall.Interpret)
 
@@ -65,10 +76,17 @@ data UnvalidatedSessionConfig
 
 data Config
   = Config
-  { gitHub :: GitHubConfig
+  { aws :: AwsConfig
+  , gitHub :: GitHubConfig
   , port :: Natural
   , postgres :: PostgresConfig
   , session :: SessionConfig
+  } deriving stock (Generic)
+
+data AwsConfig
+  = AwsConfig
+  { accessKeyId :: AWS.AccessKey
+  , secretAccessKey :: AWS.SecretKey
   } deriving stock (Generic)
 
 data GitHubConfig
@@ -103,64 +121,43 @@ readConfigFile path = do
 
 validateConfig :: UnvalidatedConfig -> Validation [Text] Config
 validateConfig config = do
+  aws :: AwsConfig <-
+    validateAwsConfig (config ^. #aws)
+
+  gitHub :: GitHubConfig <-
+    validateGitHubConfig (config ^. #gitHub)
+
   postgres :: PostgresConfig <-
-    validatePostgres (config ^. #postgres)
+    validatePostgresConfig (config ^. #postgres)
 
   session :: SessionConfig <-
-    validateSession (config ^. #session)
+    validateSessionConfig (config ^. #session)
 
   pure Config
-    { gitHub =
-        GitHubConfig
-          { clientId =
-              GitHubClientId (config ^. #gitHub . #clientId)
-          , clientSecret =
-              GitHubClientSecret (config ^. #gitHub . #clientSecret)
-          }
-
+    { aws = aws
+    , gitHub = gitHub
       -- TODO validate port is < 2^6
-    , port =
-        config ^. #port
-
-    , postgres =
-        postgres
-
-    , session =
-        session
+    , port = config ^. #port
+    , postgres = postgres
+    , session = session
     }
 
-validateCookieSettings ::
-     UnvalidatedSessionConfig
-  -> Validation [Text] CookieSettings
-validateCookieSettings config =
-  pure CookieSettings
-    { cookieDomain =
-        Nothing
+validateAwsConfig ::
+     UnvalidatedAwsConfig
+  -> Validation [Text] AwsConfig
+validateAwsConfig config =
+  pure AwsConfig
+    { accessKeyId = AWS.AccessKey (config ^. #accessKeyId . re utf8)
+    , secretAccessKey = AWS.SecretKey (config ^. #secretAccessKey . re utf8)
+    }
 
-    , cookieExpires =
-        Nothing
-
-    , cookieIsSecure =
-        if config ^. #secure
-          then Secure
-          else NotSecure
-
-    , cookieMaxAge =
-        fromIntegral <$> (config ^. #ttl)
-
-    , cookiePath =
-        Just "/"
-
-    , cookieSameSite =
-        SameSiteLax
-
-    , cookieXsrfSetting =
-        if config ^. #xsrf
-          then Just defaultXsrfCookieSettings
-          else Nothing
-
-    , sessionCookieName =
-        config ^. #name . re utf8
+validateGitHubConfig ::
+     UnvalidatedGitHubConfig
+  -> Validation [Text] GitHubConfig
+validateGitHubConfig config =
+  pure GitHubConfig
+    { clientId = GitHubClientId (config ^. #clientId)
+    , clientSecret = GitHubClientSecret (config ^. #clientSecret)
     }
 
 validateJWK :: Text -> Validation [Text] JWK
@@ -177,30 +174,64 @@ validateJWK bytes =
         _ ->
           Failure ["Invalid JWK (expected 256 base64-encoded bytes)"]
 
-validateJWTSettings ::
+validateSessionConfig ::
      UnvalidatedSessionConfig
-  -> Validation [Text] (Either (IO JWTSettings) JWTSettings)
-validateJWTSettings config =
-  case config ^. #jwk of
-    Nothing ->
-      pure (Left (defaultJWTSettings <$> generateKey))
-
-    Just bytes -> do
-      jwk :: JWK <-
-        validateJWK bytes
-
-      pure (Right (defaultJWTSettings jwk))
-
-validateSession :: UnvalidatedSessionConfig -> Validation [Text] SessionConfig
-validateSession config =
+  -> Validation [Text] SessionConfig
+validateSessionConfig config =
   SessionConfig
-    <$> validateCookieSettings config
-    <*> validateJWTSettings config
+    <$> validateCookieSettings
+    <*> validateJWTSettings
 
-validatePostgres ::
+  where
+    validateCookieSettings :: Validation [Text] CookieSettings
+    validateCookieSettings =
+      pure CookieSettings
+        { cookieDomain =
+            Nothing
+
+        , cookieExpires =
+            Nothing
+
+        , cookieIsSecure =
+            if config ^. #secure
+              then Secure
+              else NotSecure
+
+        , cookieMaxAge =
+            fromIntegral <$> (config ^. #ttl)
+
+        , cookiePath =
+            Just "/"
+
+        , cookieSameSite =
+            SameSiteLax
+
+        , cookieXsrfSetting =
+            if config ^. #xsrf
+              then Just defaultXsrfCookieSettings
+              else Nothing
+
+        , sessionCookieName =
+            config ^. #name . re utf8
+        }
+
+    validateJWTSettings ::
+         Validation [Text] (Either (IO JWTSettings) JWTSettings)
+    validateJWTSettings =
+      case config ^. #jwk of
+        Nothing ->
+          pure (Left (defaultJWTSettings <$> generateKey))
+
+        Just bytes -> do
+          jwk :: JWK <-
+            validateJWK bytes
+
+          pure (Right (defaultJWTSettings jwk))
+
+validatePostgresConfig ::
      UnvalidatedPostgresConfig
   -> Validation [Text] PostgresConfig
-validatePostgres config =
+validatePostgresConfig config =
   pure PostgresConfig
     { host = config ^. #host
     , port = config ^. #port
@@ -213,6 +244,8 @@ validatePostgres config =
 
 prettyPrintConfig :: Config -> IO ()
 prettyPrintConfig config = do
+  Text.putStrLn "aws_access_key_id = <AccessKey>"
+  Text.putStrLn "aws_secret_access_key = <SecretKey>"
   Text.putStrLn $
     "github_client_id = " <> config ^. #gitHub . #clientId . to show . packed
   Text.putStrLn $

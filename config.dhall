@@ -1,8 +1,15 @@
-{ gitHub =
+{ aws =
+    ./secrets/aws.dhall
+    ?
+    { accessKeyId = "DummyAccessKeyId"
+    , secretAccessKey = "DummySecretAccessKey"
+    }
+
+, gitHub =
     ./secrets/github.dhall
     ?
-    { clientId = "DummyGitHubClientId"
-    , clientSecret = "DummyGitHubClientSecret"
+    { clientId = "DummyClientId"
+    , clientSecret = "DummyClientSecret"
     }
 
 , postgres =
