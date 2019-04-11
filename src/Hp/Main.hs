@@ -58,7 +58,7 @@ import qualified SlaveThread
 main :: IO ()
 main = do
   config :: Config <-
-    readConfigFile "./config.dhall" >>= \case
+    readConfigFile "./etc/config.dhall" >>= \case
       Left errs -> do
         for_ errs Text.putStrLn
         exitFailure

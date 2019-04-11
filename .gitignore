@@ -2,8 +2,10 @@
 .ghci
 .ghcid
 dist-newstyle/
-pg.dhall
-secrets/
+etc/aws.dhall
+etc/github.dhall
+etc/prometheus.yaml
+docker-compose.yaml
 **/*/app.js
 **/*/bower_components
 **/*/node_modules
