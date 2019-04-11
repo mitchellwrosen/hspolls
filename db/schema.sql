@@ -1,6 +1,20 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- TODO poll created by nullable user
+CREATE TABLE users (
+  id
+    uuid
+    DEFAULT uuid_generate_v4(),
+
+  -- The user's GitHub username, or NULL if they haven't authenticated with
+  -- GitHub. Once set, may be overwritten if the user decides to authenticate
+  -- as a different GitHub user (we only want to track/display one).
+  github
+    text,
+
+  PRIMARY KEY (id),
+  UNIQUE (github)
+);
+
 CREATE TABLE polls (
   id
     uuid
@@ -19,6 +33,10 @@ CREATE TABLE polls (
     jsonb
     NOT NULL,
 
+  userId
+    uuid,
+
+  FOREIGN KEY (userId) REFERENCES users (id),
   PRIMARY KEY (id)
 );
 
@@ -41,21 +59,6 @@ CREATE TABLE poll_responses (
     uuid
     NOT NULL,
 
-  FOREIGN KEY (poll) REFERENCES polls(id),
+  FOREIGN KEY (poll) REFERENCES polls (id),
   PRIMARY KEY (id)
-);
-
-CREATE TABLE users (
-  id
-    uuid
-    DEFAULT uuid_generate_v4(),
-
-  -- The user's GitHub username, or NULL if they haven't authenticated with
-  -- GitHub. Once set, may be overwritten if the user decides to authenticate
-  -- as a different GitHub user (we only want to track/display one).
-  github
-    text,
-
-  PRIMARY KEY (id),
-  UNIQUE (github)
 );

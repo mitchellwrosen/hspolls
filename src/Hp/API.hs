@@ -29,7 +29,8 @@ data API route
 
   , createPollRoute
       :: route
-      :- "poll"
+      :- Auth '[Cookie] (Entity User)
+      :> "poll"
       :> ReqBody '[JSON] CreatePollRequestBody
       :> Post '[JSON] NoContent
 

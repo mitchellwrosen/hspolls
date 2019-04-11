@@ -12,6 +12,7 @@ import Hp.Eff.DB                      (runDBC)
 import Hp.Eff.GitHubAuth.Http         (runGitHubAuthHttp)
 import Hp.Eff.HttpRequest.IO          (runHttpRequestIO)
 import Hp.Eff.HttpSession.IO          (runHttpSessionIO)
+import Hp.Eff.Log.Stdout              (runLogStdout)
 import Hp.Eff.PersistPoll.DB          (PersistPollDBC(..))
 import Hp.Eff.PersistPollAnswer.DB    (runPersistPollAnswerDB)
 import Hp.Eff.PersistUser.DB          (runPersistUserDB)
@@ -34,13 +35,11 @@ import Hp.TBroadcastChan
 import Hp.Worker.SendEmail            (sendEmailWorker)
 import Hp.Worker.SendPollCreatedEmail (sendPollCreatedEmailWorker)
 
-import Control.Concurrent     (forkIO)
 import Control.Concurrent.STM
 import Control.Effect
--- import Control.Effect.Error
--- import Control.Monad.Trans.Except (ExceptT(..))
-import Servant     (Context((:.)))
-import System.Exit (exitFailure)
+import Servant                (Context((:.)))
+import Servant.Auth.Server    (CookieSettings, JWTSettings)
+import System.Exit            (exitFailure)
 
 import qualified Data.Text.IO             as Text
 import qualified Hasql.Pool               as Hasql (Pool)
@@ -54,8 +53,6 @@ import qualified Prometheus
 import qualified Servant
 import qualified Servant.Server.Generic   as Servant (genericServeTWithContext)
 import qualified SlaveThread
-
-import Servant.Auth.Server as Servant
 
 
 main :: IO ()
@@ -115,16 +112,8 @@ main = do
     sendEmailWorker
       & runAwaitChan chan
       & runSendEmailAmazonSES awsEnv
+      & runLogStdout
       & runM
-
-  do
-    -- Debug! Print these events forever
-    let go eventChan =
-          void . forkIO $ do
-            chan <- dupTBroadcastChanIO eventChan
-            forever (atomically (readTChan chan) >>= print)
-    go pollAnsweredEventChan
-    go pollCreatedEventChan
 
   Warp.run
     (fromIntegral (config ^. #port))

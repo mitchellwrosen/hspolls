@@ -9,6 +9,7 @@ import Hp.Entity          (Entity)
 import Hp.Poll
 import Hp.PollFormElement (PollFormElement)
 import Hp.PollId          (PollId(..))
+import Hp.UserId          (UserId)
 
 import Control.Effect
 import Control.Effect.Carrier
@@ -24,6 +25,7 @@ data PersistPollEffect (m :: Type -> Type) (k :: Type) where
   SavePoll ::
        DiffTime
     -> Seq PollFormElement
+    -> Maybe UserId
     -> (Entity Poll -> k)
     -> PersistPollEffect m k
 
@@ -46,6 +48,7 @@ savePoll ::
      )
   => DiffTime
   -> Seq PollFormElement
+  -> Maybe UserId
   -> m (Entity Poll)
-savePoll duration elements =
-  send (SavePoll duration elements pure)
+savePoll duration elements userId =
+  send (SavePoll duration elements userId pure)

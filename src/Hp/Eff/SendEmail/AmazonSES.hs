@@ -4,6 +4,7 @@ module Hp.Eff.SendEmail.AmazonSES
   ( runSendEmailAmazonSES
   ) where
 
+import Hp.Eff.Log       (LogEffect, log)
 import Hp.Eff.SendEmail (SendEmailEffect(..))
 import Hp.Email         (Email(..))
 
@@ -11,20 +12,22 @@ import Control.Effect
 import Control.Effect.Carrier
 import Control.Effect.Reader
 import Control.Effect.Sum
+import Control.Exception.Safe       (try)
 import Control.Monad.Trans.Resource (runResourceT)
 
-import qualified Network.AWS               as AWS
-import qualified Network.AWS.SES.SendEmail as AWS
-import qualified Network.AWS.SES.Types     as AWS
+import qualified Network.AWS               as Aws
+import qualified Network.AWS.SES.SendEmail as Aws
+import qualified Network.AWS.SES.Types     as Aws
 
 
 newtype SendEmailCarrierAmazonSES m a
   = SendEmailCarrierAmazonSES
-  { unSendEmailCarrierAmazonSES :: ReaderC AWS.Env m a }
+  { unSendEmailCarrierAmazonSES :: ReaderC Aws.Env m a }
   deriving newtype (Applicative, Functor, Monad, MonadIO)
 
 instance
      ( Carrier sig m
+     , Member LogEffect sig
      , MonadIO m
      )
   => Carrier (SendEmailEffect :+: sig) (SendEmailCarrierAmazonSES m) where
@@ -35,12 +38,9 @@ instance
          (SendEmailCarrierAmazonSES m a)
     -> SendEmailCarrierAmazonSES m a
   eff = \case
-    L (GetMaxEmailRecipients next) ->
-      next 50
-
     L (SendEmail email next) ->
       SendEmailCarrierAmazonSES $ do
-        env :: AWS.Env <-
+        env :: Aws.Env <-
           ask
 
         doSendEmail env email
@@ -50,44 +50,55 @@ instance
     R other ->
       SendEmailCarrierAmazonSES (eff (R (handleCoercible other)))
 
+-- TODO break email up into max 50 recipients each
+
 doSendEmail ::
      ( Carrier sig m
+     , Member LogEffect sig
      , MonadIO m
      )
-  => AWS.Env
+  => Aws.Env
   -> Email
   -> m ()
-doSendEmail env email = do
-  response :: AWS.SendEmailResponse <-
-    liftIO (runResourceT (AWS.runAWS env (AWS.send request)))
+doSendEmail env email =
+  liftIO (try @_ @Aws.Error (runResourceT (Aws.runAWS env (Aws.send request)))) >>= \case
+    Left ex ->
+      log (show ex ^. packed)
 
-  liftIO (print response)
+    Right response ->
+      case response ^. Aws.sersResponseStatus of
+        200 ->
+          pure ()
 
-  -- TODO handle email response
-  -- TODO catch IO exceptions
-
-  pure ()
+        _ ->
+          log (show response ^. packed)
 
   where
-    request :: AWS.SendEmail
+    request :: Aws.SendEmail
     request =
       case email of
-        EmailPersonal _ ->
-          undefined
+        EmailPersonal email ->
+          Aws.sendEmail
+            (email ^. #from)
+            (Aws.destination
+              & Aws.dToAddresses .~ [email ^. #to])
+            (Aws.message
+              (Aws.content (email ^. #subject))
+              (Aws.body
+                & Aws.bText .~ Just (Aws.content (email ^. #body))))
 
         EmailTransactional email ->
-          AWS.sendEmail
-            "mitchellwrosen@gmail.com"
-            (AWS.destination
-              & AWS.dBCCAddresses .~ email ^. #bcc)
-            (AWS.message
-              (AWS.content "Subject!")
-              (AWS.body
-                & AWS.bText .~ Just (AWS.content "Plaintext email")
-                & AWS.bHTML .~ Just (AWS.content "<html><p>HTML email</p></html>")))
+          Aws.sendEmail
+            (email ^. #from)
+            (Aws.destination
+              & Aws.dBCCAddresses .~ email ^. #bcc)
+            (Aws.message
+              (Aws.content (email ^. #subject))
+              (Aws.body
+                & Aws.bText .~ Just (Aws.content (email ^. #body))))
 
 runSendEmailAmazonSES ::
-     AWS.Env
+     Aws.Env
   -> SendEmailCarrierAmazonSES m a
   -> m a
 runSendEmailAmazonSES env =

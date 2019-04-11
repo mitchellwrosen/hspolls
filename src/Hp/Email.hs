@@ -16,7 +16,7 @@ data PersonalEmail
   , from :: Text
   , subject :: Text
   , to :: Text
-  }
+  } deriving stock (Generic)
 
 -- | An email to a bunch of people (using BCC).
 data TransactionalEmail

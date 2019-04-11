@@ -8,10 +8,13 @@ import Hp.Entity                 (Entity(..))
 import Hp.Event.PollCreated      (PollCreatedEvent(..))
 import Hp.Poll                   (Poll(..))
 import Hp.RequestBody.CreatePoll (CreatePollRequestBody(..))
+import Hp.User                   (User)
+import Hp.UserId                 (UserId)
 
 import Control.Effect
-import Prelude        hiding (id)
-import Servant        (NoContent(..))
+import Prelude             hiding (id)
+import Servant             (NoContent(..))
+import Servant.Auth.Server (AuthResult(..))
 
 
 handleCreatePoll ::
@@ -20,13 +23,23 @@ handleCreatePoll ::
      , Member PersistPollEffect sig
      , MonadIO m
      )
-  => CreatePollRequestBody
+  => AuthResult (Entity User)
+  -> CreatePollRequestBody
   -> m NoContent
-handleCreatePoll body = do
+handleCreatePoll authResult body = do
   poll :: Entity Poll <-
-    savePoll (body ^. #duration) (body ^. #elements)
+    savePoll
+      (body ^. #duration)
+      (body ^. #elements)
+      userId
 
   yield PollCreatedEvent
     { poll = poll }
 
   pure NoContent
+
+  where
+    userId :: Maybe UserId
+    userId = do
+      Authenticated user <- pure authResult
+      pure (user ^. #key)

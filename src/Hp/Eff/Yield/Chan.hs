@@ -1,6 +1,4 @@
 -- | Handle yields by writing them to a broadcast TChan.
---
--- TODO newtype TChan to ensure it was made with newBroadcastTChan
 
 {-# LANGUAGE UndecidableInstances #-}
 

@@ -55,7 +55,7 @@ doGetUserEmailsSubscribedToPollCreatedEvents ::
      )
   => m [Text]
 doGetUserEmailsSubscribedToPollCreatedEvents =
-  pure ["frank@example.com"] -- TODO implement this
+  pure ["mitchellwrosen@gmail.com"] -- TODO implement this
 
 doPutUserByGitHubUserName ::
      ( Carrier sig m

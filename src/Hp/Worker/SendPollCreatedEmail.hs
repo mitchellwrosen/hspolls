@@ -44,8 +44,7 @@ handlePollCreatedEvent event addresses = do
   pure $ EmailTransactional TransactionalEmail
     { bcc = addresses
     , body =
-        "Poll " <> event ^. #poll . #key . Prelude.to show . packed <>
-        " created"
-    , from = ""
-    , subject = ""
+        event ^. #poll . #key . Prelude.to show . packed <> " created"
+    , from = "mitchellwrosen@gmail.com"
+    , subject = "Poll created"
     }

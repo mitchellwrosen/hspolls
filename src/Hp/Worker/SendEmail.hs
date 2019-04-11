@@ -3,7 +3,7 @@ module Hp.Worker.SendEmail
   ) where
 
 import Hp.Eff.Await     (AwaitEffect, await)
-import Hp.Eff.SendEmail (SendEmailEffect, getMaxEmailRecipients, sendEmail)
+import Hp.Eff.SendEmail (SendEmailEffect, sendEmail)
 import Hp.Email         (Email(..))
 
 import Control.Effect
@@ -15,19 +15,5 @@ sendEmailWorker ::
      , Member SendEmailEffect sig
      )
   => m void
-sendEmailWorker = do
-  maxRecipients :: Natural <-
-    getMaxEmailRecipients
-
-  forever $ do
-    email :: Email <-
-      await
-
-    case email of
-      EmailPersonal{} ->
-        sendEmail email
-
-      EmailTransactional transactionalEmail ->
-        if fromIntegral (length (transactionalEmail ^. #bcc)) <= maxRecipients
-          then sendEmail email
-          else error "too many bcc"
+sendEmailWorker =
+  forever (await >>= sendEmail)

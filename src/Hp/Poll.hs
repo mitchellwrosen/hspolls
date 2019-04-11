@@ -7,6 +7,7 @@ module Hp.Poll
 import Hp.IsEntity        (IsEntity(..))
 import Hp.PollFormElement (PollFormElement)
 import Hp.PollId          (PollId)
+import Hp.UserId          (UserId, userIdEncoder, userIdDecoder)
 
 import Data.Aeson (eitherDecodeStrict, toJSON)
 import Data.Time  (DiffTime, UTCTime)
@@ -20,6 +21,7 @@ data Poll
   { created :: UTCTime
   , duration :: DiffTime
   , elements :: Seq PollFormElement
+  , userId :: Maybe UserId
   } deriving stock (Generic, Show)
 
 instance IsEntity Poll where
@@ -29,35 +31,16 @@ instance IsEntity Poll where
 pollDecoder :: Decoder.Row Poll
 pollDecoder =
   Poll
-    <$> decodeCreated
-    <*> decodeDuration
-    <*> decodeElements
+    <$> Decoder.column Decoder.timestamptz
+    <*> Decoder.column Decoder.interval
+    <*> Decoder.column
+          (Decoder.jsonbBytes (over _Left (view packed) . eitherDecodeStrict))
+    <*> Decoder.nullableColumn userIdDecoder
 
-  where
-    decodeCreated :: Decoder.Row UTCTime
-    decodeCreated =
-      Decoder.column Decoder.timestamptz
-
-    decodeDuration :: Decoder.Row DiffTime
-    decodeDuration =
-      Decoder.column Decoder.interval
-
-    decodeElements :: Decoder.Row (Seq PollFormElement)
-    decodeElements =
-      Decoder.column
-        (Decoder.jsonbBytes (over _Left (view packed) . eitherDecodeStrict))
-
-pollEncoder :: Encoder.Params (DiffTime, Seq PollFormElement)
+pollEncoder :: Encoder.Params (DiffTime, Seq PollFormElement, Maybe UserId)
 pollEncoder =
   fold
-    [ view _1 >$< durationEncoder
-    , view _2 >$< elementsEncoder
+    [ view _1 >$< Encoder.param Encoder.interval
+    , toJSON . view _2 >$< Encoder.param Encoder.jsonb
+    , view _3 >$< Encoder.nullableParam userIdEncoder
     ]
-  where
-    durationEncoder :: Encoder.Params DiffTime
-    durationEncoder =
-      Encoder.param Encoder.interval
-
-    elementsEncoder :: Encoder.Params (Seq PollFormElement)
-    elementsEncoder =
-      toJSON >$< Encoder.param Encoder.jsonb
