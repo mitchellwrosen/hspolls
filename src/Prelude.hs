@@ -31,4 +31,4 @@ import Data.Text.Lens             as X (builder, packed, text, unpacked, _Text)
 import Data.Text.Strict.Lens      as X (utf8)
 import GHC.Generics               as X (Generic)
 import Numeric.Natural            as X (Natural)
-import PreludeFromBase            as X
+import PreludeFromBase            as X hiding (log)

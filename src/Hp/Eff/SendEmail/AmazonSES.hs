@@ -58,8 +58,10 @@ doSendEmail ::
   -> Email
   -> m ()
 doSendEmail env email = do
-  _response :: AWS.SendEmailResponse <-
+  response :: AWS.SendEmailResponse <-
     liftIO (runResourceT (AWS.runAWS env (AWS.send request)))
+
+  liftIO (print response)
 
   -- TODO handle email response
   -- TODO catch IO exceptions

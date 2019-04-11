@@ -31,6 +31,7 @@ library
     prometheus-metrics-ghc ^>= 1.0,
     resourcet ^>= 1.2,
     safe-exceptions,
+    say ^>= 0.1,
     servant ^>= 0.16,
     servant-auth ^>= 0.3,
     servant-auth-server ^>= 0.4,
@@ -95,6 +96,8 @@ library
     Hp.Eff.HttpRequest.IO
     Hp.Eff.HttpSession
     Hp.Eff.HttpSession.IO
+    Hp.Eff.Log
+    Hp.Eff.Log.Stdout
     Hp.Eff.PersistPoll
     Hp.Eff.PersistPoll.DB
     Hp.Eff.PersistPollAnswer
