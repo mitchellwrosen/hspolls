@@ -139,6 +139,7 @@ library
     Hp.PostgresConfig
     Hp.RequestBody.AnswerPoll
     Hp.RequestBody.CreatePoll
+    Hp.TBroadcastChan
     Hp.User
     Hp.UserId
     Hp.Worker.SendEmail

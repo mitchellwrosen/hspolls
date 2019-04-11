@@ -29,6 +29,7 @@ import Hp.Handler.GetRoot             (handleGetRoot)
 import Hp.Handler.GitHubOauthCallback (handleGitHubOauthCallback)
 import Hp.Metrics                     (requestCounter)
 import Hp.PostgresConfig              (acquirePostgresPool)
+import Hp.TBroadcastChan
 import Hp.Worker.SendEmail            (sendEmailWorker)
 import Hp.Worker.SendPollCreatedEmail (sendPollCreatedEmailWorker)
 
@@ -86,29 +87,29 @@ main = do
 
   pgPool <- acquirePostgresPool (config ^. #postgres)
 
-  pollAnsweredEventChan :: TChan PollAnsweredEvent <-
-    atomically newBroadcastTChan
+  pollAnsweredEventChan :: TBroadcastChan PollAnsweredEvent <-
+    newTBroadcastChanIO
 
-  pollCreatedEventChan :: TChan PollCreatedEvent <-
-    atomically newBroadcastTChan
+  pollCreatedEventChan :: TBroadcastChan PollCreatedEvent <-
+    newTBroadcastChanIO
 
-  emailChan :: TChan Email <-
-    atomically newBroadcastTChan
+  emailChan :: TBroadcastChan Email <-
+    newTBroadcastChanIO
 
   void . SlaveThread.fork $ do
     chan :: TChan PollCreatedEvent <-
-      atomically (dupTChan pollCreatedEventChan)
+      dupTBroadcastChanIO pollCreatedEventChan
 
     sendPollCreatedEmailWorker
       & runAwaitChan chan
       & runPersistUserDB
       & runDBC pgPool
-      & runYieldChan emailChan
+      & runYieldChan (unsafeTBroadcastChanToTChan emailChan)
       & runM
 
   void . SlaveThread.fork $ do
     chan :: TChan Email <-
-      atomically (dupTChan emailChan)
+      dupTBroadcastChanIO emailChan
 
     sendEmailWorker
       & runAwaitChan chan
@@ -116,10 +117,10 @@ main = do
       & runM
 
   do
-    -- Lazy! Just print these events forever
+    -- Debug! Print these events forever
     let go eventChan =
           void . forkIO $ do
-            chan <- atomically (dupTChan eventChan)
+            chan <- dupTBroadcastChanIO eventChan
             forever (atomically (readTChan chan) >>= print)
     go pollAnsweredEventChan
     go pollCreatedEventChan
@@ -155,8 +156,8 @@ application ::
   -> Http.Manager
   -> JWTSettings
   -> Hasql.Pool
-  -> TChan PollAnsweredEvent
-  -> TChan PollCreatedEvent
+  -> TBroadcastChan PollAnsweredEvent
+  -> TBroadcastChan PollCreatedEvent
   -> Wai.Request
   -> (Wai.Response -> IO Wai.ResponseReceived)
   -> IO Wai.ResponseReceived
@@ -199,8 +200,8 @@ application
       >>> runHttpSessionIO cookieSettings jwtSettings
 
           -- Event handlers
-      >>> runYieldChan pollAnsweredEventChan
-      >>> runYieldChan pollCreatedEventChan
+      >>> runYieldChan (unsafeTBroadcastChanToTChan pollAnsweredEventChan)
+      >>> runYieldChan (unsafeTBroadcastChanToTChan pollCreatedEventChan)
 
           -- IO boilerplate
       >>> runM @IO
