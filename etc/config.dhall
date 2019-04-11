@@ -1,12 +1,12 @@
 { aws =
-    ./secrets/aws.dhall
+    ./aws.dhall
     ?
     { accessKeyId = "DummyAccessKeyId"
     , secretAccessKey = "DummySecretAccessKey"
     }
 
 , gitHub =
-    ./secrets/github.dhall
+    ./github.dhall
     ?
     { clientId = "DummyClientId"
     , clientSecret = "DummyClientSecret"
@@ -28,7 +28,7 @@
     { -- The JSON Web Key used to sign and verify JSON Web Tokens. If None,
       -- generates a random JWK at runtime.
       jwk =
-        Some ./secrets/jwk.dhall
+        Some ./jwk.dhall
         ?
         None Text
 

@@ -37,9 +37,11 @@ import Hp.Worker.SendPollCreatedEmail (sendPollCreatedEmailWorker)
 
 import Control.Concurrent.STM
 import Control.Effect
-import Servant                (Context((:.)))
-import Servant.Auth.Server    (CookieSettings, JWTSettings)
-import System.Exit            (exitFailure)
+import Control.Effect.Error       (runError)
+import Control.Monad.Trans.Except (ExceptT(..))
+import Servant                    (Context((:.)))
+import Servant.Auth.Server        (CookieSettings, JWTSettings)
+import System.Exit                (exitFailure)
 
 import qualified Data.Text.IO             as Text
 import qualified Hasql.Pool               as Hasql (Pool)
@@ -194,6 +196,10 @@ application
       >>> runYieldChan (unsafeTBroadcastChanToTChan pollAnsweredEventChan)
       >>> runYieldChan (unsafeTBroadcastChanToTChan pollCreatedEventChan)
 
+          -- Error handlers
+      >>> runError @Servant.ServerError
+
           -- IO boilerplate
-      >>> runM
+      >>> runM @IO
+      >>> ExceptT
       >>> Servant.Handler

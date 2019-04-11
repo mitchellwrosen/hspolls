@@ -7,11 +7,14 @@ import Hp.User        (User(..))
 import Hp.UserProfile (UserProfile(..))
 
 import Control.Effect
-import Servant.Auth.Server (AuthResult(..))
+import Control.Effect.Error
+import Servant.Auth.Server  (AuthResult(..))
+import Servant.Server       (ServerError, err401)
 
 
 handleGetUserProfile ::
      ( Carrier sig m
+     , Member (Error ServerError) sig
      )
   => AuthResult (Entity User)
   -> m UserProfile
@@ -22,4 +25,4 @@ handleGetUserProfile = \case
       }
 
   _ ->
-    undefined -- TODO redirect
+    throwError err401
