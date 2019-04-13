@@ -62,10 +62,11 @@ servantClient =
 
 gitHubGetUser ::
      ( Carrier sig m
+     , Member (Error Servant.ClientError) sig
      , Member HttpRequestEffect sig
      )
   => GitHubAccessToken
-  -> m (Either SomeException GitHubUser)
+  -> m (Either Servant.Response GitHubUser)
 gitHubGetUser accessToken =
   fromServantClient
     apiBaseUrl
@@ -76,6 +77,7 @@ gitHubGetUser accessToken =
 
 gitHubPostLoginOauthAccessToken ::
      ( Carrier sig m
+     , Member (Error Servant.ClientError) sig
      , Member HttpRequestEffect sig
      )
   => GitHubClientId
@@ -83,7 +85,7 @@ gitHubPostLoginOauthAccessToken ::
   -> GitHubCode
   -> Maybe Text
   -> Maybe Text
-  -> m (Either SomeException (GitHubResponse GitHubPostLoginOauthAccessTokenResponse))
+  -> m (Either Servant.Response (GitHubResponse GitHubPostLoginOauthAccessTokenResponse))
 gitHubPostLoginOauthAccessToken clientId clientSecret code redirectUri state =
   fromServantClient
     baseUrl

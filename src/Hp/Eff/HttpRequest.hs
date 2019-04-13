@@ -10,7 +10,7 @@ import Hp.Eff.FirstOrder (FirstOrderEffect(..))
 
 import Control.Effect
 import Control.Effect.Carrier
-import Control.Exception      (toException)
+import Control.Effect.Error   (throwError)
 import Control.Monad.Free     (Free(..))
 
 import qualified Servant.Client.Core as Servant (BaseUrl, Request, Response)
@@ -22,7 +22,7 @@ data HttpRequestEffect (m :: Type -> Type) (k :: Type) where
   HttpRequest ::
        Servant.BaseUrl
     -> Servant.Request
-    -> (Either SomeException Servant.Response -> k)
+    -> (Either Servant.Response Servant.Response -> k)
     -> HttpRequestEffect m k
 
   deriving stock (Functor)
@@ -36,7 +36,7 @@ httpRequest ::
      )
   => Servant.BaseUrl
   -> Servant.Request
-  -> m (Either SomeException Servant.Response)
+  -> m (Either Servant.Response Servant.Response)
 httpRequest baseUrl request =
   send (HttpRequest baseUrl request pure)
 
@@ -48,24 +48,30 @@ httpRequest baseUrl request =
 -- (Pure) or a failure node (Free Throw).
 fromServantClient ::
      ( Carrier sig m
+     , Member (Error Servant.ClientError) sig
      , Member HttpRequestEffect sig
      )
   => Servant.BaseUrl
   -> Free Servant.ClientF a
-  -> m (Either SomeException a)
+  -> m (Either Servant.Response a)
 fromServantClient baseUrl = \case
   Free (Servant.RunRequest request next) ->
     httpRequest baseUrl request >>= \case
-      Left ex ->
-        pure (Left ex)
+      Left response ->
+        pure (Left response)
 
       Right response ->
         case next response of
-          Pure token ->
-            pure (Right token)
+          Pure result ->
+            pure (Right result)
 
-          Free (Servant.Throw err) ->
-            pure (Left (toException err))
+          Free (Servant.Throw clientError) ->
+            case clientError of
+              Servant.FailureResponse _ response ->
+                pure (Left response)
+
+              _ ->
+                throwError clientError
 
           Free Servant.RunRequest{} ->
             undefined

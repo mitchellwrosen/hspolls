@@ -11,9 +11,9 @@ import Hp.Eff.HttpRequest (HttpRequestEffect(..))
 
 import Control.Effect
 import Control.Effect.Carrier
+import Control.Effect.Error   (throwError)
 import Control.Effect.Reader
 import Control.Effect.Sum
-import Control.Exception.Safe (toException, tryAny)
 
 import qualified Network.HTTP.Client                as Http
 import qualified Servant.Client                     as Servant
@@ -27,6 +27,7 @@ newtype HttpRequestCarrierIO m a
 
 instance
      ( Carrier sig m
+     , Member (Error Servant.ClientError) sig
      , MonadIO m
      )
   => Carrier (HttpRequestEffect :+: sig) (HttpRequestCarrierIO m) where
@@ -47,13 +48,25 @@ instance
       HttpRequestCarrierIO (eff (R (handleCoercible other)))
 
 doHttpRequestIO ::
-     MonadIO m
+     ( Carrier sig m
+     , Member (Error Servant.ClientError) sig
+     , MonadIO m
+     )
   => Http.Manager
   -> Servant.BaseUrl
   -> Servant.Request
-  -> m (Either SomeException Servant.Response)
+  -> m (Either Servant.Response Servant.Response)
 doHttpRequestIO manager baseUrl request =
-  liftIO (fromResult <$> tryAny doRequest)
+  -- TODO catch IOExceptions
+  liftIO doRequest >>= \case
+    Left (Servant.FailureResponse _ response) ->
+      pure (Left response)
+
+    Left clientError ->
+      throwError clientError
+
+    Right response ->
+      pure (Right response)
 
   where
     doRequest :: IO (Either Servant.ClientError Servant.Response)
@@ -65,19 +78,6 @@ doHttpRequestIO manager baseUrl request =
           , Servant.baseUrl = baseUrl
           , Servant.cookieJar = Nothing
           }
-
-    fromResult ::
-         Either SomeException (Either Servant.ClientError Servant.Response)
-      -> Either SomeException Servant.Response
-    fromResult = \case
-      Left ex ->
-        Left ex
-
-      Right (Left err) ->
-        Left (toException err)
-
-      Right (Right response) ->
-        Right response
 
 runHttpRequestIO ::
      Http.Manager

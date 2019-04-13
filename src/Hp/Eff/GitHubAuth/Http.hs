@@ -6,6 +6,7 @@ module Hp.Eff.GitHubAuth.Http
 
 import Hp.Eff.GitHubAuth                           (GitHubAuthEffect(..))
 import Hp.Eff.HttpRequest                          (HttpRequestEffect)
+import Hp.Eff.Log                                  (LogEffect, log)
 import Hp.GitHub                                   (gitHubGetUser, gitHubPostLoginOauthAccessToken)
 import Hp.GitHub.ClientId                          (GitHubClientId)
 import Hp.GitHub.ClientSecret                      (GitHubClientSecret)
@@ -19,6 +20,8 @@ import Control.Effect.Carrier
 import Control.Effect.Reader
 import Control.Effect.Sum
 
+import qualified Servant.Client as Servant (ClientError, Response)
+
 -- TODO log failures instead of discarding them
 
 newtype GitHubAuthCarrierHttp m a
@@ -30,8 +33,9 @@ newtype GitHubAuthCarrierHttp m a
 
 instance
      ( Carrier sig m
+     , Member (Error Servant.ClientError) sig
      , Member HttpRequestEffect sig
-     , MonadIO m -- TODO replace MonadIO with logging effect
+     , Member LogEffect sig
      )
   => Carrier (GitHubAuthEffect :+: sig) (GitHubAuthCarrierHttp m) where
 
@@ -53,8 +57,9 @@ instance
 doGitHubAuth ::
      ∀ m sig.
      ( Carrier sig m
+     , Member (Error Servant.ClientError) sig
      , Member HttpRequestEffect sig
-     , MonadIO m
+     , Member LogEffect sig
      )
   => GitHubClientId
   -> GitHubClientSecret
@@ -62,18 +67,18 @@ doGitHubAuth ::
   -> m (Maybe GitHubUser)
 doGitHubAuth clientId clientSecret code =
   doPost >>= \case
-    Left ex -> do
-      liftIO (print ex)
+    Left response -> do
+      log (show response ^. packed)
       pure Nothing
 
     Right (GitHubResponseError err) -> do
-      liftIO (print err)
+      log (show err ^. packed)
       pure Nothing
 
     Right (GitHubResponseSuccess response) ->
       gitHubGetUser (response ^. #access_token) >>= \case
-        Left ex -> do
-          liftIO (print ex)
+        Left response -> do
+          log (show response ^. packed)
           pure Nothing
 
         Right user ->
@@ -81,7 +86,7 @@ doGitHubAuth clientId clientSecret code =
 
   where
     doPost ::
-          m (Either SomeException (GitHubResponse GitHubPostLoginOauthAccessTokenResponse))
+          m (Either Servant.Response (GitHubResponse GitHubPostLoginOauthAccessTokenResponse))
     doPost =
       gitHubPostLoginOauthAccessToken
         clientId

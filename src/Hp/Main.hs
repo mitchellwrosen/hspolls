@@ -5,35 +5,36 @@
 module Hp.Main where
 
 import Hp.API
-import Hp.Config                      (Config(..), prettyPrintConfig,
-                                       readConfigFile)
-import Hp.Eff.Await.Chan              (runAwaitChan)
-import Hp.Eff.DB                      (runDBC)
-import Hp.Eff.GitHubAuth.Http         (runGitHubAuthHttp)
-import Hp.Eff.HttpRequest.IO          (runHttpRequestIO)
-import Hp.Eff.HttpSession.IO          (runHttpSessionIO)
-import Hp.Eff.Log.Stdout              (runLogStdout)
-import Hp.Eff.PersistPoll.DB          (PersistPollDBC(..))
-import Hp.Eff.PersistPollAnswer.DB    (runPersistPollAnswerDB)
-import Hp.Eff.PersistUser.DB          (runPersistUserDB)
-import Hp.Eff.SendEmail.AmazonSES     (runSendEmailAmazonSES)
-import Hp.Eff.Yield.Chan              (runYieldChan)
-import Hp.Email                       (Email)
-import Hp.Event.PollAnswered          (PollAnsweredEvent)
-import Hp.Event.PollCreated           (PollCreatedEvent)
-import Hp.GitHub.ClientId             (GitHubClientId)
-import Hp.GitHub.ClientSecret         (GitHubClientSecret)
-import Hp.Handler.AnswerPoll          (handleAnswerPoll)
-import Hp.Handler.CreatePoll          (handleCreatePoll)
-import Hp.Handler.GetMetrics          (handleGetMetrics)
-import Hp.Handler.GetRoot             (handleGetRoot)
-import Hp.Handler.GetUserProfile      (handleGetUserProfile)
-import Hp.Handler.GitHubOauthCallback (handleGitHubOauthCallback)
-import Hp.Metrics                     (requestCounter)
-import Hp.PostgresConfig              (acquirePostgresPool)
+import Hp.Config                           (Config(..), readConfigFile)
+import Hp.Eff.Await.Chan                   (runAwaitChan)
+import Hp.Eff.DB                           (runDBC)
+import Hp.Eff.Error.Fail                   (runErrorFail)
+import Hp.Eff.GitHubAuth.Http              (runGitHubAuthHttp)
+import Hp.Eff.HttpRequest.IO               (runHttpRequestIO)
+import Hp.Eff.HttpSession.IO               (runHttpSessionIO)
+import Hp.Eff.Log.Stdout                   (runLogStdout)
+import Hp.Eff.PersistPoll.DB               (PersistPollDBC(..))
+import Hp.Eff.PersistPollAnswer.DB         (runPersistPollAnswerDB)
+import Hp.Eff.PersistUser.DB               (runPersistUserDB)
+import Hp.Eff.SendEmail.AmazonSES          (runSendEmailAmazonSES)
+import Hp.Eff.ServantClientError.LogAnd500 (runServantClientErrorLogAnd500)
+import Hp.Eff.Yield.Chan                   (runYieldChan)
+import Hp.Email                            (Email)
+import Hp.Event.PollAnswered               (PollAnsweredEvent)
+import Hp.Event.PollCreated                (PollCreatedEvent)
+import Hp.GitHub.ClientId                  (GitHubClientId)
+import Hp.GitHub.ClientSecret              (GitHubClientSecret)
+import Hp.Handler.AnswerPoll               (handleAnswerPoll)
+import Hp.Handler.CreatePoll               (handleCreatePoll)
+import Hp.Handler.GetMetrics               (handleGetMetrics)
+import Hp.Handler.GetRoot                  (handleGetRoot)
+import Hp.Handler.GetUserProfile           (handleGetUserProfile)
+import Hp.Handler.GitHubOauthCallback      (handleGitHubOauthCallback)
+import Hp.Metrics                          (requestCounter)
+import Hp.PostgresConfig                   (acquirePostgresPool)
 import Hp.TBroadcastChan
-import Hp.Worker.SendEmail            (sendEmailWorker)
-import Hp.Worker.SendPollCreatedEmail (sendPollCreatedEmailWorker)
+import Hp.Worker.SendEmail                 (sendEmailWorker)
+import Hp.Worker.SendPollCreatedEmail      (sendPollCreatedEmailWorker)
 
 import Control.Concurrent.STM
 import Control.Effect
@@ -53,6 +54,7 @@ import qualified Network.Wai              as Wai
 import qualified Network.Wai.Handler.Warp as Warp
 import qualified Prometheus
 import qualified Servant
+import qualified Servant.Client           as Servant (ClientError)
 import qualified Servant.Server.Generic   as Servant (genericServeTWithContext)
 import qualified SlaveThread
 
@@ -67,8 +69,6 @@ main = do
 
       Right config ->
         pure config
-
-  prettyPrintConfig config
 
   httpManager :: Http.Manager <-
     Http.newManager Http.tlsManagerSettings
@@ -197,7 +197,12 @@ application
       >>> runYieldChan (unsafeTBroadcastChanToTChan pollCreatedEventChan)
 
           -- Error handlers
+      >>> runErrorFail @Servant.ClientError
+      >>> runServantClientErrorLogAnd500
       >>> runError @Servant.ServerError
+
+          -- Logging
+      >>> runLogStdout
 
           -- IO boilerplate
       >>> runM @IO
