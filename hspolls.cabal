@@ -148,6 +148,7 @@ library
     Hp.RequestBody.AnswerPoll
     Hp.RequestBody.CreatePoll
     Hp.RequestBody.Subscribe
+    Hp.Subscription
     Hp.TBroadcastChan
     Hp.User
     Hp.UserId

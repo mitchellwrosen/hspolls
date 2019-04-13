@@ -2,12 +2,15 @@ module Hp.Eff.PersistUser
   ( PersistUserEffect(..)
   , getUserEmailsSubscribedToPollCreatedEvents
   , putUserByGitHubUserName
+  , setUserSubscription
   ) where
 
 import Hp.Eff.FirstOrder  (FirstOrderEffect(..))
+import Hp.Entity          (Entity)
 import Hp.GitHub.UserName (GitHubUserName)
+import Hp.Subscription    (Subscription)
 import Hp.User            (User)
-import Hp.Entity (Entity)
+import Hp.UserId          (UserId)
 
 import Control.Effect
 import Control.Effect.Carrier
@@ -22,6 +25,12 @@ data PersistUserEffect (m :: Type -> Type) (k :: Type) where
        GitHubUserName
     -> Maybe Text
     -> (Entity User -> k)
+    -> PersistUserEffect m k
+
+  SetUserSubscription ::
+       UserId
+    -> Subscription
+    -> k
     -> PersistUserEffect m k
 
   deriving stock (Functor)
@@ -49,3 +58,14 @@ putUserByGitHubUserName ::
   -> m (Entity User)
 putUserByGitHubUserName name email =
   send (PutUserByGitHubUserName name email pure)
+
+-- | Set the user's email subscription settings.
+setUserSubscription ::
+     ( Carrier sig m
+     , Member PersistUserEffect sig
+     )
+  => UserId
+  -> Subscription
+  -> m ()
+setUserSubscription userId sub =
+  send (SetUserSubscription userId sub (pure ()))

@@ -1,5 +1,7 @@
 module Prelude
-  ( module X
+  ( error
+  , undefined
+  , module X
   ) where
 
 import Control.Applicative        as X ((<|>))
@@ -32,4 +34,16 @@ import Data.Text.Strict.Lens      as X (utf8)
 import Debug.Trace                as X (traceShowM)
 import GHC.Generics               as X (Generic)
 import Numeric.Natural            as X (Natural)
-import PreludeFromBase            as X hiding (log)
+import PreludeFromBase            as X hiding (error, log, undefined)
+
+import qualified PreludeFromBase
+
+error :: [Char] -> a
+error =
+  PreludeFromBase.error
+{-# WARNING error "error" #-}
+
+undefined :: a
+undefined =
+  PreludeFromBase.undefined
+{-# WARNING undefined "undefined" #-}

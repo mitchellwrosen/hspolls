@@ -10,8 +10,9 @@ import Hp.Eff.DB          (DB, runDB)
 import Hp.Eff.PersistUser
 import Hp.Entity          (Entity(..))
 import Hp.GitHub.UserName (GitHubUserName(..), gitHubUserNameEncoder)
+import Hp.Subscription    (Subscription(..))
 import Hp.User            (User(..), userDecoder, userEncoder)
-import Hp.UserId          (UserId(..), userIdDecoder)
+import Hp.UserId          (UserId(..), userIdDecoder, userIdEncoder)
 
 import Control.Effect
 import Control.Effect.Carrier
@@ -45,6 +46,10 @@ instance
 
     L (PutUserByGitHubUserName name email next) ->
       PersistUserCarrierDB (doPutUserByGitHubUserName name email) >>= next
+
+    L (SetUserSubscription userId sub next) -> do
+      PersistUserCarrierDB (doSetUserSubscription userId sub)
+      next
 
     R other ->
       PersistUserCarrierDB (eff (handleCoercible other))
@@ -103,6 +108,26 @@ doPutUserByGitHubUserName name email =
           Just user ->
             pure user
 
+doSetUserSubscription ::
+     ( Carrier sig m
+     , Member DB sig
+     )
+  => UserId
+  -> Subscription
+  -> m ()
+doSetUserSubscription userId sub =
+  runDB session >>= \case
+    Left err ->
+      error (show err)
+
+    Right () ->
+      pure ()
+
+  where
+    session :: Session ()
+    session =
+      statement (userId, sub) sqlSetUserSubscription
+
 runPersistUserDB :: PersistUserCarrierDB m a -> m a
 runPersistUserDB (PersistUserCarrierDB m) =
   m
@@ -158,3 +183,19 @@ sqlPutUser =
     decoder :: Decoder.Result UserId
     decoder =
       Decoder.singleRow (Decoder.column userIdDecoder)
+
+sqlSetUserSubscription :: Statement (UserId, Subscription) ()
+sqlSetUserSubscription =
+  Statement sql encoder Decoder.unit True
+
+  where
+    sql :: ByteString
+    sql =
+      "UPDATE users SET subscribed_to_poll_created = $1 WHERE id = $2"
+
+    encoder :: Encoder.Params (UserId, Subscription)
+    encoder =
+      fold
+        [ view (_2 . #pollCreated) >$< Encoder.param Encoder.bool
+        , view _1 >$< Encoder.param userIdEncoder
+        ]
