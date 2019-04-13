@@ -18,7 +18,7 @@
         , network_mode = "host"
         , volumes =
             [ { type = "bind"
-              , source = "./prometheus.yml"
+              , source = "./etc/prometheus.yaml"
               , target = "/etc/prometheus/prometheus.yml"
               }
             , { type = "volume"
