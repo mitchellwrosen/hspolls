@@ -23,7 +23,9 @@ import qualified Hasql.Encoders as Encoder
 -- TODO encrypt user in ToJWT
 data User
   = User
-  { gitHub :: Maybe GitHubUserName
+  { email :: Maybe Text
+  , gitHub :: Maybe GitHubUserName
+  , subscribedToPollCreated :: Bool
   } deriving stock (Generic, Show)
     deriving anyclass (FromJSON, ToJSON)
 
@@ -54,11 +56,16 @@ instance ToJWT (Entity User) where
           , "user" .= toJSON user
           ]
 
-userEncoder :: Encoder.Params User
+userEncoder :: Encoder.Params (Maybe Text, Maybe GitHubUserName)
 userEncoder =
-  (^. #gitHub) >$< Encoder.nullableParam gitHubUserNameEncoder
+  fold
+    [ view _1 >$< Encoder.nullableParam Encoder.text
+    , view _2 >$< Encoder.nullableParam gitHubUserNameEncoder
+    ]
 
 userDecoder :: Decoder.Row User
-userDecoder =
-  User
-    <$> Decoder.nullableColumn gitHubUserNameDecoder
+userDecoder = do
+  email <- Decoder.nullableColumn Decoder.text
+  gitHub <- Decoder.nullableColumn gitHubUserNameDecoder
+  subscribedToPollCreated <- Decoder.column Decoder.bool
+  pure User{..}

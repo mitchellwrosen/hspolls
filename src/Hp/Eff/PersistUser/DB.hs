@@ -16,14 +16,14 @@ import Hp.UserId          (UserId(..), userIdDecoder)
 import Control.Effect
 import Control.Effect.Carrier
 import Control.Effect.Sum
-import Hasql.Session              (Session)
+import Hasql.Session              (Session, statement)
 import Hasql.Statement            (Statement(..))
-import Hasql.Transaction          (statement)
 import Hasql.Transaction.Sessions (IsolationLevel(..), Mode(..), transaction)
 import Prelude                    hiding (id)
 
-import qualified Hasql.Decoders as Decoder
-import qualified Hasql.Encoders as Encoder
+import qualified Hasql.Decoders    as Decoder
+import qualified Hasql.Encoders    as Encoder
+import qualified Hasql.Transaction as Transaction (statement)
 
 
 newtype PersistUserCarrierDB m a
@@ -43,8 +43,8 @@ instance
     L (GetUserEmailsSubscribedToPollCreatedEvents next) ->
       PersistUserCarrierDB doGetUserEmailsSubscribedToPollCreatedEvents >>= next
 
-    L (PutUserByGitHubUserName name next) ->
-      PersistUserCarrierDB (doPutUserByGitHubUserName name) >>= next
+    L (PutUserByGitHubUserName name email next) ->
+      PersistUserCarrierDB (doPutUserByGitHubUserName name email) >>= next
 
     R other ->
       PersistUserCarrierDB (eff (handleCoercible other))
@@ -55,15 +55,27 @@ doGetUserEmailsSubscribedToPollCreatedEvents ::
      )
   => m [Text]
 doGetUserEmailsSubscribedToPollCreatedEvents =
-  pure ["mitchellwrosen@gmail.com"] -- TODO implement this
+  runDB session >>= \case
+    Left err -> do
+      traceShowM err
+      undefined
+
+    Right emailAddresses ->
+      pure emailAddresses
+
+  where
+    session :: Session [Text]
+    session =
+      statement () sqlGetUserEmailsSubscribedToPollCreatedEvents
 
 doPutUserByGitHubUserName ::
      ( Carrier sig m
      , Member DB sig
      )
   => GitHubUserName
+  -> Maybe Text
   -> m (Entity User)
-doPutUserByGitHubUserName name =
+doPutUserByGitHubUserName name email =
   runDB session >>= \case
     Left err ->
       -- TODO deal with Hasql.Pool.UsageError how?
@@ -76,19 +88,17 @@ doPutUserByGitHubUserName name =
     session :: Session (Entity User)
     session =
       transaction Serializable Write $
-        statement name sqlGetUserByGitHubUserName >>= \case
+        Transaction.statement name sqlGetUserByGitHubUserName >>= \case
           Nothing -> do
-            let
-              user :: User
-              user =
-                User
-                  { gitHub = Just name
-                  }
-
             userId :: UserId <-
-              statement user sqlPutUser
+              Transaction.statement (email, Just name) sqlPutUser
 
-            pure (Entity userId user)
+            pure
+              (Entity userId User
+                { email = email
+                , gitHub = Just name
+                , subscribedToPollCreated = False
+                })
 
           Just user ->
             pure user
@@ -109,7 +119,7 @@ sqlGetUserByGitHubUserName =
   where
     sql :: ByteString
     sql =
-      "SELECT id, github FROM users WHERE github = $1"
+      "SELECT id, email, $1, subscribed_to_poll_created FROM users WHERE github = $1"
 
     encoder :: Encoder.Params GitHubUserName
     encoder =
@@ -122,18 +132,28 @@ sqlGetUserByGitHubUserName =
           <$> Decoder.column userIdDecoder
           <*> userDecoder)
 
-sqlPutUser :: Statement User UserId
-sqlPutUser =
-  Statement sql encoder decoder True
+sqlGetUserEmailsSubscribedToPollCreatedEvents :: Statement () [Text]
+sqlGetUserEmailsSubscribedToPollCreatedEvents =
+  Statement sql Encoder.unit decoder True
 
   where
     sql :: ByteString
     sql =
-      "INSERT INTO users (github) VALUES ($1) RETURNING id"
+      "SELECT email FROM users WHERE subscribed_to_poll_created = true AND email IS NOT NULL"
 
-    encoder :: Encoder.Params User
-    encoder =
-      userEncoder
+    decoder :: Decoder.Result [Text]
+    decoder =
+      -- TODO Decoder.rowVector
+      Decoder.rowList (Decoder.column Decoder.text)
+
+sqlPutUser :: Statement (Maybe Text, Maybe GitHubUserName) UserId
+sqlPutUser =
+  Statement sql userEncoder decoder True
+
+  where
+    sql :: ByteString
+    sql =
+      "INSERT INTO users (email, github) VALUES ($1, $2) RETURNING id"
 
     decoder :: Decoder.Result UserId
     decoder =

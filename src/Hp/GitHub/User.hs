@@ -5,8 +5,9 @@ import Hp.GitHub.UserName
 import Data.Aeson (FromJSON)
 
 
-newtype GitHubUser
+data GitHubUser
   = GitHubUser
-  { login :: GitHubUserName
+  { email :: Maybe Text
+  , login :: GitHubUserName
   } deriving stock (Generic, Show)
     deriving anyclass (FromJSON)

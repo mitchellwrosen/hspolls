@@ -33,7 +33,7 @@ handleGitHubOauthCallback code =
 
     Just gitHubUser -> do
       user :: Entity User <-
-        putUserByGitHubUserName (gitHubUser ^. #login)
+        putUserByGitHubUserName (gitHubUser ^. #login) (gitHubUser ^. #email)
 
       redirect <$> beginHttpSession user NoContent
 

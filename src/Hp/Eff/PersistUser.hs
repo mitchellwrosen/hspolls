@@ -20,6 +20,7 @@ data PersistUserEffect (m :: Type -> Type) (k :: Type) where
 
   PutUserByGitHubUserName ::
        GitHubUserName
+    -> Maybe Text
     -> (Entity User -> k)
     -> PersistUserEffect m k
 
@@ -44,6 +45,7 @@ putUserByGitHubUserName ::
      , Member PersistUserEffect sig
      )
   => GitHubUserName
+  -> Maybe Text
   -> m (Entity User)
-putUserByGitHubUserName name =
-  send (PutUserByGitHubUserName name pure)
+putUserByGitHubUserName name email =
+  send (PutUserByGitHubUserName name email pure)
