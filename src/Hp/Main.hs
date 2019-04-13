@@ -165,7 +165,7 @@ application
     pollCreatedEventChan = do
 
   Servant.genericServeTWithContext
-    η
+    eta
     API
       { answerPollRoute = handleAnswerPoll
       , createPollRoute = handleCreatePoll
@@ -180,8 +180,8 @@ application
       :. Servant.EmptyContext)
 
   where
-    η :: forall a. _ a -> Servant.Handler a
-    η =   -- Outgoing HTTP requests
+    eta :: forall a. _ a -> Servant.Handler a
+    eta =   -- Outgoing HTTP requests
           runGitHubAuthHttp gitHubClientId gitHubClientSecret
       >>> runHttpRequestIO httpManager
 
