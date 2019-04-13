@@ -55,7 +55,7 @@ instance
       GitHubAuthCarrierHttp (eff (R (handleCoercible other)))
 
 doGitHubAuth ::
-     ∀ m sig.
+     forall m sig.
      ( Carrier sig m
      , Member (Error Servant.ClientError) sig
      , Member HttpRequestEffect sig

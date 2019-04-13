@@ -180,7 +180,7 @@ application
       :. Servant.EmptyContext)
 
   where
-    η :: ∀ a. _ a -> Servant.Handler a
+    η :: forall a. _ a -> Servant.Handler a
     η =   -- Outgoing HTTP requests
           runGitHubAuthHttp gitHubClientId gitHubClientSecret
       >>> runHttpRequestIO httpManager

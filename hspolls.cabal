@@ -78,7 +78,6 @@ library
     TypeApplications
     TypeFamilies
     TypeOperators
-    UnicodeSyntax
 
   default-language:
     Haskell2010

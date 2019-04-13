@@ -16,7 +16,7 @@ import Hasql.Session
 import qualified Hasql.Pool as HPool
 
 data DB (m :: * -> *) k
-  = ∀ a. RunDB (Session a) (Either HPool.UsageError a -> k)
+  = forall a. RunDB (Session a) (Either HPool.UsageError a -> k)
 
 deriving instance Functor (DB m)
 
@@ -34,7 +34,7 @@ newtype DBC m a
   { unDBC :: ReaderC HPool.Pool m a
   } deriving newtype (Functor, Applicative, Monad, MonadIO)
 
-runDBC :: ∀ m a. HPool.Pool -> DBC m a -> m a
+runDBC :: forall m a. HPool.Pool -> DBC m a -> m a
 runDBC pool = runReader pool . unDBC
 
 instance ( Carrier sig m

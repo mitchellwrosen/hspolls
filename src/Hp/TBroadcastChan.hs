@@ -19,15 +19,15 @@ unsafeTBroadcastChanToTChan :: TBroadcastChan a -> TChan a
 unsafeTBroadcastChanToTChan =
   coerce
 
-newTBroadcastChan :: ∀ a. STM (TBroadcastChan a)
+newTBroadcastChan :: forall a. STM (TBroadcastChan a)
 newTBroadcastChan =
   coerce @(STM (TChan a)) newTChan
 
-newTBroadcastChanIO :: ∀ a. IO (TBroadcastChan a)
+newTBroadcastChanIO :: forall a. IO (TBroadcastChan a)
 newTBroadcastChanIO =
   coerce @(IO (TChan a)) newTChanIO
 
-dupTBroadcastChan :: ∀ a. TBroadcastChan a -> STM (TChan a)
+dupTBroadcastChan :: forall a. TBroadcastChan a -> STM (TChan a)
 dupTBroadcastChan =
   coerce @(TChan a -> _) dupTChan
 
@@ -35,7 +35,7 @@ dupTBroadcastChanIO :: TBroadcastChan a -> IO (TChan a)
 dupTBroadcastChanIO =
   atomically . dupTBroadcastChan
 
-writeTBroadcastChan :: ∀ a. TBroadcastChan a -> a -> STM ()
+writeTBroadcastChan :: forall a. TBroadcastChan a -> a -> STM ()
 writeTBroadcastChan =
   coerce @(TChan a -> _ -> _) writeTChan
 

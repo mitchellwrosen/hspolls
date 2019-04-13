@@ -8,7 +8,7 @@ import Control.Effect
 import Control.Effect.Error (ErrorC(..), runError)
 
 runErrorFail ::
-     ∀ e sig m a.
+     forall e sig m a.
      ( Carrier sig m
      , Member (Fail' e) sig
      )

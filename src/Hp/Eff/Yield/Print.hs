@@ -35,7 +35,7 @@ instance
       YieldCarrierPrint (eff (handleCoercible other))
 
 runYieldPrint ::
-     ∀ value a m.
+     forall value a m.
      YieldCarrierPrint value m a
   -> m a
 runYieldPrint =
