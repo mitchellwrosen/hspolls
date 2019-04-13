@@ -133,6 +133,7 @@ library
     Hp.Handler.GetRoot
     Hp.Handler.GetUserProfile
     Hp.Handler.GitHubOauthCallback
+    Hp.Handler.Subscribe
     Hp.IsEntity
     Hp.Main
     Hp.Metrics
@@ -146,6 +147,7 @@ library
     Hp.PostgresConfig
     Hp.RequestBody.AnswerPoll
     Hp.RequestBody.CreatePoll
+    Hp.RequestBody.Subscribe
     Hp.TBroadcastChan
     Hp.User
     Hp.UserId

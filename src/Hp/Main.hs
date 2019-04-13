@@ -30,6 +30,7 @@ import Hp.Handler.GetMetrics               (handleGetMetrics)
 import Hp.Handler.GetRoot                  (handleGetRoot)
 import Hp.Handler.GetUserProfile           (handleGetUserProfile)
 import Hp.Handler.GitHubOauthCallback      (handleGitHubOauthCallback)
+import Hp.Handler.Subscribe                (handleSubscribe)
 import Hp.Metrics                          (requestCounter)
 import Hp.PostgresConfig                   (acquirePostgresPool)
 import Hp.TBroadcastChan
@@ -172,6 +173,7 @@ application
       , getMetricsRoute = handleGetMetrics
       , getUserProfileRoute = handleGetUserProfile
       , gitHubOauthCallbackRoute = handleGitHubOauthCallback
+      , subscribeRoute = handleSubscribe
       }
     (cookieSettings
       :. jwtSettings

@@ -5,6 +5,7 @@ import Hp.GitHub.Code            (GitHubCode)
 import Hp.PollId                 (PollId)
 import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody)
 import Hp.RequestBody.CreatePoll (CreatePollRequestBody)
+import Hp.RequestBody.Subscribe  (SubscribeRequestBody)
 import Hp.User                   (User)
 import Hp.UserProfile            (UserProfile)
 
@@ -19,7 +20,8 @@ import qualified Text.Blaze.Html as Blaze
 
 data API route
   = API
-  { answerPollRoute
+  { -- | Answer a poll.
+    answerPollRoute
       :: route
       :- Auth '[Cookie] (Entity User)
       :> "poll"
@@ -27,6 +29,7 @@ data API route
       :> ReqBody '[JSON] AnswerPollRequestBody
       :> Post '[JSON] NoContent
 
+    -- | Create a poll.
   , createPollRoute
       :: route
       :- Auth '[Cookie] (Entity User)
@@ -34,6 +37,7 @@ data API route
       :> ReqBody '[JSON] CreatePollRequestBody
       :> Post '[JSON] NoContent
 
+    -- | Get Prometheus metrics.
   , getMetricsRoute
       :: route
       :- "metrics"
@@ -50,7 +54,7 @@ data API route
       :> "profile"
       :> Get '[JSON] UserProfile
 
-    -- Callback URL used for GitHub OAuth.
+    -- | Callback URL used for GitHub OAuth.
   , gitHubOauthCallbackRoute
       :: route
       :- "oauth"
@@ -68,4 +72,12 @@ data API route
               , Header "Set-Cookie" SetCookie
               ]
            NoContent)
+
+    -- | Adjust subscription settings.
+  , subscribeRoute
+      :: route
+      :- Auth '[Cookie] (Entity User)
+      :> "subscribe"
+      :> ReqBody '[JSON] SubscribeRequestBody
+      :> Post '[JSON] NoContent
   } deriving stock (Generic)

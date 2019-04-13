@@ -4,6 +4,7 @@ module Hp.Email
   , TransactionalEmail(..)
   ) where
 
+
 -- | An email.
 data Email
   = EmailPersonal PersonalEmail
