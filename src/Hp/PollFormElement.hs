@@ -4,21 +4,48 @@ module Hp.PollFormElement
 
 import Hp.PollQuestion (PollQuestion)
 
-import Data.Aeson (FromJSON, ToJSON)
+import Data.Aeson       ((.:), FromJSON(..), ToJSON(..), Value, withObject, withText)
+import Data.Aeson.Types (Parser)
 
 
 -- TODO proper markdown type
 newtype Markdown
   = Markdown Text
-  deriving newtype (FromJSON, ToJSON, Show)
+  deriving newtype (FromJSON, Show, ToJSON)
 
 data PollFormElement
   = MarkdownElement Markdown
   | QuestionElement PollQuestion
   deriving stock (Generic, Show)
 
--- TODO FromJSON PollFormElement
 instance FromJSON PollFormElement where
+  parseJSON :: Value -> Parser PollFormElement
+  parseJSON =
+    withObject "PollFormElement" $ \o -> do
+      type_ <- o .: "type"
+      value <- o .: "value"
 
--- TODO ToJSON PollFormElement
+      withText "type"
+        (\case
+          "checkbox" ->
+            parseCheckboxElement value
+
+          "markdown" ->
+            parseMarkdownElement value
+
+          _ ->
+            undefined
+        )
+        type_
+
+    where
+      parseCheckboxElement :: Value -> Parser PollFormElement
+      parseCheckboxElement value =
+        undefined
+
+      parseMarkdownElement :: Value -> Parser PollFormElement
+      parseMarkdownElement value =
+        MarkdownElement <$> parseJSON value
+
 instance ToJSON PollFormElement where
+  toJSON = undefined
