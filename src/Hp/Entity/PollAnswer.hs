@@ -1,14 +1,17 @@
 -- TODO PollAnswer -> PollResponse everywhere
 
-module Hp.PollAnswer
+module Hp.Entity.PollAnswer
   ( PollAnswer(..)
+  , EntityId(PollAnswerId)
+  , PollAnswerId
   ) where
 
+import Hp.Entity.Poll        (PollId)
+import Hp.Entity.User        (UserId)
 import Hp.IsEntity           (IsEntity(..))
-import Hp.PollAnswerId       (PollAnswerId)
-import Hp.PollId             (PollId)
 import Hp.PollQuestionAnswer (PollQuestionAnswer)
-import Hp.UserId             (UserId)
+
+import Data.UUID (UUID)
 
 
 data PollAnswer
@@ -19,5 +22,9 @@ data PollAnswer
   } deriving stock (Generic, Show)
 
 instance IsEntity PollAnswer where
-  type EntityId PollAnswer
-    = PollAnswerId
+  newtype EntityId PollAnswer
+    = PollAnswerId { unPollAnswerId :: UUID }
+    deriving stock (Show)
+
+type PollAnswerId
+  = EntityId PollAnswer

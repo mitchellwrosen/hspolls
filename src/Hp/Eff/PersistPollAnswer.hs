@@ -3,9 +3,8 @@ module Hp.Eff.PersistPollAnswer
   , putPollAnswer
   ) where
 
-import Hp.Eff.FirstOrder (FirstOrderEffect(..))
-import Hp.PollAnswer     (PollAnswer)
-import Hp.PollAnswerId   (PollAnswerId)
+import Hp.Eff.FirstOrder    (FirstOrderEffect(..))
+import Hp.Entity.PollAnswer (PollAnswer, PollAnswerId)
 
 import Control.Effect
 import Control.Effect.Carrier

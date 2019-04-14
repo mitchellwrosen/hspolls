@@ -6,8 +6,8 @@ import Hp.Eff.GitHubAuth  (GitHubAuthEffect, gitHubAuth)
 import Hp.Eff.HttpSession (HttpSessionEffect, beginHttpSession)
 import Hp.Eff.PersistUser (PersistUserEffect, putUserByGitHubUserName)
 import Hp.Entity          (Entity)
+import Hp.Entity.User     (User)
 import Hp.GitHub.Code     (GitHubCode)
-import Hp.User            (User)
 
 import Control.Effect
 import Servant             (Header, Headers, NoContent(..), addHeader, noHeader)

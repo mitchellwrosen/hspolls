@@ -4,8 +4,8 @@ module Hp.Handler.Subscribe
 
 import Hp.Eff.PersistUser       (PersistUserEffect)
 import Hp.Entity                (Entity)
+import Hp.Entity.User           (User)
 import Hp.RequestBody.Subscribe (SubscribeRequestBody(..))
-import Hp.User                  (User)
 
 import Control.Effect
 import Control.Effect.Error (throwError)

@@ -1,19 +1,20 @@
-module Hp.User
+module Hp.Entity.User
   ( User(..)
-  , userEncoder
-  , userDecoder
+  , EntityId(UserId)
+  , UserId
+  , userIdDecoder
+  , userIdEncoder
   ) where
 
 import Hp.Entity          (Entity(..))
-import Hp.GitHub.UserName (GitHubUserName, gitHubUserNameDecoder,
-                           gitHubUserNameEncoder)
+import Hp.GitHub.UserName (GitHubUserName)
 import Hp.IsEntity        (IsEntity(..))
-import Hp.UserId          (UserId(..))
 
 import Crypto.JWT          (ClaimsSet, addClaim, emptyClaimsSet,
                             unregisteredClaims)
 import Data.Aeson          (FromJSON, Result(..), ToJSON(..), Value(..),
                             fromJSON, object, (.=))
+import Data.UUID           (UUID)
 import Servant.Auth.Server (FromJWT(..), ToJWT(..))
 
 import qualified Hasql.Decoders as Decoder
@@ -41,8 +42,9 @@ instance FromJWT (Entity User) where
         Left ""
 
 instance IsEntity User where
-  type EntityId User
-    = UserId
+  newtype EntityId User
+    = UserId { unUserId :: UUID }
+    deriving stock (Show)
 
 instance ToJWT (Entity User) where
   encodeJWT :: Entity User -> ClaimsSet
@@ -56,16 +58,14 @@ instance ToJWT (Entity User) where
           , "user" .= toJSON user
           ]
 
-userEncoder :: Encoder.Params (Maybe Text, Maybe GitHubUserName)
-userEncoder =
-  fold
-    [ view _1 >$< Encoder.nullableParam Encoder.text
-    , view _2 >$< Encoder.nullableParam gitHubUserNameEncoder
-    ]
+type UserId
+  = EntityId User
 
-userDecoder :: Decoder.Row User
-userDecoder = do
-  email <- Decoder.nullableColumn Decoder.text
-  gitHub <- Decoder.nullableColumn gitHubUserNameDecoder
-  subscribedToPollCreated <- Decoder.column Decoder.bool
-  pure User{..}
+userIdDecoder :: Decoder.Value UserId
+userIdDecoder =
+  UserId <$> Decoder.uuid
+
+userIdEncoder :: Encoder.Value UserId
+userIdEncoder =
+  coerce Encoder.uuid
+

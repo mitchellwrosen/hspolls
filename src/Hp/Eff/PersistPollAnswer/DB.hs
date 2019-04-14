@@ -8,8 +8,7 @@ module Hp.Eff.PersistPollAnswer.DB
 
 import Hp.Eff.DB                (DB, runDB)
 import Hp.Eff.PersistPollAnswer (PersistPollAnswerEffect(..))
-import Hp.PollAnswer            (PollAnswer)
-import Hp.PollAnswerId          (PollAnswerId)
+import Hp.Entity.PollAnswer     (PollAnswer, PollAnswerId)
 
 import Control.Effect
 import Control.Effect.Carrier

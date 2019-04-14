@@ -5,11 +5,10 @@ module Hp.Handler.CreatePoll
 import Hp.Eff.PersistPoll        (PersistPollEffect, savePoll)
 import Hp.Eff.Yield              (YieldEffect, yield)
 import Hp.Entity                 (Entity(..))
+import Hp.Entity.Poll            (Poll(..))
+import Hp.Entity.User            (User, UserId)
 import Hp.Event.PollCreated      (PollCreatedEvent(..))
-import Hp.Poll                   (Poll(..))
 import Hp.RequestBody.CreatePoll (CreatePollRequestBody(..))
-import Hp.User                   (User)
-import Hp.UserId                 (UserId)
 
 import Control.Effect
 import Prelude             hiding (id)

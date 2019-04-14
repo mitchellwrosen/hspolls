@@ -1,12 +1,12 @@
 module Hp.API where
 
 import Hp.Entity                 (Entity)
+import Hp.Entity.Poll            (PollId)
+import Hp.Entity.User            (User)
 import Hp.GitHub.Code            (GitHubCode)
-import Hp.PollId                 (PollId)
 import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody)
 import Hp.RequestBody.CreatePoll (CreatePollRequestBody)
 import Hp.RequestBody.Subscribe  (SubscribeRequestBody)
-import Hp.User                   (User)
 import Hp.UserProfile            (UserProfile)
 
 import Servant

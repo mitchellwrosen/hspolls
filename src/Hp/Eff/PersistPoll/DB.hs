@@ -7,10 +7,9 @@ module Hp.Eff.PersistPoll.DB
 import Hp.Eff.DB
 import Hp.Eff.PersistPoll (PersistPollEffect(..))
 import Hp.Entity          (Entity(..))
-import Hp.Poll
+import Hp.Entity.Poll
+import Hp.Entity.User     (UserId)
 import Hp.PollFormElement (PollFormElement)
-import Hp.PollId          (pollIdDecoder, pollIdEncoder)
-import Hp.UserId          (UserId)
 
 import Control.Effect
 import Control.Effect.Carrier

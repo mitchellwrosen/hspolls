@@ -7,10 +7,9 @@ module Hp.Eff.PersistUser
 
 import Hp.Eff.FirstOrder  (FirstOrderEffect(..))
 import Hp.Entity          (Entity)
+import Hp.Entity.User     (User, UserId)
 import Hp.GitHub.UserName (GitHubUserName)
 import Hp.Subscription    (Subscription)
-import Hp.User            (User)
-import Hp.UserId          (UserId)
 
 import Control.Effect
 import Control.Effect.Carrier

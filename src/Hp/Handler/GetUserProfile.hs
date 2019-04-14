@@ -3,7 +3,7 @@ module Hp.Handler.GetUserProfile
   ) where
 
 import Hp.Entity      (Entity)
-import Hp.User        (User(..))
+import Hp.Entity.User (User(..))
 import Hp.UserProfile (UserProfile(..))
 
 import Control.Effect

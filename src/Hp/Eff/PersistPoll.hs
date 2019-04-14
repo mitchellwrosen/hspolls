@@ -6,10 +6,9 @@ module Hp.Eff.PersistPoll
 
 import Hp.Eff.FirstOrder  (FirstOrderEffect(..))
 import Hp.Entity          (Entity)
-import Hp.Poll
+import Hp.Entity.Poll
+import Hp.Entity.User     (UserId)
 import Hp.PollFormElement (PollFormElement)
-import Hp.PollId          (PollId(..))
-import Hp.UserId          (UserId)
 
 import Control.Effect
 import Control.Effect.Carrier

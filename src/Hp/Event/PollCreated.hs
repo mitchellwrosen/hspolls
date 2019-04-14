@@ -1,7 +1,7 @@
 module Hp.Event.PollCreated where
 
-import Hp.Entity (Entity)
-import Hp.Poll   (Poll)
+import Hp.Entity      (Entity)
+import Hp.Entity.Poll (Poll)
 
 
 -- | A poll was created.

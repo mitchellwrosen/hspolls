@@ -2,8 +2,8 @@ module Hp.Handler.GetRoot
   ( handleGetRoot
   ) where
 
-import Hp.Entity (Entity)
-import Hp.User   (User)
+import Hp.Entity      (Entity)
+import Hp.Entity.User (User)
 
 import Control.Effect
 import Prelude                     hiding (div)

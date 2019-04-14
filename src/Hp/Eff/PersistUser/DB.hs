@@ -9,10 +9,10 @@ module Hp.Eff.PersistUser.DB
 import Hp.Eff.DB          (DB, runDB)
 import Hp.Eff.PersistUser
 import Hp.Entity          (Entity(..))
-import Hp.GitHub.UserName (GitHubUserName(..), gitHubUserNameEncoder)
+import Hp.Entity.User     (User(..), UserId, userIdDecoder, userIdEncoder)
+import Hp.GitHub.UserName (GitHubUserName(..), gitHubUserNameDecoder,
+                           gitHubUserNameEncoder)
 import Hp.Subscription    (Subscription(..))
-import Hp.User            (User(..), userDecoder, userEncoder)
-import Hp.UserId          (UserId(..), userIdDecoder, userIdEncoder)
 
 import Control.Effect
 import Control.Effect.Carrier
@@ -133,7 +133,11 @@ sqlGetUserByGitHubUserName =
       Decoder.rowMaybe
         (Entity
           <$> Decoder.column userIdDecoder
-          <*> userDecoder)
+          <*> (do
+                email <- Decoder.nullableColumn Decoder.text
+                gitHub <- Decoder.nullableColumn gitHubUserNameDecoder
+                subscribedToPollCreated <- Decoder.column Decoder.bool
+                pure User{..}))
 
 sqlGetUserEmailsSubscribedToPollCreatedEvents :: Statement () [Text]
 sqlGetUserEmailsSubscribedToPollCreatedEvents =
@@ -151,12 +155,19 @@ sqlGetUserEmailsSubscribedToPollCreatedEvents =
 
 sqlPutUser :: Statement (Maybe Text, Maybe GitHubUserName) UserId
 sqlPutUser =
-  Statement sql userEncoder decoder True
+  Statement sql encoder decoder True
 
   where
     sql :: ByteString
     sql =
       "INSERT INTO users (email, github) VALUES ($1, $2) RETURNING id"
+
+    encoder :: Encoder.Params (Maybe Text, Maybe GitHubUserName)
+    encoder =
+      fold
+        [ view _1 >$< Encoder.nullableParam Encoder.text
+        , view _2 >$< Encoder.nullableParam gitHubUserNameEncoder
+        ]
 
     decoder :: Decoder.Result UserId
     decoder =

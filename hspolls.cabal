@@ -114,6 +114,9 @@ library
     Hp.Eff.Yield.Print
     Hp.Email
     Hp.Entity
+    Hp.Entity.Poll
+    Hp.Entity.PollAnswer
+    Hp.Entity.User
     Hp.Event.PollAnswered
     Hp.Event.PollCreated
     Hp.GitHub
@@ -137,11 +140,7 @@ library
     Hp.IsEntity
     Hp.Main
     Hp.Metrics
-    Hp.Poll
-    Hp.PollAnswer
-    Hp.PollAnswerId
     Hp.PollFormElement
-    Hp.PollId
     Hp.PollQuestion
     Hp.PollQuestionAnswer
     Hp.PostgresConfig
@@ -150,8 +149,6 @@ library
     Hp.RequestBody.Subscribe
     Hp.Subscription
     Hp.TBroadcastChan
-    Hp.User
-    Hp.UserId
     Hp.UserProfile
     Hp.Worker.SendEmail
     Hp.Worker.SendPollCreatedEmail
