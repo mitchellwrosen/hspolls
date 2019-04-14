@@ -1,4 +1,6 @@
-module Hp.GitHub.User where
+module Hp.GitHub.User
+  ( GitHubUser(..)
+  ) where
 
 import Hp.GitHub.UserName
 

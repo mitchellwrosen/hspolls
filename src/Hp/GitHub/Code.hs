@@ -1,4 +1,6 @@
-module Hp.GitHub.Code where
+module Hp.GitHub.Code
+  ( GitHubCode(..)
+  ) where
 
 import Web.HttpApiData
 

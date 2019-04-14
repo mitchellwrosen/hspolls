@@ -1,4 +1,6 @@
-module Hp.GitHub.AccessToken where
+module Hp.GitHub.AccessToken
+  ( GitHubAccessToken(..)
+  ) where
 
 import Data.Aeson      (FromJSON)
 import Web.HttpApiData (ToHttpApiData(..))

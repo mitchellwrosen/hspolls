@@ -2,7 +2,9 @@
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
-module Hp.Main where
+module Hp.Main
+  ( main
+  ) where
 
 import Hp.API
 import Hp.Config                           (Config(..), readConfigFile)

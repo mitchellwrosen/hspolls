@@ -1,4 +1,6 @@
-module Hp.GitHub.ClientId where
+module Hp.GitHub.ClientId
+  ( GitHubClientId(..)
+  ) where
 
 import Web.HttpApiData
 

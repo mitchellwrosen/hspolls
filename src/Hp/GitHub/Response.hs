@@ -1,4 +1,6 @@
-module Hp.GitHub.Response where
+module Hp.GitHub.Response
+  ( GitHubResponse(..)
+  ) where
 
 import Hp.GitHub.ErrorResponse (GitHubErrorResponse)
 

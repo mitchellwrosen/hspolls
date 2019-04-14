@@ -1,4 +1,6 @@
-module Hp.API where
+module Hp.API
+  ( API(..)
+  ) where
 
 import Hp.Entity                 (Entity)
 import Hp.Entity.Poll            (PollId)

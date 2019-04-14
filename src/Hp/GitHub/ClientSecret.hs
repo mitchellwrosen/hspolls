@@ -1,4 +1,6 @@
-module Hp.GitHub.ClientSecret where
+module Hp.GitHub.ClientSecret
+  ( GitHubClientSecret(..)
+  ) where
 
 import Web.HttpApiData
 

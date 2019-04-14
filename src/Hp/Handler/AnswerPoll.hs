@@ -1,4 +1,6 @@
-module Hp.Handler.AnswerPoll where
+module Hp.Handler.AnswerPoll
+  ( handleAnswerPoll
+  ) where
 
 import Hp.Eff.GetCurrentTime     (GetCurrentTimeEffect)
 import Hp.Eff.PersistPoll        (PersistPollEffect, getPoll)

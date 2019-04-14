@@ -58,10 +58,7 @@ instance
 
 
 runFail' ::
-     ( Carrier sig m
-     , Member (Fail' e) sig
-     )
-  => FailC' e m a
+     FailC' e m a
   -> m (Either e a)
 runFail' =
   runErrorC . unFailC'

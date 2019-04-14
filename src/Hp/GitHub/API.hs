@@ -1,4 +1,6 @@
-module Hp.GitHub.API where
+module Hp.GitHub.API
+  ( GitHubAPI(..)
+  ) where
 
 import Hp.GitHub.AccessToken                       (GitHubAccessToken)
 import Hp.GitHub.ClientId                          (GitHubClientId)

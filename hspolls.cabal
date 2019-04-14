@@ -157,6 +157,14 @@ library
 
   ghc-options:
     -Wall
+    -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wmissing-export-lists
+    -Wpartial-fields
+    -Wredundant-constraints
+    -fhide-source-paths
     -fno-warn-name-shadowing
 
   hs-source-dirs:

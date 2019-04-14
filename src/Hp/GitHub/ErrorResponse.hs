@@ -1,4 +1,6 @@
-module Hp.GitHub.ErrorResponse where
+module Hp.GitHub.ErrorResponse
+  ( GitHubErrorResponse(..)
+  ) where
 
 import Data.Aeson (FromJSON)
 
