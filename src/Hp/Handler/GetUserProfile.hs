@@ -22,6 +22,7 @@ handleGetUserProfile = \case
   Authenticated user ->
     pure UserProfile
       { gitHub = user ^. #value . #gitHub
+      , subscribedToPollCreated = user ^. #value . #subscribedToPollCreated
       }
 
   _ ->
