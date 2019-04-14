@@ -11,21 +11,25 @@ import Hp.Event.PollCreated      (PollCreatedEvent(..))
 import Hp.RequestBody.CreatePoll (CreatePollRequestBody(..))
 
 import Control.Effect
-import Prelude             hiding (id)
-import Servant             (NoContent(..))
-import Servant.Auth.Server (AuthResult(..))
+import Control.Effect.Error (throwError)
+import Prelude              hiding (id)
+import Servant              (NoContent(..), ServerError, err400)
+import Servant.Auth.Server  (AuthResult(..))
 
 
 handleCreatePoll ::
      ( Carrier sig m
-     , Member (YieldEffect PollCreatedEvent) sig
+     , Member (Error ServerError) sig
      , Member PersistPollEffect sig
+     , Member (YieldEffect PollCreatedEvent) sig
      , MonadIO m
      )
   => AuthResult (Entity User)
   -> CreatePollRequestBody
   -> m NoContent
 handleCreatePoll authResult body = do
+  validatePoll body
+
   poll :: Entity Poll <-
     savePoll
       (body ^. #duration)
@@ -42,3 +46,17 @@ handleCreatePoll authResult body = do
     userId = do
       Authenticated user <- pure authResult
       pure (user ^. #key)
+
+-- Validate a poll:
+--
+-- * Duration is at least 1 minute
+-- * Form has at least 1 element
+validatePoll ::
+     ( Carrier sig m
+     , Member (Error ServerError) sig
+     )
+  => CreatePollRequestBody
+  -> m ()
+validatePoll body = do
+  when ((body ^. #duration) < 60) (throwError err400)
+  when (null (body ^. #elements)) (throwError err400)
