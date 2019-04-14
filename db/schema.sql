@@ -60,14 +60,19 @@ CREATE TABLE poll_responses (
     NOT NULL
     DEFAULT current_timestamp,
 
-  response
-    jsonb
-    NOT NULL,
-
   pollId
     uuid
     NOT NULL,
 
+  response
+    jsonb
+    NOT NULL,
+
+  userId
+    uuid
+    NOT NULL,
+
   FOREIGN KEY (pollId) REFERENCES polls (id),
+  FOREIGN KEY (userId) REFERENCES users (id),
   PRIMARY KEY (id)
 );

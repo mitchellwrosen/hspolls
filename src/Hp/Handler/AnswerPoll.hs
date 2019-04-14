@@ -13,7 +13,7 @@ import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody(..))
 
 import Control.Effect
 import Control.Effect.Error (throwError)
-import Servant              (NoContent(..), ServerError, err404)
+import Servant              (NoContent(..), ServerError, err403, err404)
 import Servant.Auth.Server  (AuthResult(..))
 
 
@@ -38,25 +38,16 @@ handleAnswerPoll authResult pollId body =
       expired :: Bool <-
         pollIsExpired (poll ^. #value)
 
+      when expired
+        (throwError err403)
+
       -- TODO validate poll answer
 
-      let
-        pollAnswer :: PollAnswer
-        pollAnswer =
-          PollAnswer
-            { answers = body ^. #answers
-            , pollId = pollId
-            , userId = view #key <$> user
-            }
+      pollAnswer :: Entity PollAnswer <-
+        putPollAnswer pollId (body ^. #response) (view #key <$> user)
 
-      putPollAnswer pollAnswer >>= \case
-        Nothing ->
-          -- TODO some error code
-          pure ()
-
-        Just pollAnswerId ->
-          yield PollAnsweredEvent
-            { answer = Entity pollAnswerId pollAnswer }
+      yield PollAnsweredEvent
+        { answer = pollAnswer }
 
       pure NoContent
 

@@ -7,6 +7,6 @@ import Data.Aeson (FromJSON)
 
 data AnswerPollRequestBody
   = AnswerPollRequestBody
-  { answers :: Seq PollQuestionAnswer
+  { response :: Seq PollQuestionAnswer
   } deriving stock (Generic)
     deriving anyclass (FromJSON)

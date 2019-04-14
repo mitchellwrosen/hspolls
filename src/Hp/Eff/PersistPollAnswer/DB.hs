@@ -8,7 +8,11 @@ module Hp.Eff.PersistPollAnswer.DB
 
 import Hp.Eff.DB                (DB, runDB)
 import Hp.Eff.PersistPollAnswer (PersistPollAnswerEffect(..))
-import Hp.Entity.PollAnswer     (PollAnswer, PollAnswerId)
+import Hp.Entity                (Entity)
+import Hp.Entity.Poll           (PollId)
+import Hp.Entity.PollAnswer     (PollAnswer)
+import Hp.Entity.User           (UserId)
+import Hp.PollQuestionAnswer    (PollQuestionAnswer)
 
 import Control.Effect
 import Control.Effect.Carrier
@@ -30,8 +34,9 @@ instance
        (PersistPollAnswerEffect :+: sig) (PersistPollAnswerCarrierDB m) (PersistPollAnswerCarrierDB m a)
     -> PersistPollAnswerCarrierDB m a
   eff = \case
-    L (PutPollAnswer pollAnswer next) ->
-      PersistPollAnswerCarrierDB (doPutPollAnswer pollAnswer) >>= next
+    L (PutPollAnswer pollId response userId next) ->
+      PersistPollAnswerCarrierDB (doPutPollAnswer pollId response userId) >>=
+        next
 
     R other ->
       PersistPollAnswerCarrierDB (eff (handleCoercible other))
@@ -40,14 +45,16 @@ doPutPollAnswer ::
      ( Carrier sig m
      , Member DB sig
      )
-  => PollAnswer
-  -> m (Maybe PollAnswerId)
-doPutPollAnswer _pollAnswer =
-  Just <$> runDB session
+  => PollId
+  -> Seq PollQuestionAnswer
+  -> Maybe UserId
+  -> m (Entity PollAnswer)
+doPutPollAnswer _pollId _response _userId =
+  runDB session
 
   where
     -- TODO insert poll answer
-    session :: Session PollAnswerId
+    session :: Session (Entity PollAnswer)
     session =
       undefined
 

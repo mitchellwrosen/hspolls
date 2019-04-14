@@ -11,13 +11,15 @@ import Hp.Entity.User        (UserId)
 import Hp.IsEntity           (IsEntity(..))
 import Hp.PollQuestionAnswer (PollQuestionAnswer)
 
+import Data.Time (UTCTime)
 import Data.UUID (UUID)
 
 
 data PollAnswer
   = PollAnswer
-  { answers :: Seq PollQuestionAnswer
+  { created :: UTCTime
   , pollId :: PollId
+  , response :: Seq PollQuestionAnswer
   , userId :: Maybe UserId
   } deriving stock (Generic, Show)
 

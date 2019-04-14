@@ -3,8 +3,12 @@ module Hp.Eff.PersistPollAnswer
   , putPollAnswer
   ) where
 
-import Hp.Eff.FirstOrder    (FirstOrderEffect(..))
-import Hp.Entity.PollAnswer (PollAnswer, PollAnswerId)
+import Hp.Eff.FirstOrder     (FirstOrderEffect(..))
+import Hp.Entity             (Entity)
+import Hp.Entity.Poll        (PollId)
+import Hp.Entity.PollAnswer  (PollAnswer)
+import Hp.Entity.User        (UserId)
+import Hp.PollQuestionAnswer (PollQuestionAnswer)
 
 import Control.Effect
 import Control.Effect.Carrier
@@ -12,22 +16,24 @@ import Control.Effect.Carrier
 
 data PersistPollAnswerEffect (m :: Type -> Type) (k :: Type) where
   PutPollAnswer ::
-       PollAnswer
-    -> (Maybe PollAnswerId -> k)
+       PollId
+    -> Seq PollQuestionAnswer
+    -> Maybe UserId
+    -> (Entity PollAnswer -> k)
     -> PersistPollAnswerEffect m k
 
   deriving stock (Functor)
   deriving (Effect, HFunctor)
        via (FirstOrderEffect PersistPollAnswerEffect)
 
--- | Insert a poll answer and return its id (if successfully created).
---
--- It might fail if the poll or user were just deleted (foreign key violation).
+-- | Insert a poll answer and return its id.
 putPollAnswer ::
      ( Carrier sig m
      , Member PersistPollAnswerEffect sig
      )
-  => PollAnswer
-  -> m (Maybe PollAnswerId)
-putPollAnswer pollAnswer =
-  send (PutPollAnswer pollAnswer pure)
+  => PollId
+  -> Seq PollQuestionAnswer
+  -> Maybe UserId
+  -> m (Entity PollAnswer)
+putPollAnswer pollId response userId =
+  send (PutPollAnswer pollId response userId pure)
