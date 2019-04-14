@@ -57,7 +57,7 @@ doGetPoll pollId =
     statement =
       H.Statement
         "SELECT created_at, duration, form, userId FROM polls WHERE id = $1"
-        pollIdEncoder
+        (Encoder.param pollIdEncoder)
         (Decoder.rowMaybe decoder)
         True
 

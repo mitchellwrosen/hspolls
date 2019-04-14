@@ -9,6 +9,7 @@ import Hp.Config                           (Config(..), readConfigFile)
 import Hp.Eff.Await.Chan                   (runAwaitChan)
 import Hp.Eff.DB                           (runDBC)
 import Hp.Eff.Error.Fail                   (runErrorFail)
+import Hp.Eff.GetCurrentTime               (GetCurrentTimeEffect(..))
 import Hp.Eff.GitHubAuth.Http              (runGitHubAuthHttp)
 import Hp.Eff.HasqlUsageError.LogAnd500    (runHasqlUsageErrorLogAnd500)
 import Hp.Eff.HttpRequest.IO               (runHttpRequestIO)
@@ -42,12 +43,14 @@ import Hp.Worker.SendPollCreatedEmail      (sendPollCreatedEmailWorker)
 import Control.Concurrent.STM
 import Control.Effect
 import Control.Effect.Error       (runError)
+import Control.Effect.Interpret
 import Control.Monad.Trans.Except (ExceptT(..))
 import Servant                    (Context((:.)))
 import Servant.Auth.Server        (CookieSettings, JWTSettings)
 import System.Exit                (exitFailure)
 
 import qualified Data.Text.IO             as Text
+import qualified Data.Time                as Time (getCurrentTime)
 import qualified Hasql.Pool               as Hasql (Pool, UsageError)
 import qualified Network.AWS              as Aws
 import qualified Network.AWS.Env          as Aws (newEnvWith)
@@ -218,6 +221,10 @@ application
       >>> runErrorFail @Servant.ClientError
       >>> runServantClientErrorLogAnd500
       >>> runError @Servant.ServerError
+
+          -- Current time
+      >>> runInterpret
+            (\(GetCurrentTime next) -> liftIO Time.getCurrentTime >>= next)
 
           -- Logging
       >>> runLogStdout

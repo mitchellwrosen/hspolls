@@ -91,6 +91,7 @@ library
     Hp.Eff.Error.Fail
     Hp.Eff.Fail
     Hp.Eff.FirstOrder
+    Hp.Eff.GetCurrentTime
     Hp.Eff.GitHubAuth
     Hp.Eff.GitHubAuth.Http
     Hp.Eff.HasqlUsageError.LogAnd500

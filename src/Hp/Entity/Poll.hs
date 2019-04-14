@@ -4,15 +4,17 @@ module Hp.Entity.Poll
   , PollId
   , pollIdDecoder
   , pollIdEncoder
+  , pollIsExpired
   ) where
 
-import Hp.Entity.User     (UserId, userIdDecoder, userIdEncoder)
-import Hp.IsEntity        (IsEntity(..))
-import Hp.PollFormElement (PollFormElement)
+import Hp.Eff.GetCurrentTime (GetCurrentTimeEffect, getCurrentTime)
+import Hp.Entity.User        (UserId)
+import Hp.IsEntity           (IsEntity(..))
+import Hp.PollFormElement    (PollFormElement)
 
-import Data.Aeson      (eitherDecodeStrict, toJSON)
+import Control.Effect
 import Data.Aeson      (FromJSON)
-import Data.Time       (DiffTime, UTCTime)
+import Data.Time       (DiffTime, NominalDiffTime, UTCTime, diffUTCTime)
 import Data.UUID       (UUID)
 import Web.HttpApiData (FromHttpApiData)
 
@@ -41,6 +43,23 @@ pollIdDecoder :: Decoder.Value PollId
 pollIdDecoder =
   PollId <$> Decoder.uuid
 
-pollIdEncoder :: Encoder.Params PollId
+pollIdEncoder :: Encoder.Value PollId
 pollIdEncoder =
-  coerce (Encoder.param Encoder.uuid)
+  coerce Encoder.uuid
+
+pollIsExpired ::
+     ( Carrier sig m
+     , Member GetCurrentTimeEffect sig
+     )
+  => Poll
+  -> m Bool
+pollIsExpired poll = do
+  now :: UTCTime <-
+    getCurrentTime
+
+  let
+    elapsed :: NominalDiffTime
+    elapsed =
+      now `diffUTCTime` (poll ^. #created)
+
+  pure (elapsed >= realToFrac (poll ^. #duration))
