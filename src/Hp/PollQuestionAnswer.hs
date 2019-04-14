@@ -1,4 +1,6 @@
-module Hp.PollQuestionAnswer where
+module Hp.PollQuestionAnswer
+  ( PollQuestionAnswer(..)
+  ) where
 
 import Data.Aeson (FromJSON(..))
 

@@ -166,6 +166,8 @@ library
     -Wredundant-constraints
     -fhide-source-paths
     -fno-warn-name-shadowing
+    -fprint-explicit-foralls
+    -fprint-unicode-syntax
 
   hs-source-dirs:
     src

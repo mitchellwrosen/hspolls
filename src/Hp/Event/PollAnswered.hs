@@ -1,4 +1,6 @@
-module Hp.Event.PollAnswered where
+module Hp.Event.PollAnswered
+  ( PollAnsweredEvent(..)
+  ) where
 
 import Hp.Entity            (Entity)
 import Hp.Entity.PollAnswer (PollAnswer)

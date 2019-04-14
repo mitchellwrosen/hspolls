@@ -16,8 +16,8 @@ newtype TBroadcastChan a
 
 -- | Forget that a channel can only be written to.
 unsafeTBroadcastChanToTChan :: TBroadcastChan a -> TChan a
-unsafeTBroadcastChanToTChan =
-  coerce
+unsafeTBroadcastChanToTChan (TBroadcastChan chan) =
+  chan
 
 newTBroadcastChan :: forall a. STM (TBroadcastChan a)
 newTBroadcastChan =

@@ -1,4 +1,6 @@
-module Hp.RequestBody.Subscribe where
+module Hp.RequestBody.Subscribe
+  ( SubscribeRequestBody(..)
+  ) where
 
 import Data.Aeson (FromJSON)
 

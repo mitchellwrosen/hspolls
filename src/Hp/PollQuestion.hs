@@ -1,9 +1,11 @@
-module Hp.PollQuestion where
+module Hp.PollQuestion
+  ( PollQuestion(..)
+  ) where
 
 
 -- | A single question in a poll.
 data PollQuestion
-  = CheckboxQuestion [Text]
+  = CheckboxQuestion Text [Text]
   -- | DropdownQuestion Text [Text]
   -- | NumberQuestion Text Int
   -- | RadioQuestion Text [Text]

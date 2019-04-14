@@ -22,7 +22,6 @@ handleCreatePoll ::
      , Member (Error ServerError) sig
      , Member PersistPollEffect sig
      , Member (YieldEffect PollCreatedEvent) sig
-     , MonadIO m
      )
   => AuthResult (Entity User)
   -> CreatePollRequestBody

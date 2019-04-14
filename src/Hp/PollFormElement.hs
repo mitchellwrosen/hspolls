@@ -2,9 +2,10 @@ module Hp.PollFormElement
   ( PollFormElement(..)
   ) where
 
-import Hp.PollQuestion (PollQuestion)
+import Hp.PollQuestion (PollQuestion(..))
 
-import Data.Aeson       ((.:), FromJSON(..), ToJSON(..), Value, withObject, withText)
+import Data.Aeson       (FromJSON(..), ToJSON(..), Value(..), object,
+                         withObject, withText, (.:), (.=))
 import Data.Aeson.Types (Parser)
 
 
@@ -33,19 +34,39 @@ instance FromJSON PollFormElement where
           "markdown" ->
             parseMarkdownElement value
 
-          _ ->
-            undefined
+          s ->
+            fail ("Unknown type: " ++ s ^. unpacked)
         )
         type_
 
     where
       parseCheckboxElement :: Value -> Parser PollFormElement
-      parseCheckboxElement value =
-        undefined
+      parseCheckboxElement =
+        withObject "checkbox" $ \o ->
+          QuestionElement <$>
+            (CheckboxQuestion
+              <$> o .: "header"
+              <*> o .: "options")
 
       parseMarkdownElement :: Value -> Parser PollFormElement
       parseMarkdownElement value =
         MarkdownElement <$> parseJSON value
 
 instance ToJSON PollFormElement where
-  toJSON = undefined
+  toJSON :: PollFormElement -> Value
+  toJSON = \case
+    MarkdownElement markdown ->
+      object
+        [ "type" .= String "markdown"
+        , "value" .= markdown
+        ]
+
+    QuestionElement (CheckboxQuestion header options) ->
+      object
+        [ "type" .= String "checkbox"
+        , "value" .=
+            object
+              [ "header" .= header
+              , "options" .= options
+              ]
+        ]

@@ -1,4 +1,6 @@
-module Hp.RequestBody.AnswerPoll where
+module Hp.RequestBody.AnswerPoll
+  ( AnswerPollRequestBody(..)
+  ) where
 
 import Hp.PollQuestionAnswer (PollQuestionAnswer)
 
