@@ -15,7 +15,7 @@ import Hp.Eff.HttpRequest.IO               (runHttpRequestIO)
 import Hp.Eff.HttpSession.IO               (runHttpSessionIO)
 import Hp.Eff.Log                          (log)
 import Hp.Eff.Log.Stdout                   (runLogStdout)
-import Hp.Eff.PersistPoll.DB               (PersistPollDBC(..))
+import Hp.Eff.PersistPoll.DB               (runPersistPollDB)
 import Hp.Eff.PersistPollAnswer.DB         (runPersistPollAnswerDB)
 import Hp.Eff.PersistUser.DB               (runPersistUserDB)
 import Hp.Eff.SendEmail.AmazonSES          (runSendEmailAmazonSES)
@@ -119,6 +119,9 @@ main = do
             & runLogStdout
             & runM
 
+        Right void ->
+          absurd void
+
   void . SlaveThread.fork $ do
     chan :: TChan Email <-
       dupTBroadcastChanIO emailChan
@@ -197,7 +200,7 @@ application
       >>> runHttpRequestIO httpManager
 
           -- Persistence layer
-      >>> unPersistPollDBC
+      >>> runPersistPollDB
       >>> runPersistPollAnswerDB
       >>> runPersistUserDB
       >>> runDBC postgresPool
