@@ -7,41 +7,52 @@ module Hp.Eff.DB
   , runDB
   ) where
 
+import Hp.Eff.FirstOrder (FirstOrderEffect(..))
+
 import Control.Effect
+import Control.Effect.Error   (throwError)
+import Control.Effect.Carrier
 import Control.Effect.Reader
 import Control.Effect.Sum
-import Control.Effect.Carrier
 import Hasql.Session
 
-import qualified Hasql.Pool as HPool
+import qualified Hasql.Pool as Hasql
 
-data DB (m :: * -> *) k
-  = forall a. RunDB (Session a) (Either HPool.UsageError a -> k)
+data DB (m :: Type -> Type) (k :: Type) where
+  RunDB ::
+       Session a
+    -> (a -> k)
+    -> DB m k
+
+  deriving (Effect, HFunctor) via (FirstOrderEffect DB)
 
 deriving instance Functor (DB m)
 
-instance HFunctor DB where
-  hmap _ = coerce
-
-instance Effect DB where
-  handle st hdl (RunDB sess k) = RunDB sess (hdl . (<$ st) . k)
-
-runDB :: (Member DB sig, Carrier sig m) => Session a -> m (Either HPool.UsageError a)
-runDB sess = send (RunDB sess pure)
+runDB ::
+     ( Carrier sig m
+     , Member DB sig
+     )
+  => Session a
+  -> m a
+runDB sess =
+  send (RunDB sess pure)
 
 newtype DBC m a
   = DBC
-  { unDBC :: ReaderC HPool.Pool m a
+  { unDBC :: ReaderC Hasql.Pool m a
   } deriving newtype (Functor, Applicative, Monad, MonadIO)
 
-runDBC :: forall m a. HPool.Pool -> DBC m a -> m a
-runDBC pool = runReader pool . unDBC
-
 instance ( Carrier sig m
+         , Member (Error Hasql.UsageError) sig
          , MonadIO m
          ) => Carrier (DB :+: sig) (DBC m) where
   eff = DBC . \case
     L (RunDB sess k) -> do
-      pool :: HPool.Pool <- ask
-      unDBC . k =<< liftIO (HPool.use pool sess)
+      pool :: Hasql.Pool <- ask
+      liftIO (Hasql.use pool sess) >>= \case
+        Left err -> throwError err
+        Right result -> unDBC (k result)
     R other -> eff (R (handleCoercible other))
+
+runDBC :: forall m a. Hasql.Pool -> DBC m a -> m a
+runDBC pool = runReader pool . unDBC

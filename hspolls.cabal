@@ -93,6 +93,7 @@ library
     Hp.Eff.FirstOrder
     Hp.Eff.GitHubAuth
     Hp.Eff.GitHubAuth.Http
+    Hp.Eff.HasqlUsageError.LogAnd500
     Hp.Eff.HttpRequest
     Hp.Eff.HttpRequest.IO
     Hp.Eff.HttpSession

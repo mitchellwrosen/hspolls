@@ -27,7 +27,6 @@ handleGetRoot auth =
           (unsafeByteStringValue
             (fold
               [ "https://github.com/login/oauth/authorize?"
-              , "allow_signup=false&"
               , "client_id=0708940f1632f7a953e8"
               ]))
     ]

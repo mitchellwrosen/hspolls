@@ -10,8 +10,10 @@ import Hp.Eff.Await.Chan                   (runAwaitChan)
 import Hp.Eff.DB                           (runDBC)
 import Hp.Eff.Error.Fail                   (runErrorFail)
 import Hp.Eff.GitHubAuth.Http              (runGitHubAuthHttp)
+import Hp.Eff.HasqlUsageError.LogAnd500    (runHasqlUsageErrorLogAnd500)
 import Hp.Eff.HttpRequest.IO               (runHttpRequestIO)
 import Hp.Eff.HttpSession.IO               (runHttpSessionIO)
+import Hp.Eff.Log                          (log)
 import Hp.Eff.Log.Stdout                   (runLogStdout)
 import Hp.Eff.PersistPoll.DB               (PersistPollDBC(..))
 import Hp.Eff.PersistPollAnswer.DB         (runPersistPollAnswerDB)
@@ -46,7 +48,7 @@ import Servant.Auth.Server        (CookieSettings, JWTSettings)
 import System.Exit                (exitFailure)
 
 import qualified Data.Text.IO             as Text
-import qualified Hasql.Pool               as Hasql (Pool)
+import qualified Hasql.Pool               as Hasql (Pool, UsageError)
 import qualified Network.AWS              as Aws
 import qualified Network.AWS.Env          as Aws (newEnvWith)
 import qualified Network.HTTP.Client      as Http
@@ -101,12 +103,21 @@ main = do
     chan :: TChan PollCreatedEvent <-
       dupTBroadcastChanIO pollCreatedEventChan
 
-    sendPollCreatedEmailWorker
-      & runAwaitChan chan
-      & runPersistUserDB
-      & runDBC pgPool
-      & runYieldChan (unsafeTBroadcastChanToTChan emailChan)
-      & runM
+    forever $ do
+      result :: Either Hasql.UsageError Void <-
+        sendPollCreatedEmailWorker
+          & runAwaitChan chan
+          & runPersistUserDB
+          & runDBC pgPool
+          & runError @Hasql.UsageError
+          & runYieldChan (unsafeTBroadcastChanToTChan emailChan)
+          & runM
+
+      case result of
+        Left err -> do
+          log (show err ^. packed)
+            & runLogStdout
+            & runM
 
   void . SlaveThread.fork $ do
     chan :: TChan Email <-
@@ -199,6 +210,8 @@ application
       >>> runYieldChan (unsafeTBroadcastChanToTChan pollCreatedEventChan)
 
           -- Error handlers
+      >>> runErrorFail @Hasql.UsageError
+      >>> runHasqlUsageErrorLogAnd500
       >>> runErrorFail @Servant.ClientError
       >>> runServantClientErrorLogAnd500
       >>> runError @Servant.ServerError

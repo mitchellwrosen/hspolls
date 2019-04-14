@@ -37,10 +37,8 @@ instance ( Carrier sig m
 
     L (GetPoll pollId k) -> do
       let sql = "SELECT created_at, duration, form FROM polls WHERE id = $1"
-      runDB (H.statement pollId (H.Statement sql pollIdEncoder ((fmap.fmap) (Entity pollId) (D.rowMaybe pollDecoder)) True)) >>= \case
-        Left err -> error (show err)
-        -- TODO handle error
-        Right x -> unPersistPollDBC $ k x
+      runDB (H.statement pollId (H.Statement sql pollIdEncoder ((fmap.fmap) (Entity pollId) (D.rowMaybe pollDecoder)) True)) >>=
+        unPersistPollDBC . k
 
     R other ->
       eff (handleCoercible other)
@@ -54,13 +52,7 @@ doSavePoll ::
   -> Maybe UserId
   -> m (Entity Poll)
 doSavePoll duration elements userId =
-  runDB session >>= \case
-    -- TODO handle error
-    Left err ->
-      error (show err)
-
-    Right poll ->
-      pure poll
+  runDB session
 
   where
     session :: H.Session (Entity Poll)

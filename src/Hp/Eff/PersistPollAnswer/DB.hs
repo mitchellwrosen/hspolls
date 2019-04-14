@@ -44,13 +44,7 @@ doPutPollAnswer ::
   => PollAnswer
   -> m (Maybe PollAnswerId)
 doPutPollAnswer _pollAnswer =
-  runDB session >>= \case
-    Left err ->
-      -- TODO deal with Hasql.Pool.UsageError how?
-      error (show err)
-
-    Right pollAnswerId ->
-      pure (Just pollAnswerId)
+  Just <$> runDB session
 
   where
     -- TODO insert poll answer

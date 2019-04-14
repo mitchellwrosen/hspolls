@@ -49,6 +49,8 @@ getUserEmailsSubscribedToPollCreatedEvents =
 
 -- | Insert and return a user, given its GitHub user name. If the user already
 -- exists, just returns it.
+--
+-- TODO what if email changed?
 putUserByGitHubUserName ::
      ( Carrier sig m
      , Member PersistUserEffect sig

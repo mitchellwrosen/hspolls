@@ -60,18 +60,7 @@ doGetUserEmailsSubscribedToPollCreatedEvents ::
      )
   => m [Text]
 doGetUserEmailsSubscribedToPollCreatedEvents =
-  runDB session >>= \case
-    Left err -> do
-      traceShowM err
-      undefined
-
-    Right emailAddresses ->
-      pure emailAddresses
-
-  where
-    session :: Session [Text]
-    session =
-      statement () sqlGetUserEmailsSubscribedToPollCreatedEvents
+  runDB (statement () sqlGetUserEmailsSubscribedToPollCreatedEvents)
 
 doPutUserByGitHubUserName ::
      ( Carrier sig m
@@ -81,13 +70,7 @@ doPutUserByGitHubUserName ::
   -> Maybe Text
   -> m (Entity User)
 doPutUserByGitHubUserName name email =
-  runDB session >>= \case
-    Left err ->
-      -- TODO deal with Hasql.Pool.UsageError how?
-      error (show err)
-
-    Right user ->
-      pure user
+  runDB session
 
   where
     session :: Session (Entity User)
@@ -116,12 +99,7 @@ doSetUserSubscription ::
   -> Subscription
   -> m ()
 doSetUserSubscription userId sub =
-  runDB session >>= \case
-    Left err ->
-      error (show err)
-
-    Right () ->
-      pure ()
+  runDB session
 
   where
     session :: Session ()
