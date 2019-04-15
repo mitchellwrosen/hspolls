@@ -150,7 +150,8 @@ main = do
 middleware ::
      (  Wai.Request
      -> (Wai.Response -> IO Wai.ResponseReceived)
-     -> IO Wai.ResponseReceived)
+     -> IO Wai.ResponseReceived
+     )
   -> Wai.Request
   -> (Wai.Response -> IO Wai.ResponseReceived)
   -> IO Wai.ResponseReceived
@@ -233,6 +234,6 @@ application
       >>> runLogStdout
 
           -- IO boilerplate
-      >>> runM @IO
+      >>> runM
       >>> ExceptT
       >>> Servant.Handler

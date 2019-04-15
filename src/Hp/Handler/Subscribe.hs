@@ -2,11 +2,12 @@ module Hp.Handler.Subscribe
   ( handleSubscribe
   ) where
 
-import Hp.Eff.PersistUser       (PersistUserEffect)
+import Hp.Eff.PersistUser       (PersistUserEffect, setUserSubscription)
 import Hp.Eff.Throw             (ThrowEffect, throw)
 import Hp.Entity                (Entity)
 import Hp.Entity.User           (User)
 import Hp.RequestBody.Subscribe (SubscribeRequestBody(..))
+import Hp.Subscription          (Subscription(..))
 
 import Control.Effect
 import Servant             (NoContent(..), ServerError, err401)
@@ -23,7 +24,12 @@ handleSubscribe ::
   -> m NoContent
 handleSubscribe authResult body =
   case authResult of
-    Authenticated user ->
+    Authenticated user -> do
+      setUserSubscription
+        (user ^. #key)
+        Subscription
+          { pollCreated = body ^. #pollCreated }
+
       pure NoContent
 
     _ ->
