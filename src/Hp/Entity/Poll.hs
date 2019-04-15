@@ -4,7 +4,7 @@ module Hp.Entity.Poll
   , PollId
   , pollIdDecoder
   , pollIdEncoder
-  , pollIsExpired
+  , isPollExpired
   ) where
 
 import Hp.Eff.GetCurrentTime (GetCurrentTimeEffect, getCurrentTime)
@@ -47,13 +47,13 @@ pollIdEncoder :: Encoder.Value PollId
 pollIdEncoder =
   coerce Encoder.uuid
 
-pollIsExpired ::
+isPollExpired ::
      ( Carrier sig m
      , Member GetCurrentTimeEffect sig
      )
   => Poll
   -> m Bool
-pollIsExpired poll = do
+isPollExpired poll = do
   now :: UTCTime <-
     getCurrentTime
 

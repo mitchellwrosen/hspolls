@@ -1,8 +1,9 @@
 module Hp.PollFormElement
   ( PollFormElement(..)
+  , arePollFormElementsValid
   ) where
 
-import Hp.PollQuestion (PollQuestion(..))
+import Hp.PollQuestion (PollQuestion(..), isPollQuestionValid)
 
 import Data.Aeson       (FromJSON(..), ToJSON(..), Value(..), object,
                          withObject, withText, (.:), (.=))
@@ -70,3 +71,52 @@ instance ToJSON PollFormElement where
               , "options" .= options
               ]
         ]
+
+-- | Validate a list of form elements:
+--
+-- * It's not empty
+-- * Markdown is valid (i.e. not empty)
+-- * Questions are valid
+-- * There aren't two markdown elements in a row
+arePollFormElementsValid :: Seq PollFormElement -> Bool
+arePollFormElementsValid elements =
+  case uncons elements of
+    Nothing ->
+      False
+
+    Just (elem0, elems) ->
+      and
+        [ isPollFormElementValid elem0
+        , go elem0 elems
+        ]
+
+  where
+    go :: PollFormElement -> Seq PollFormElement -> Bool
+    go x xs =
+      case uncons xs of
+        Nothing ->
+          True
+
+        Just (y, ys) ->
+          and
+            [ isPollFormElementValid y
+            , case (x, y) of
+                (MarkdownElement{}, MarkdownElement{}) -> False
+                _ -> True
+            , go y ys
+            ]
+
+-- | Validate a single form element:
+--
+-- * Markdown isn't empty
+-- * Question is valid
+isPollFormElementValid :: PollFormElement -> Bool
+isPollFormElementValid = \case
+  MarkdownElement markdown ->
+    isMarkdownValid markdown
+  QuestionElement question ->
+    isPollQuestionValid question
+
+isMarkdownValid :: Markdown -> Bool
+isMarkdownValid =
+  undefined

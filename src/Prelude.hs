@@ -11,10 +11,11 @@ import Control.Lens               as X (Fold, Getter, Lens, Lens', Traversal,
                                         Traversal', at, each, foldMapOf, folded,
                                         foldlOf, foldrOf, ix, mapped, over,
                                         preview, re, review, reviews, set,
-                                        strict, to, toListOf, view, (%~), (.~),
-                                        (^.), (^..), (^?), (^?!), _1, _2, _3,
-                                        _4, _5, _Just, _Left, _Nothing, _Right,
-                                        _head, _init, _last, _tail)
+                                        strict, to, toListOf, uncons, view,
+                                        (%~), (.~), (^.), (^..), (^?), (^?!),
+                                        _1, _2, _3, _4, _5, _Just, _Left,
+                                        _Nothing, _Right, _head, _init, _last,
+                                        _tail)
 import Control.Monad              as X (forever, guard, unless, when)
 import Control.Monad.IO.Class     as X
 import Data.ByteString            as X (ByteString)

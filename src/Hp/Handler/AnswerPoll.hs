@@ -7,7 +7,7 @@ import Hp.Eff.PersistPoll        (PersistPollEffect, getPoll)
 import Hp.Eff.PersistPollAnswer  (PersistPollAnswerEffect, putPollAnswer)
 import Hp.Eff.Yield              (YieldEffect, yield)
 import Hp.Entity                 (Entity(..))
-import Hp.Entity.Poll            (PollId, pollIsExpired)
+import Hp.Entity.Poll            (PollId, isPollExpired)
 import Hp.Entity.PollAnswer      (PollAnswer(..))
 import Hp.Entity.User            (User)
 import Hp.Event.PollAnswered     (PollAnsweredEvent(..))
@@ -38,7 +38,7 @@ handleAnswerPoll authResult pollId body =
 
     Just poll -> do
       expired :: Bool <-
-        pollIsExpired (poll ^. #value)
+        isPollExpired (poll ^. #value)
 
       when expired
         (throwError err403)
