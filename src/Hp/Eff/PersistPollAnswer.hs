@@ -16,8 +16,8 @@ import Control.Effect.Carrier
 
 data PersistPollAnswerEffect (m :: Type -> Type) (k :: Type) where
   PutPollAnswer ::
-       PollId
-    -> [PollQuestionAnswer]
+       [PollQuestionAnswer]
+    -> PollId
     -> Maybe UserId
     -> (Entity PollAnswer -> k)
     -> PersistPollAnswerEffect m k
@@ -31,9 +31,9 @@ putPollAnswer ::
      ( Carrier sig m
      , Member PersistPollAnswerEffect sig
      )
-  => PollId
-  -> [PollQuestionAnswer]
+  => [PollQuestionAnswer]
+  -> PollId
   -> Maybe UserId
   -> m (Entity PollAnswer)
-putPollAnswer pollId response userId =
-  send (PutPollAnswer pollId response userId pure)
+putPollAnswer answers pollId userId =
+  send (PutPollAnswer answers pollId userId pure)

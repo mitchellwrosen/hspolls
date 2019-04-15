@@ -6,7 +6,9 @@ module Hp.PollQuestionAnswer
 
 import Hp.PollQuestion (PollQuestion(..))
 
-import Data.Aeson (FromJSON(..))
+import Data.Aeson       (FromJSON(..), ToJSON(..), Value, object, withObject,
+                         withText, (.:), (.=))
+import Data.Aeson.Types (Parser)
 
 
 data PollQuestionAnswer
@@ -14,9 +16,37 @@ data PollQuestionAnswer
   -- = RadioAnswer Natural -- 0-based index into question
   deriving stock (Show)
 
--- TODO instance FromJSON PollQuestionAnswer
 instance FromJSON PollQuestionAnswer where
-  parseJSON = undefined
+  parseJSON :: Value -> Parser PollQuestionAnswer
+  parseJSON =
+    withObject "PollQuestionAnswer" $ \o -> do
+      type_ <- o .: "type"
+      value <- o .: "value"
+
+      withText
+        "type"
+        (\case
+          "checkbox" ->
+            parseCheckboxAnswer value
+
+          s ->
+            fail ("Unknown type: " ++ s ^. unpacked)
+        )
+        type_
+
+    where
+      parseCheckboxAnswer :: Value -> Parser PollQuestionAnswer
+      parseCheckboxAnswer value =
+        CheckboxAnswer <$> parseJSON value
+
+instance ToJSON PollQuestionAnswer where
+  toJSON :: PollQuestionAnswer -> Value
+  toJSON = \case
+    CheckboxAnswer answers ->
+      object
+        [ "type" .= ("checkbox" :: Text)
+        , "value" .= toJSON answers
+        ]
 
 arePollQuestionAnswersValid ::
      [PollQuestion]

@@ -47,11 +47,14 @@ handleAnswerPoll authResult pollId body =
       unless
         (arePollQuestionAnswersValid
           (pollQuestions (poll ^. #value))
-          (body ^. #response))
+          (body ^. #answers))
         (throw err400)
 
       pollAnswer :: Entity PollAnswer <-
-        putPollAnswer pollId (body ^. #response) (view #key <$> user)
+        putPollAnswer
+          (body ^. #answers)
+          pollId
+          (view #key <$> user)
 
       yield PollAnsweredEvent
         { answer = pollAnswer }

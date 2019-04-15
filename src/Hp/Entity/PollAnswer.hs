@@ -4,6 +4,7 @@ module Hp.Entity.PollAnswer
   ( PollAnswer(..)
   , EntityId(PollAnswerId)
   , PollAnswerId
+  , pollAnswerIdDecoder
   ) where
 
 import Hp.Entity.Poll        (PollId)
@@ -14,12 +15,14 @@ import Hp.PollQuestionAnswer (PollQuestionAnswer)
 import Data.Time (UTCTime)
 import Data.UUID (UUID)
 
+import qualified Hasql.Decoders as Decoder
+
 
 data PollAnswer
   = PollAnswer
-  { created :: UTCTime
+  { answers :: [PollQuestionAnswer]
+  , created :: UTCTime
   , pollId :: PollId
-  , response :: Seq PollQuestionAnswer
   , userId :: Maybe UserId
   } deriving stock (Generic, Show)
 
@@ -30,3 +33,7 @@ instance IsEntity PollAnswer where
 
 type PollAnswerId
   = EntityId PollAnswer
+
+pollAnswerIdDecoder :: Decoder.Value PollAnswerId
+pollAnswerIdDecoder =
+  PollAnswerId <$> Decoder.uuid

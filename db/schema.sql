@@ -69,8 +69,7 @@ CREATE TABLE poll_responses (
     NOT NULL,
 
   userId
-    uuid
-    NOT NULL,
+    uuid,
 
   FOREIGN KEY (pollId) REFERENCES polls (id),
   FOREIGN KEY (userId) REFERENCES users (id),

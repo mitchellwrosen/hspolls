@@ -27,7 +27,8 @@ instance FromJSON PollFormElement where
       type_ <- o .: "type"
       value <- o .: "value"
 
-      withText "type"
+      withText
+        "type"
         (\case
           "checkbox" ->
             parseCheckboxElement value

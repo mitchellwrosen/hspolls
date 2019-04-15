@@ -28,7 +28,7 @@ data API route
       :: route
       :- Auth '[Cookie] (Entity User)
       :> "poll"
-      :> Capture "Poll ID" PollId
+      :> Capture "PollId" PollId
       :> ReqBody '[JSON] AnswerPollRequestBody
       :> Post '[JSON] NoContent
 
