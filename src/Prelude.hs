@@ -1,5 +1,6 @@
 module Prelude
   ( error
+  , impossible
   , undefined
   , module X
   ) where
@@ -44,6 +45,10 @@ error :: [Char] -> a
 error =
   PreludeFromBase.error
 {-# WARNING error "error" #-}
+
+impossible :: a
+impossible =
+  PreludeFromBase.error "impossible"
 
 undefined :: a
 undefined =

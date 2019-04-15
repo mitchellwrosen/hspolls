@@ -74,8 +74,8 @@ fromServantClient baseUrl = \case
                 throw clientError
 
           Free Servant.RunRequest{} ->
-            undefined
+            impossible
 
-  Pure _ -> undefined
-  Free Servant.Throw{} -> undefined
+  Pure _ -> impossible
+  Free Servant.Throw{} -> impossible
 

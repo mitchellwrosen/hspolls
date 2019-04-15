@@ -12,7 +12,8 @@ import Hp.Entity.Poll            (PollId, isPollExpired, pollQuestions)
 import Hp.Entity.PollAnswer      (PollAnswer(..))
 import Hp.Entity.User            (User)
 import Hp.Event.PollAnswered     (PollAnsweredEvent(..))
-import Hp.PollQuestionAnswer     (arePollQuestionAnswersValid)
+import Hp.PollQuestionAnswer     (PollQuestionAnswer,
+                                  arePollQuestionAnswersValid)
 import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody(..))
 
 import Control.Effect
@@ -33,23 +34,17 @@ handleAnswerPoll ::
   -> AnswerPollRequestBody
   -> m NoContent
 handleAnswerPoll authResult pollId body =
-  getPoll pollId >>= \case
-    Nothing ->
+  validateAnswerPoll pollId (body ^. #answers) >>= \case
+    Left PollDoesNotExist ->
       throw err404
 
-    Just poll -> do
-      expired :: Bool <-
-        isPollExpired (poll ^. #value)
+    Left PollIsExpired ->
+      throw err403
 
-      when expired
-        (throw err403)
+    Left QuestionsAreInvalid ->
+      throw err400
 
-      unless
-        (arePollQuestionAnswersValid
-          (pollQuestions (poll ^. #value))
-          (body ^. #answers))
-        (throw err400)
-
+    Right () -> do
       pollAnswer :: Entity PollAnswer <-
         putPollAnswer
           (body ^. #answers)
@@ -66,3 +61,37 @@ handleAnswerPoll authResult pollId body =
     user = do
       Authenticated user <- pure authResult
       pure user
+
+
+data AnswerPollError
+  = PollDoesNotExist
+  | PollIsExpired
+  | QuestionsAreInvalid
+
+validateAnswerPoll ::
+     ( Carrier sig m
+     , Member GetCurrentTimeEffect sig
+     , Member PersistPollEffect sig
+     )
+  => PollId
+  -> [PollQuestionAnswer]
+  -> m (Either AnswerPollError ())
+validateAnswerPoll pollId answers =
+  getPoll pollId >>= \case
+    Nothing ->
+      pure (Left PollDoesNotExist)
+
+    Just poll -> do
+      expired :: Bool <-
+        isPollExpired (poll ^. #value)
+
+      let
+        valid :: Bool
+        valid =
+          arePollQuestionAnswersValid (pollQuestions (poll ^. #value)) answers
+
+      pure $
+        case (expired, valid) of
+          (True, _) -> Left PollIsExpired
+          (_, False) -> Left QuestionsAreInvalid
+          _ -> Right ()
