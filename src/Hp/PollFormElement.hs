@@ -35,7 +35,7 @@ instance FromJSON PollFormElement where
           "markdown" ->
             parseMarkdownElement value
 
-          s
+          s ->
             fail ("Unknown type: " ++ s ^. unpacked)
         )
         type_

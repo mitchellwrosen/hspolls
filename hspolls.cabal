@@ -87,6 +87,7 @@ library
     Hp.Config
     Hp.Eff.Await
     Hp.Eff.Await.Chan
+    Hp.Eff.Catch
     Hp.Eff.DB
     Hp.Eff.Error.Fail
     Hp.Eff.Fail
@@ -110,6 +111,7 @@ library
     Hp.Eff.SendEmail
     Hp.Eff.SendEmail.AmazonSES
     Hp.Eff.ServantClientError.LogAnd500
+    Hp.Eff.Throw
     Hp.Eff.Yield
     Hp.Eff.Yield.Chan
     Hp.Eff.Yield.Print
