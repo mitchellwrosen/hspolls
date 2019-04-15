@@ -17,7 +17,7 @@ import Hp.PollQuestionAnswer    (PollQuestionAnswer)
 import Control.Effect
 import Control.Effect.Carrier
 import Control.Effect.Sum
-import Data.Aeson             (toJSON)
+import Data.Aeson             (eitherDecodeStrict, toJSON)
 import Hasql.Statement        (Statement(..))
 
 import qualified Hasql.Decoders as Decoder
@@ -36,15 +36,50 @@ instance
   => Carrier (PersistPollAnswerEffect :+: sig) (PersistPollAnswerCarrierDB m) where
 
   eff ::
-       (PersistPollAnswerEffect :+: sig) (PersistPollAnswerCarrierDB m) (PersistPollAnswerCarrierDB m a)
+       (PersistPollAnswerEffect :+: sig)
+         (PersistPollAnswerCarrierDB m)
+         (PersistPollAnswerCarrierDB m a)
     -> PersistPollAnswerCarrierDB m a
   eff = \case
+    L (GetPollAnswers pollId next) ->
+      PersistPollAnswerCarrierDB (doGetPollAnswers pollId) >>=
+        next
+
     L (PutPollAnswer answers pollId userId next) ->
       PersistPollAnswerCarrierDB (doPutPollAnswer answers pollId userId) >>=
         next
 
     R other ->
       PersistPollAnswerCarrierDB (eff (handleCoercible other))
+
+doGetPollAnswers ::
+     ( Carrier sig m
+     , Member DB sig
+     )
+  => PollId
+  -> m (Vector [PollQuestionAnswer])
+doGetPollAnswers pollId =
+  runDB (Hasql.statement pollId statement)
+
+  where
+    statement :: Statement PollId (Vector [PollQuestionAnswer])
+    statement =
+      Statement sql encoder decoder True
+
+      where
+        sql :: ByteString
+        sql =
+          "SELECT response FROM poll_responses WHERE pollId = $1"
+
+        encoder :: Encoder.Params PollId
+        encoder =
+          Encoder.param pollIdEncoder
+
+        decoder :: Decoder.Result (Vector [PollQuestionAnswer])
+        decoder =
+          Decoder.rowVector
+            (Decoder.column
+              (Decoder.jsonbBytes (over _Left (view packed) . eitherDecodeStrict)))
 
 doPutPollAnswer ::
      ( Carrier sig m

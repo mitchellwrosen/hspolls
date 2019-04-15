@@ -1,5 +1,6 @@
 module Hp.Eff.PersistPollAnswer
   ( PersistPollAnswerEffect(..)
+  , getPollAnswers
   , putPollAnswer
   ) where
 
@@ -15,6 +16,11 @@ import Control.Effect.Carrier
 
 
 data PersistPollAnswerEffect (m :: Type -> Type) (k :: Type) where
+  GetPollAnswers ::
+       PollId
+    -> (Vector [PollQuestionAnswer] -> k)
+    -> PersistPollAnswerEffect m k
+
   PutPollAnswer ::
        [PollQuestionAnswer]
     -> PollId
@@ -25,6 +31,16 @@ data PersistPollAnswerEffect (m :: Type -> Type) (k :: Type) where
   deriving stock (Functor)
   deriving (Effect, HFunctor)
        via (FirstOrderEffect PersistPollAnswerEffect)
+
+-- | Get all of the answers to a poll.
+getPollAnswers ::
+     ( Carrier sig m
+     , Member PersistPollAnswerEffect sig
+     )
+  => PollId
+  -> m (Vector [PollQuestionAnswer])
+getPollAnswers pollId =
+  send (GetPollAnswers pollId pure)
 
 -- | Insert a poll answer and return its id.
 putPollAnswer ::
