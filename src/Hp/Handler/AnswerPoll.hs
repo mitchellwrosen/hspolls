@@ -5,6 +5,7 @@ module Hp.Handler.AnswerPoll
 import Hp.Eff.GetCurrentTime     (GetCurrentTimeEffect)
 import Hp.Eff.PersistPoll        (PersistPollEffect, getPoll)
 import Hp.Eff.PersistPollAnswer  (PersistPollAnswerEffect, putPollAnswer)
+import Hp.Eff.Throw              (ThrowEffect, throw)
 import Hp.Eff.Yield              (YieldEffect, yield)
 import Hp.Entity                 (Entity(..))
 import Hp.Entity.Poll            (PollId, isPollExpired, pollQuestions)
@@ -15,17 +16,16 @@ import Hp.PollQuestionAnswer     (arePollQuestionAnswersValid)
 import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody(..))
 
 import Control.Effect
-import Control.Effect.Error (throwError)
-import Servant              (NoContent(..), ServerError, err400, err403, err404)
-import Servant.Auth.Server  (AuthResult(..))
+import Servant             (NoContent(..), ServerError, err400, err403, err404)
+import Servant.Auth.Server (AuthResult(..))
 
 
 handleAnswerPoll ::
      ( Carrier sig m
-     , Member (Error ServerError) sig
      , Member GetCurrentTimeEffect sig
      , Member PersistPollEffect sig
      , Member PersistPollAnswerEffect sig
+     , Member (ThrowEffect ServerError) sig
      , Member (YieldEffect PollAnsweredEvent) sig
      )
   => AuthResult (Entity User)
@@ -35,20 +35,20 @@ handleAnswerPoll ::
 handleAnswerPoll authResult pollId body =
   getPoll pollId >>= \case
     Nothing ->
-      throwError err404
+      throw err404
 
     Just poll -> do
       expired :: Bool <-
         isPollExpired (poll ^. #value)
 
       when expired
-        (throwError err403)
+        (throw err403)
 
       unless
         (arePollQuestionAnswersValid
           (pollQuestions (poll ^. #value))
           (body ^. #response))
-        (throwError err400)
+        (throw err400)
 
       pollAnswer :: Entity PollAnswer <-
         putPollAnswer pollId (body ^. #response) (view #key <$> user)

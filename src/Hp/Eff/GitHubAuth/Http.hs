@@ -7,6 +7,7 @@ module Hp.Eff.GitHubAuth.Http
 import Hp.Eff.GitHubAuth                           (GitHubAuthEffect(..))
 import Hp.Eff.HttpRequest                          (HttpRequestEffect)
 import Hp.Eff.Log                                  (LogEffect, log)
+import Hp.Eff.Throw                                (ThrowEffect)
 import Hp.GitHub                                   (gitHubGetUser, gitHubPostLoginOauthAccessToken)
 import Hp.GitHub.ClientId                          (GitHubClientId)
 import Hp.GitHub.ClientSecret                      (GitHubClientSecret)
@@ -33,9 +34,9 @@ newtype GitHubAuthCarrierHttp m a
 
 instance
      ( Carrier sig m
-     , Member (Error Servant.ClientError) sig
      , Member HttpRequestEffect sig
      , Member LogEffect sig
+     , Member (ThrowEffect Servant.ClientError) sig
      )
   => Carrier (GitHubAuthEffect :+: sig) (GitHubAuthCarrierHttp m) where
 
@@ -57,9 +58,9 @@ instance
 doGitHubAuth ::
      forall m sig.
      ( Carrier sig m
-     , Member (Error Servant.ClientError) sig
      , Member HttpRequestEffect sig
      , Member LogEffect sig
+     , Member (ThrowEffect Servant.ClientError) sig
      )
   => GitHubClientId
   -> GitHubClientSecret

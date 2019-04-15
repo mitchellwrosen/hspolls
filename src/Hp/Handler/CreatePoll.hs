@@ -3,6 +3,7 @@ module Hp.Handler.CreatePoll
   ) where
 
 import Hp.Eff.PersistPoll        (PersistPollEffect, savePoll)
+import Hp.Eff.Throw              (ThrowEffect, throw)
 import Hp.Eff.Yield              (YieldEffect, yield)
 import Hp.Entity                 (Entity(..))
 import Hp.Entity.Poll            (Poll(..))
@@ -12,16 +13,15 @@ import Hp.PollFormElement        (arePollFormElementsValid)
 import Hp.RequestBody.CreatePoll (CreatePollRequestBody(..))
 
 import Control.Effect
-import Control.Effect.Error (throwError)
-import Prelude              hiding (id)
-import Servant              (NoContent(..), ServerError, err400)
-import Servant.Auth.Server  (AuthResult(..))
+import Prelude             hiding (id)
+import Servant             (NoContent(..), ServerError, err400)
+import Servant.Auth.Server (AuthResult(..))
 
 
 handleCreatePoll ::
      ( Carrier sig m
-     , Member (Error ServerError) sig
      , Member PersistPollEffect sig
+     , Member (ThrowEffect ServerError) sig
      , Member (YieldEffect PollCreatedEvent) sig
      )
   => AuthResult (Entity User)
@@ -53,10 +53,10 @@ handleCreatePoll authResult body = do
 -- * Questions are all valid
 validatePoll ::
      ( Carrier sig m
-     , Member (Error ServerError) sig
+     , Member (ThrowEffect ServerError) sig
      )
   => CreatePollRequestBody
   -> m ()
 validatePoll body = do
-  when ((body ^. #duration) < 60) (throwError err400)
-  when (not (arePollFormElementsValid (body ^. #elements))) (throwError err400)
+  when ((body ^. #duration) < 60) (throw err400)
+  when (not (arePollFormElementsValid (body ^. #elements))) (throw err400)

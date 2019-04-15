@@ -89,13 +89,10 @@ library
     Hp.Eff.Await.Chan
     Hp.Eff.Catch
     Hp.Eff.DB
-    Hp.Eff.Error.Fail
-    Hp.Eff.Fail
     Hp.Eff.FirstOrder
     Hp.Eff.GetCurrentTime
     Hp.Eff.GitHubAuth
     Hp.Eff.GitHubAuth.Http
-    Hp.Eff.HasqlUsageError.LogAnd500
     Hp.Eff.HttpRequest
     Hp.Eff.HttpRequest.IO
     Hp.Eff.HttpSession
@@ -110,7 +107,6 @@ library
     Hp.Eff.PersistUser.DB
     Hp.Eff.SendEmail
     Hp.Eff.SendEmail.AmazonSES
-    Hp.Eff.ServantClientError.LogAnd500
     Hp.Eff.Throw
     Hp.Eff.Yield
     Hp.Eff.Yield.Chan

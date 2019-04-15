@@ -7,10 +7,10 @@ module Hp.Eff.HttpRequest
   ) where
 
 import Hp.Eff.FirstOrder (FirstOrderEffect(..))
+import Hp.Eff.Throw      (ThrowEffect, throw)
 
 import Control.Effect
 import Control.Effect.Carrier
-import Control.Effect.Error   (throwError)
 import Control.Monad.Free     (Free(..))
 
 import qualified Servant.Client.Core as Servant (BaseUrl, Request, Response)
@@ -48,8 +48,8 @@ httpRequest baseUrl request =
 -- (Pure) or a failure node (Free Throw).
 fromServantClient ::
      ( Carrier sig m
-     , Member (Error Servant.ClientError) sig
      , Member HttpRequestEffect sig
+     , Member (ThrowEffect Servant.ClientError) sig
      )
   => Servant.BaseUrl
   -> Free Servant.ClientF a
@@ -71,7 +71,7 @@ fromServantClient baseUrl = \case
                 pure (Left response)
 
               _ ->
-                throwError clientError
+                throw clientError
 
           Free Servant.RunRequest{} ->
             undefined

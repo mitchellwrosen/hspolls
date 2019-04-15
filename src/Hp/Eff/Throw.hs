@@ -36,7 +36,7 @@ throw err =
 
 newtype ThrowCarrier e m a
   = ThrowCarrier { unThrowCarrier :: Error.ErrorC e m a }
-  deriving newtype (Applicative, Functor, Monad)
+  deriving newtype (Applicative, Functor, Monad, MonadIO)
 
 instance
      ( Carrier sig m

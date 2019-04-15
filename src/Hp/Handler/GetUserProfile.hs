@@ -2,19 +2,19 @@ module Hp.Handler.GetUserProfile
   ( handleGetUserProfile
   ) where
 
+import Hp.Eff.Throw   (ThrowEffect, throw)
 import Hp.Entity      (Entity)
 import Hp.Entity.User (User(..))
 import Hp.UserProfile (UserProfile(..))
 
 import Control.Effect
-import Control.Effect.Error
-import Servant.Auth.Server  (AuthResult(..))
-import Servant.Server       (ServerError, err401)
+import Servant.Auth.Server (AuthResult(..))
+import Servant.Server      (ServerError, err401)
 
 
 handleGetUserProfile ::
      ( Carrier sig m
-     , Member (Error ServerError) sig
+     , Member (ThrowEffect ServerError) sig
      )
   => AuthResult (Entity User)
   -> m UserProfile
@@ -26,4 +26,4 @@ handleGetUserProfile = \case
       }
 
   _ ->
-    throwError err401
+    throw err401

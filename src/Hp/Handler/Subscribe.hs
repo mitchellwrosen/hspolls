@@ -3,20 +3,20 @@ module Hp.Handler.Subscribe
   ) where
 
 import Hp.Eff.PersistUser       (PersistUserEffect)
+import Hp.Eff.Throw             (ThrowEffect, throw)
 import Hp.Entity                (Entity)
 import Hp.Entity.User           (User)
 import Hp.RequestBody.Subscribe (SubscribeRequestBody(..))
 
 import Control.Effect
-import Control.Effect.Error (throwError)
-import Servant              (NoContent(..), ServerError, err401)
-import Servant.Auth.Server  (AuthResult(..))
+import Servant             (NoContent(..), ServerError, err401)
+import Servant.Auth.Server (AuthResult(..))
 
 
 handleSubscribe ::
      ( Carrier sig m
-     , Member (Error ServerError) sig
      , Member PersistUserEffect sig
+     , Member (ThrowEffect ServerError) sig
      )
   => AuthResult (Entity User)
   -> SubscribeRequestBody
@@ -27,4 +27,4 @@ handleSubscribe authResult body =
       pure NoContent
 
     _ ->
-      throwError err401
+      throw err401

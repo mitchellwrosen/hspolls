@@ -8,9 +8,9 @@ module Hp.Eff.DB
   ) where
 
 import Hp.Eff.FirstOrder (FirstOrderEffect(..))
+import Hp.Eff.Throw      (ThrowEffect, throw)
 
 import Control.Effect
-import Control.Effect.Error   (throwError)
 import Control.Effect.Carrier
 import Control.Effect.Reader
 import Control.Effect.Sum
@@ -43,14 +43,14 @@ newtype DBC m a
   } deriving newtype (Functor, Applicative, Monad, MonadIO)
 
 instance ( Carrier sig m
-         , Member (Error Hasql.UsageError) sig
+         , Member (ThrowEffect Hasql.UsageError) sig
          , MonadIO m
          ) => Carrier (DB :+: sig) (DBC m) where
   eff = DBC . \case
     L (RunDB sess k) -> do
       pool :: Hasql.Pool <- ask
       liftIO (Hasql.use pool sess) >>= \case
-        Left err -> throwError err
+        Left err -> throw err
         Right result -> unDBC (k result)
     R other -> eff (R (handleCoercible other))
 

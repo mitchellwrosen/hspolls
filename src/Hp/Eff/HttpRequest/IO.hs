@@ -8,10 +8,10 @@ module Hp.Eff.HttpRequest.IO
   ) where
 
 import Hp.Eff.HttpRequest (HttpRequestEffect(..))
+import Hp.Eff.Throw       (ThrowEffect, throw)
 
 import Control.Effect
 import Control.Effect.Carrier
-import Control.Effect.Error   (throwError)
 import Control.Effect.Reader
 import Control.Effect.Sum
 
@@ -27,7 +27,7 @@ newtype HttpRequestCarrierIO m a
 
 instance
      ( Carrier sig m
-     , Member (Error Servant.ClientError) sig
+     , Member (ThrowEffect Servant.ClientError) sig
      , MonadIO m
      )
   => Carrier (HttpRequestEffect :+: sig) (HttpRequestCarrierIO m) where
@@ -49,7 +49,7 @@ instance
 
 doHttpRequestIO ::
      ( Carrier sig m
-     , Member (Error Servant.ClientError) sig
+     , Member (ThrowEffect Servant.ClientError) sig
      , MonadIO m
      )
   => Http.Manager
@@ -63,7 +63,7 @@ doHttpRequestIO manager baseUrl request =
       pure (Left response)
 
     Left clientError ->
-      throwError clientError
+      throw clientError
 
     Right response ->
       pure (Right response)

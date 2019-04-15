@@ -5,6 +5,7 @@ module Hp.GitHub
 
 import Hp.Eff.HttpRequest                          (HttpRequestEffect,
                                                     fromServantClient)
+import Hp.Eff.Throw                                (ThrowEffect)
 import Hp.GitHub.AccessToken                       (GitHubAccessToken)
 import Hp.GitHub.API                               (GitHubAPI)
 import Hp.GitHub.ClientId                          (GitHubClientId(..))
@@ -62,8 +63,8 @@ servantClient =
 
 gitHubGetUser ::
      ( Carrier sig m
-     , Member (Error Servant.ClientError) sig
      , Member HttpRequestEffect sig
+     , Member (ThrowEffect Servant.ClientError) sig
      )
   => GitHubAccessToken
   -> m (Either Servant.Response GitHubUser)
@@ -77,8 +78,8 @@ gitHubGetUser accessToken =
 
 gitHubPostLoginOauthAccessToken ::
      ( Carrier sig m
-     , Member (Error Servant.ClientError) sig
      , Member HttpRequestEffect sig
+     , Member (ThrowEffect Servant.ClientError) sig
      )
   => GitHubClientId
   -> GitHubClientSecret
