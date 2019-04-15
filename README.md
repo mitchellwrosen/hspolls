@@ -17,3 +17,6 @@ cabal v2-run
 - Event types (domain events of interest to other parts of the application) are
   defined in `Hp.Event.<EventName>` and use the past tense
 - Misc. types are defined in `Hp.<TypeName>`
+- HTTP API routes are given declarative verb names `<Name>Route`
+  - The corresponding route handler is defined in `Hp.Handler.<Name>`, which
+    exports a single function named `handle<Name>`

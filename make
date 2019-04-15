@@ -4,5 +4,5 @@
 
 set -ex
 
-dhall-to-yaml <<< ./docker-compose.dhall > ./docker-compose.yaml
-dhall-to-yaml <<< ./etc/prometheus.dhall > ./etc/prometheus.yaml
+dhall-to-yaml --explain <<< ./docker-compose.dhall > ./docker-compose.yaml
+dhall-to-yaml --explain <<< ./etc/prometheus.dhall > ./etc/prometheus.yaml

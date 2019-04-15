@@ -6,7 +6,7 @@ import Hp.Eff.PersistPoll        (PersistPollEffect, savePoll)
 import Hp.Eff.Throw              (ThrowEffect, throw)
 import Hp.Eff.Yield              (YieldEffect, yield)
 import Hp.Entity                 (Entity(..))
-import Hp.Entity.Poll            (Poll(..))
+import Hp.Entity.Poll            (Poll(..), PollId)
 import Hp.Entity.User            (User, UserId)
 import Hp.Event.PollCreated      (PollCreatedEvent(..))
 import Hp.PollFormElement        (arePollFormElementsValid)
@@ -14,7 +14,7 @@ import Hp.RequestBody.CreatePoll (CreatePollRequestBody(..))
 
 import Control.Effect
 import Prelude             hiding (id)
-import Servant             (NoContent(..), ServerError, err400)
+import Servant             (ServerError, err400)
 import Servant.Auth.Server (AuthResult(..))
 
 
@@ -26,7 +26,7 @@ handleCreatePoll ::
      )
   => AuthResult (Entity User)
   -> CreatePollRequestBody
-  -> m NoContent
+  -> m PollId
 handleCreatePoll authResult body = do
   validatePoll body
 
@@ -39,7 +39,7 @@ handleCreatePoll authResult body = do
   yield PollCreatedEvent
     { poll = poll }
 
-  pure NoContent
+  pure (poll ^. #key)
 
   where
     userId :: Maybe UserId

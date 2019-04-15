@@ -132,6 +132,7 @@ library
     Hp.Handler.AnswerPoll
     Hp.Handler.CreatePoll
     Hp.Handler.GetMetrics
+    Hp.Handler.GetPoll
     Hp.Handler.GetRoot
     Hp.Handler.GetUserProfile
     Hp.Handler.GitHubOauthCallback
@@ -146,6 +147,7 @@ library
     Hp.RequestBody.AnswerPoll
     Hp.RequestBody.CreatePoll
     Hp.RequestBody.Subscribe
+    Hp.ResponseBody.GetPoll
     Hp.Subscription
     Hp.TBroadcastChan
     Hp.UserProfile

@@ -30,6 +30,7 @@ import Hp.GitHub.ClientSecret         (GitHubClientSecret)
 import Hp.Handler.AnswerPoll          (handleAnswerPoll)
 import Hp.Handler.CreatePoll          (handleCreatePoll)
 import Hp.Handler.GetMetrics          (handleGetMetrics)
+import Hp.Handler.GetPoll             (handleGetPoll)
 import Hp.Handler.GetRoot             (handleGetRoot)
 import Hp.Handler.GetUserProfile      (handleGetUserProfile)
 import Hp.Handler.GitHubOauthCallback (handleGitHubOauthCallback)
@@ -186,8 +187,9 @@ application
     API
       { answerPollRoute = handleAnswerPoll
       , createPollRoute = handleCreatePoll
-      , getRootRoute = handleGetRoot
       , getMetricsRoute = handleGetMetrics
+      , getPollRoute = handleGetPoll
+      , getRootRoute = handleGetRoot
       , getUserProfileRoute = handleGetUserProfile
       , gitHubOauthCallbackRoute = handleGitHubOauthCallback
       , subscribeRoute = handleSubscribe

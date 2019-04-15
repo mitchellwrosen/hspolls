@@ -74,42 +74,34 @@ instance ToJSON PollFormElement where
 
 -- | Validate a list of form elements:
 --
--- * It's not empty
--- * Markdown is valid (i.e. not empty)
--- * Questions are valid
+-- * There's at least one question
 -- * There aren't two markdown elements in a row
+-- * Elements are all individually valid
 arePollFormElementsValid :: [PollFormElement] -> Bool
 arePollFormElementsValid elements =
-  case uncons elements of
-    Nothing ->
-      False
-
-    Just (elem0, elems) ->
-      and
-        [ isPollFormElementValid elem0
-        , go elem0 elems
-        ]
+  and
+    [ atLeastOneQuestion
+    , notTwoConsecutiveMarkdown
+    , all isPollFormElementValid elements
+    ]
 
   where
-    go :: PollFormElement -> [PollFormElement] -> Bool
-    go x xs =
-      case uncons xs of
-        Nothing ->
-          True
+    atLeastOneQuestion :: Bool
+    atLeastOneQuestion =
+      not (null [ () | QuestionElement{} <- elements ])
 
-        Just (y, ys) ->
-          and
-            [ isPollFormElementValid y
-            , case (x, y) of
-                (MarkdownElement{}, MarkdownElement{}) -> False
-                _ -> True
-            , go y ys
-            ]
+    notTwoConsecutiveMarkdown :: Bool
+    notTwoConsecutiveMarkdown =
+      null
+        [ () | (MarkdownElement{}, MarkdownElement{}) <- consecutive elements ]
+      where
+        consecutive :: [a] -> [(a, a)]
+        consecutive = \case
+          [] -> []
+          _:[] -> []
+          x:y:ys -> (x, y) : consecutive (y:ys)
 
--- | Validate a single form element:
---
--- * Markdown isn't empty
--- * Question is valid
+-- | Validate a single form element
 isPollFormElementValid :: PollFormElement -> Bool
 isPollFormElementValid = \case
   MarkdownElement markdown ->
@@ -118,5 +110,4 @@ isPollFormElementValid = \case
     isPollQuestionValid question
 
 isMarkdownValid :: Markdown -> Bool
-isMarkdownValid =
-  undefined
+isMarkdownValid _ = True -- TODO validate markdown

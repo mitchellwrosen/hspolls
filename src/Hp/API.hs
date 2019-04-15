@@ -9,6 +9,7 @@ import Hp.GitHub.Code            (GitHubCode)
 import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody)
 import Hp.RequestBody.CreatePoll (CreatePollRequestBody)
 import Hp.RequestBody.Subscribe  (SubscribeRequestBody)
+import Hp.ResponseBody.GetPoll   (GetPollResponseBody)
 import Hp.UserProfile            (UserProfile)
 
 import Servant
@@ -37,13 +38,19 @@ data API route
       :- Auth '[Cookie] (Entity User)
       :> "poll"
       :> ReqBody '[JSON] CreatePollRequestBody
-      :> Post '[JSON] NoContent
+      :> Post '[JSON] PollId
 
     -- | Get Prometheus metrics.
   , getMetricsRoute
       :: route
       :- "metrics"
       :> Get '[PlainText] Text
+
+  , getPollRoute
+      :: route
+      :- "poll"
+      :> Capture "PollId" PollId
+      :> Get '[JSON] GetPollResponseBody
 
   , getRootRoute
       :: route
