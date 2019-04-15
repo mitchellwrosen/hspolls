@@ -1,6 +1,6 @@
 { aws =
-    -- ./aws.dhall
-    -- ?
+    ./aws.dhall
+    ?
     { accessKeyId = "DummyAccessKeyId"
     , secretAccessKey = "DummySecretAccessKey"
     }

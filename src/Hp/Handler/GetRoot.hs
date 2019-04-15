@@ -2,8 +2,7 @@ module Hp.Handler.GetRoot
   ( handleGetRoot
   ) where
 
-import Hp.Entity      (Entity)
-import Hp.Entity.User (User)
+import Hp.Entity.User (UserId)
 
 import Control.Effect
 import Prelude                     hiding (div)
@@ -15,7 +14,7 @@ import Text.Blaze.Html5.Attributes
 handleGetRoot ::
      ( Carrier sig m
      )
-  => AuthResult (Entity User)
+  => AuthResult UserId
   -> m Html
 handleGetRoot auth =
   (pure . fold)

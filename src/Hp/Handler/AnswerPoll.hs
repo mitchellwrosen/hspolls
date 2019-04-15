@@ -10,7 +10,7 @@ import Hp.Eff.Yield              (YieldEffect, yield)
 import Hp.Entity                 (Entity(..))
 import Hp.Entity.Poll            (PollId, isPollExpired, pollQuestions)
 import Hp.Entity.PollAnswer      (PollAnswer(..))
-import Hp.Entity.User            (User)
+import Hp.Entity.User            (UserId)
 import Hp.Event.PollAnswered     (PollAnsweredEvent(..))
 import Hp.PollQuestionAnswer     (PollQuestionAnswer,
                                   arePollQuestionAnswersValid)
@@ -29,7 +29,7 @@ handleAnswerPoll ::
      , Member (ThrowEffect ServerError) sig
      , Member (YieldEffect PollAnsweredEvent) sig
      )
-  => AuthResult (Entity User)
+  => AuthResult UserId
   -> PollId
   -> AnswerPollRequestBody
   -> m NoContent
@@ -49,7 +49,7 @@ handleAnswerPoll authResult pollId body =
         putPollAnswer
           (body ^. #answers)
           pollId
-          (view #key <$> user)
+          userId
 
       yield PollAnsweredEvent
         { answer = pollAnswer }
@@ -57,10 +57,10 @@ handleAnswerPoll authResult pollId body =
       pure NoContent
 
   where
-    user :: Maybe (Entity User)
-    user = do
-      Authenticated user <- pure authResult
-      pure user
+    userId :: Maybe UserId
+    userId = do
+      Authenticated id <- pure authResult
+      pure id
 
 
 data AnswerPollError

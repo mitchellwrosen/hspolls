@@ -2,9 +2,8 @@ module Hp.API
   ( API(..)
   ) where
 
-import Hp.Entity                 (Entity)
 import Hp.Entity.Poll            (PollId)
-import Hp.Entity.User            (User)
+import Hp.Entity.User            (UserId)
 import Hp.GitHub.Code            (GitHubCode)
 import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody)
 import Hp.RequestBody.CreatePoll (CreatePollRequestBody)
@@ -26,7 +25,7 @@ data API route
   { -- | Answer a poll.
     answerPollRoute
       :: route
-      :- Auth '[Cookie] (Entity User)
+      :- Auth '[Cookie] UserId
       :> "poll"
       :> Capture "PollId" PollId
       :> ReqBody '[JSON] AnswerPollRequestBody
@@ -35,7 +34,7 @@ data API route
     -- | Create a poll.
   , createPollRoute
       :: route
-      :- Auth '[Cookie] (Entity User)
+      :- Auth '[Cookie] UserId
       :> "poll"
       :> ReqBody '[JSON] CreatePollRequestBody
       :> Post '[JSON] PollId
@@ -54,12 +53,12 @@ data API route
 
   , getRootRoute
       :: route
-      :- Auth '[Cookie] (Entity User)
+      :- Auth '[Cookie] UserId
       :> Get '[HTML] Blaze.Html
 
   , getUserProfileRoute
       :: route
-      :- Auth '[Cookie] (Entity User)
+      :- Auth '[Cookie] UserId
       :> "profile"
       :> Get '[JSON] UserProfile
 
@@ -85,7 +84,7 @@ data API route
     -- | Adjust subscription settings.
   , subscribeRoute
       :: route
-      :- Auth '[Cookie] (Entity User)
+      :- Auth '[Cookie] UserId
       :> "subscribe"
       :> ReqBody '[JSON] SubscribeRequestBody
       :> Post '[JSON] NoContent

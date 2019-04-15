@@ -4,8 +4,7 @@ module Hp.Handler.Subscribe
 
 import Hp.Eff.PersistUser       (PersistUserEffect, setUserSubscription)
 import Hp.Eff.Throw             (ThrowEffect, throw)
-import Hp.Entity                (Entity)
-import Hp.Entity.User           (User)
+import Hp.Entity.User           (UserId)
 import Hp.RequestBody.Subscribe (SubscribeRequestBody(..))
 import Hp.Subscription          (Subscription(..))
 
@@ -19,14 +18,14 @@ handleSubscribe ::
      , Member PersistUserEffect sig
      , Member (ThrowEffect ServerError) sig
      )
-  => AuthResult (Entity User)
+  => AuthResult UserId
   -> SubscribeRequestBody
   -> m NoContent
 handleSubscribe authResult body =
   case authResult of
-    Authenticated user -> do
+    Authenticated userId -> do
       setUserSubscription
-        (user ^. #key)
+        userId
         Subscription
           { pollCreated = body ^. #pollCreated }
 

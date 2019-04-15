@@ -7,7 +7,7 @@ import Hp.Eff.Throw              (ThrowEffect, throw)
 import Hp.Eff.Yield              (YieldEffect, yield)
 import Hp.Entity                 (Entity(..))
 import Hp.Entity.Poll            (Poll(..), PollId)
-import Hp.Entity.User            (User, UserId)
+import Hp.Entity.User            (UserId)
 import Hp.Event.PollCreated      (PollCreatedEvent(..))
 import Hp.PollFormElement        (arePollFormElementsValid)
 import Hp.RequestBody.CreatePoll (CreatePollRequestBody(..))
@@ -24,7 +24,7 @@ handleCreatePoll ::
      , Member (ThrowEffect ServerError) sig
      , Member (YieldEffect PollCreatedEvent) sig
      )
-  => AuthResult (Entity User)
+  => AuthResult UserId
   -> CreatePollRequestBody
   -> m PollId
 handleCreatePoll authResult body = do
@@ -44,8 +44,8 @@ handleCreatePoll authResult body = do
   where
     userId :: Maybe UserId
     userId = do
-      Authenticated user <- pure authResult
-      pure (user ^. #key)
+      Authenticated id <- pure authResult
+      pure id
 
 -- Validate a poll:
 --

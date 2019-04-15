@@ -41,6 +41,9 @@ instance
        (PersistUserEffect :+: sig) (PersistUserCarrierDB m) (PersistUserCarrierDB m a)
     -> PersistUserCarrierDB m a
   eff = \case
+    L (GetUserById userId next) ->
+      PersistUserCarrierDB (doGetUserById userId) >>= next
+
     L (GetUserEmailsSubscribedToPollCreatedEvents next) ->
       PersistUserCarrierDB doGetUserEmailsSubscribedToPollCreatedEvents >>= next
 
@@ -53,6 +56,15 @@ instance
 
     R other ->
       PersistUserCarrierDB (eff (handleCoercible other))
+
+doGetUserById ::
+     ( Carrier sig m
+     , Member DB sig
+     )
+  => UserId
+  -> m (Maybe (Entity User))
+doGetUserById userId =
+  runDB (statement userId (sqlGetUserById userId))
 
 doGetUserEmailsSubscribedToPollCreatedEvents ::
      ( Carrier sig m
@@ -76,7 +88,7 @@ doPutUserByGitHubUserName name email =
     session :: Session (Entity User)
     session =
       transaction Serializable Write $
-        Transaction.statement name sqlGetUserByGitHubUserName >>= \case
+        Transaction.statement name (sqlGetUserByGitHubUserName name) >>= \case
           Nothing -> do
             userId :: UserId <-
               Transaction.statement (email, Just name) sqlPutUser
@@ -115,14 +127,16 @@ runPersistUserDB (PersistUserCarrierDB m) =
 -- Statements
 --------------------------------------------------------------------------------
 
-sqlGetUserByGitHubUserName :: Statement GitHubUserName (Maybe (Entity User))
-sqlGetUserByGitHubUserName =
+sqlGetUserByGitHubUserName ::
+     GitHubUserName
+  -> Statement GitHubUserName (Maybe (Entity User))
+sqlGetUserByGitHubUserName gitHub =
   Statement sql encoder decoder True
 
   where
     sql :: ByteString
     sql =
-      "SELECT id, email, $1, subscribed_to_poll_created FROM users WHERE github = $1"
+      "SELECT id, email, subscribed_to_poll_created FROM users WHERE github = $1"
 
     encoder :: Encoder.Params GitHubUserName
     encoder =
@@ -135,9 +149,39 @@ sqlGetUserByGitHubUserName =
           <$> Decoder.column userIdDecoder
           <*> (do
                 email <- Decoder.nullableColumn Decoder.text
+                subscribedToPollCreated <- Decoder.column Decoder.bool
+                pure User
+                  { email = email
+                  , gitHub = Just gitHub
+                  , subscribedToPollCreated = subscribedToPollCreated
+                  }))
+
+sqlGetUserById :: UserId -> Statement UserId (Maybe (Entity User))
+sqlGetUserById userId =
+  Statement sql encoder decoder True
+
+  where
+    sql :: ByteString
+    sql =
+      "SELECT email, gitHub, subscribed_to_poll_created FROM users WHERE id = $1"
+
+    encoder :: Encoder.Params UserId
+    encoder =
+      Encoder.param userIdEncoder
+
+    decoder :: Decoder.Result (Maybe (Entity User))
+    decoder =
+      Decoder.rowMaybe
+        (Entity userId
+          <$> (do
+                email <- Decoder.nullableColumn Decoder.text
                 gitHub <- Decoder.nullableColumn gitHubUserNameDecoder
                 subscribedToPollCreated <- Decoder.column Decoder.bool
-                pure User{..}))
+                pure User
+                  { email = email
+                  , gitHub = gitHub
+                  , subscribedToPollCreated = subscribedToPollCreated
+                  }))
 
 sqlGetUserEmailsSubscribedToPollCreatedEvents :: Statement () [Text]
 sqlGetUserEmailsSubscribedToPollCreatedEvents =

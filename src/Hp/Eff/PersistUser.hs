@@ -1,5 +1,6 @@
 module Hp.Eff.PersistUser
   ( PersistUserEffect(..)
+  , getUserById
   , getUserEmailsSubscribedToPollCreatedEvents
   , putUserByGitHubUserName
   , setUserSubscription
@@ -16,6 +17,11 @@ import Control.Effect.Carrier
 
 
 data PersistUserEffect (m :: Type -> Type) (k :: Type) where
+  GetUserById ::
+       UserId
+    -> (Maybe (Entity User) -> k)
+    -> PersistUserEffect m k
+
   GetUserEmailsSubscribedToPollCreatedEvents ::
        ([Text] -> k)
     -> PersistUserEffect m k
@@ -35,6 +41,15 @@ data PersistUserEffect (m :: Type -> Type) (k :: Type) where
   deriving stock (Functor)
   deriving (Effect, HFunctor)
        via (FirstOrderEffect PersistUserEffect)
+
+getUserById ::
+     ( Carrier sig m
+     , Member PersistUserEffect sig
+     )
+  => UserId
+  -> m (Maybe (Entity User))
+getUserById userId =
+  send (GetUserById userId pure)
 
 -- | Get all email addresses to blast with a "new poll was created" event.
 getUserEmailsSubscribedToPollCreatedEvents ::
