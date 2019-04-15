@@ -77,7 +77,7 @@ doSavePoll ::
      , Member DB sig
      )
   => DiffTime
-  -> Seq PollFormElement
+  -> [PollFormElement]
   -> Maybe UserId
   -> m (Entity Poll)
 doSavePoll duration elements userId =
@@ -91,7 +91,7 @@ doSavePoll duration elements userId =
         statement
 
     statement ::
-         H.Statement (DiffTime, Seq PollFormElement, Maybe UserId) (Entity Poll)
+         H.Statement (DiffTime, [PollFormElement], Maybe UserId) (Entity Poll)
     statement =
       H.Statement sql encoder (Decoder.singleRow decoder) True
 
@@ -100,7 +100,7 @@ doSavePoll duration elements userId =
         sql =
           "INSERT INTO polls (duration, form, userId) VALUES ($1, $2, $3) RETURNING created_at, id"
 
-        encoder :: Encoder.Params (DiffTime, Seq PollFormElement, Maybe UserId)
+        encoder :: Encoder.Params (DiffTime, [PollFormElement], Maybe UserId)
         encoder =
           fold
             [ view _1 >$< Encoder.param Encoder.interval

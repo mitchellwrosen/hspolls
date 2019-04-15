@@ -1,6 +1,7 @@
 module Hp.PollQuestionAnswer
   ( PollQuestionAnswer(..)
-  , isValidPollQuestionAnswer
+  , arePollQuestionAnswersValid
+  , isPollQuestionAnswerValid
   ) where
 
 import Hp.PollQuestion (PollQuestion(..))
@@ -17,13 +18,20 @@ data PollQuestionAnswer
 instance FromJSON PollQuestionAnswer where
   parseJSON = undefined
 
+arePollQuestionAnswersValid ::
+     [PollQuestion]
+  -> [PollQuestionAnswer]
+  -> Bool
+arePollQuestionAnswersValid questions answers =
+  all (uncurry isPollQuestionAnswerValid) (zip questions answers)
+
 -- | Does this question/answer pair make sense?
 --
 -- Precondition: question was already validated with isValidPollQuestion
 --
 -- TODO gdp
-isValidPollQuestionAnswer :: PollQuestion -> PollQuestionAnswer -> Bool
-isValidPollQuestionAnswer question answer =
+isPollQuestionAnswerValid :: PollQuestion -> PollQuestionAnswer -> Bool
+isPollQuestionAnswerValid question answer =
   case (question, answer) of
     (CheckboxQuestion _ xs, CheckboxAnswer ys) ->
       length xs == length ys

@@ -23,7 +23,7 @@ data PersistPollEffect (m :: Type -> Type) (k :: Type) where
 
   SavePoll ::
        DiffTime
-    -> Seq PollFormElement
+    -> [PollFormElement]
     -> Maybe UserId
     -> (Entity Poll -> k)
     -> PersistPollEffect m k
@@ -46,7 +46,7 @@ savePoll ::
      , Member PersistPollEffect sig
      )
   => DiffTime
-  -> Seq PollFormElement
+  -> [PollFormElement]
   -> Maybe UserId
   -> m (Entity Poll)
 savePoll duration elements userId =

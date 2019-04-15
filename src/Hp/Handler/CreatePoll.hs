@@ -8,6 +8,7 @@ import Hp.Entity                 (Entity(..))
 import Hp.Entity.Poll            (Poll(..))
 import Hp.Entity.User            (User, UserId)
 import Hp.Event.PollCreated      (PollCreatedEvent(..))
+import Hp.PollFormElement        (arePollFormElementsValid)
 import Hp.RequestBody.CreatePoll (CreatePollRequestBody(..))
 
 import Control.Effect
@@ -49,7 +50,7 @@ handleCreatePoll authResult body = do
 -- Validate a poll:
 --
 -- * Duration is at least 1 minute
--- * Form has at least 1 element
+-- * Questions are all valid
 validatePoll ::
      ( Carrier sig m
      , Member (Error ServerError) sig
@@ -58,4 +59,4 @@ validatePoll ::
   -> m ()
 validatePoll body = do
   when ((body ^. #duration) < 60) (throwError err400)
-  when (null (body ^. #elements)) (throwError err400)
+  when (not (arePollFormElementsValid (body ^. #elements))) (throwError err400)

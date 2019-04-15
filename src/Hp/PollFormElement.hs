@@ -35,7 +35,7 @@ instance FromJSON PollFormElement where
           "markdown" ->
             parseMarkdownElement value
 
-          s ->
+          s
             fail ("Unknown type: " ++ s ^. unpacked)
         )
         type_
@@ -78,7 +78,7 @@ instance ToJSON PollFormElement where
 -- * Markdown is valid (i.e. not empty)
 -- * Questions are valid
 -- * There aren't two markdown elements in a row
-arePollFormElementsValid :: Seq PollFormElement -> Bool
+arePollFormElementsValid :: [PollFormElement] -> Bool
 arePollFormElementsValid elements =
   case uncons elements of
     Nothing ->
@@ -91,7 +91,7 @@ arePollFormElementsValid elements =
         ]
 
   where
-    go :: PollFormElement -> Seq PollFormElement -> Bool
+    go :: PollFormElement -> [PollFormElement] -> Bool
     go x xs =
       case uncons xs of
         Nothing ->

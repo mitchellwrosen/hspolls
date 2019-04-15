@@ -4,13 +4,15 @@ module Hp.Entity.Poll
   , PollId
   , pollIdDecoder
   , pollIdEncoder
+  , pollQuestions
   , isPollExpired
   ) where
 
 import Hp.Eff.GetCurrentTime (GetCurrentTimeEffect, getCurrentTime)
 import Hp.Entity.User        (UserId)
 import Hp.IsEntity           (IsEntity(..))
-import Hp.PollFormElement    (PollFormElement)
+import Hp.PollFormElement    (PollFormElement(..))
+import Hp.PollQuestion       (PollQuestion)
 
 import Control.Effect
 import Data.Aeson      (FromJSON)
@@ -26,7 +28,7 @@ data Poll
   = Poll
   { created :: UTCTime
   , duration :: DiffTime
-  , elements :: Seq PollFormElement
+  , elements :: [PollFormElement]
   , userId :: Maybe UserId
   } deriving stock (Generic, Show)
 
@@ -46,6 +48,12 @@ pollIdDecoder =
 pollIdEncoder :: Encoder.Value PollId
 pollIdEncoder =
   coerce Encoder.uuid
+
+pollQuestions ::
+     Poll
+  -> [PollQuestion]
+pollQuestions poll =
+  [ question | QuestionElement question <- poll ^. #elements ]
 
 isPollExpired ::
      ( Carrier sig m

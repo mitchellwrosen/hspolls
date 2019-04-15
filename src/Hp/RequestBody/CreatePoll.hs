@@ -11,6 +11,6 @@ import Data.Time  (DiffTime)
 data CreatePollRequestBody
   = PollRequestBody
   { duration :: DiffTime
-  , elements :: Seq PollFormElement
+  , elements :: [PollFormElement]
   } deriving stock (Generic, Show)
     deriving anyclass (FromJSON)

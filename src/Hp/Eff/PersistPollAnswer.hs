@@ -17,7 +17,7 @@ import Control.Effect.Carrier
 data PersistPollAnswerEffect (m :: Type -> Type) (k :: Type) where
   PutPollAnswer ::
        PollId
-    -> Seq PollQuestionAnswer
+    -> [PollQuestionAnswer]
     -> Maybe UserId
     -> (Entity PollAnswer -> k)
     -> PersistPollAnswerEffect m k
@@ -32,7 +32,7 @@ putPollAnswer ::
      , Member PersistPollAnswerEffect sig
      )
   => PollId
-  -> Seq PollQuestionAnswer
+  -> [PollQuestionAnswer]
   -> Maybe UserId
   -> m (Entity PollAnswer)
 putPollAnswer pollId response userId =

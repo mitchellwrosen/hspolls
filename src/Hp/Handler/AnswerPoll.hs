@@ -7,15 +7,16 @@ import Hp.Eff.PersistPoll        (PersistPollEffect, getPoll)
 import Hp.Eff.PersistPollAnswer  (PersistPollAnswerEffect, putPollAnswer)
 import Hp.Eff.Yield              (YieldEffect, yield)
 import Hp.Entity                 (Entity(..))
-import Hp.Entity.Poll            (PollId, isPollExpired)
+import Hp.Entity.Poll            (PollId, isPollExpired, pollQuestions)
 import Hp.Entity.PollAnswer      (PollAnswer(..))
 import Hp.Entity.User            (User)
 import Hp.Event.PollAnswered     (PollAnsweredEvent(..))
+import Hp.PollQuestionAnswer     (arePollQuestionAnswersValid)
 import Hp.RequestBody.AnswerPoll (AnswerPollRequestBody(..))
 
 import Control.Effect
 import Control.Effect.Error (throwError)
-import Servant              (NoContent(..), ServerError, err403, err404)
+import Servant              (NoContent(..), ServerError, err400, err403, err404)
 import Servant.Auth.Server  (AuthResult(..))
 
 
@@ -43,7 +44,11 @@ handleAnswerPoll authResult pollId body =
       when expired
         (throwError err403)
 
-      -- TODO validate poll answer
+      unless
+        (arePollQuestionAnswersValid
+          (pollQuestions (poll ^. #value))
+          (body ^. #response))
+        (throwError err400)
 
       pollAnswer :: Entity PollAnswer <-
         putPollAnswer pollId (body ^. #response) (view #key <$> user)

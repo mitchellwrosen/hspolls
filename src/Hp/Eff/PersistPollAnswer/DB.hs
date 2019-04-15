@@ -46,7 +46,7 @@ doPutPollAnswer ::
      , Member DB sig
      )
   => PollId
-  -> Seq PollQuestionAnswer
+  -> [PollQuestionAnswer]
   -> Maybe UserId
   -> m (Entity PollAnswer)
 doPutPollAnswer _pollId _response _userId =
