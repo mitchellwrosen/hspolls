@@ -10,21 +10,18 @@ import Hp.Eff.DB          (DB, runDB)
 import Hp.Eff.PersistUser
 import Hp.Entity          (Entity(..))
 import Hp.Entity.User     (User(..), UserId, userIdDecoder, userIdEncoder)
-import Hp.GitHub.UserName (GitHubUserName(..), gitHubUserNameDecoder,
-                           gitHubUserNameEncoder)
+import Hp.GitHub.User     (GitHubUser(..))
+import Hp.GitHub.UserName (gitHubUserNameDecoder, gitHubUserNameEncoder)
+import Hp.Hasql           (statement, transaction)
 import Hp.Subscription    (Subscription(..))
 
 import Control.Effect
 import Control.Effect.Carrier
 import Control.Effect.Sum
-import Hasql.Session              (Session, statement)
-import Hasql.Statement            (Statement(..))
-import Hasql.Transaction.Sessions (IsolationLevel(..), Mode(..), transaction)
-import Prelude                    hiding (id)
+import Prelude                hiding (id)
 
-import qualified Hasql.Decoders    as Decoder
-import qualified Hasql.Encoders    as Encoder
-import qualified Hasql.Transaction as Transaction (statement)
+import qualified Hasql.Decoders as Decoder
+import qualified Hasql.Encoders as Encoder
 
 
 newtype PersistUserCarrierDB m a
@@ -47,8 +44,8 @@ instance
     L (GetUserEmailsSubscribedToPollCreatedEvents next) ->
       PersistUserCarrierDB doGetUserEmailsSubscribedToPollCreatedEvents >>= next
 
-    L (PutUserByGitHubUserName name email next) ->
-      PersistUserCarrierDB (doPutUserByGitHubUserName name email) >>= next
+    L (PutUserByGitHubUser user next) ->
+      PersistUserCarrierDB (doPutUserByGitHubUser user) >>= next
 
     L (SetUserSubscription userId sub next) -> do
       PersistUserCarrierDB (doSetUserSubscription userId sub)
@@ -64,114 +61,12 @@ doGetUserById ::
   => UserId
   -> m (Maybe (Entity User))
 doGetUserById userId =
-  runDB (statement userId (sqlGetUserById userId))
-
-doGetUserEmailsSubscribedToPollCreatedEvents ::
-     ( Carrier sig m
-     , Member DB sig
-     )
-  => m [Text]
-doGetUserEmailsSubscribedToPollCreatedEvents =
-  runDB (statement () sqlGetUserEmailsSubscribedToPollCreatedEvents)
-
-doPutUserByGitHubUserName ::
-     ( Carrier sig m
-     , Member DB sig
-     )
-  => GitHubUserName
-  -> Maybe Text
-  -> m (Entity User)
-doPutUserByGitHubUserName name email =
-  runDB session
-
-  where
-    session :: Session (Entity User)
-    session =
-      transaction Serializable Write $
-        Transaction.statement name (sqlGetUserByGitHubUserName name) >>= \case
-          Nothing -> do
-            userId :: UserId <-
-              Transaction.statement (email, Just name) sqlPutUser
-
-            pure
-              (Entity userId User
-                { email = email
-                , gitHub = Just name
-                , subscribedToPollCreated = False
-                })
-
-          Just user ->
-            pure user
-
-doSetUserSubscription ::
-     ( Carrier sig m
-     , Member DB sig
-     )
-  => UserId
-  -> Subscription
-  -> m ()
-doSetUserSubscription userId sub =
-  runDB session
-
-  where
-    session :: Session ()
-    session =
-      statement (userId, sub) sqlSetUserSubscription
-
-runPersistUserDB :: PersistUserCarrierDB m a -> m a
-runPersistUserDB (PersistUserCarrierDB m) =
-  m
-
-
---------------------------------------------------------------------------------
--- Statements
---------------------------------------------------------------------------------
-
-sqlGetUserByGitHubUserName ::
-     GitHubUserName
-  -> Statement GitHubUserName (Maybe (Entity User))
-sqlGetUserByGitHubUserName gitHub =
-  Statement sql encoder decoder True
-
-  where
-    sql :: ByteString
-    sql =
-      "SELECT id, email, subscribed_to_poll_created FROM users WHERE github = $1"
-
-    encoder :: Encoder.Params GitHubUserName
-    encoder =
-      Encoder.param gitHubUserNameEncoder
-
-    decoder :: Decoder.Result (Maybe (Entity User))
-    decoder =
-      Decoder.rowMaybe
-        (Entity
-          <$> Decoder.column userIdDecoder
-          <*> (do
-                email <- Decoder.nullableColumn Decoder.text
-                subscribedToPollCreated <- Decoder.column Decoder.bool
-                pure User
-                  { email = email
-                  , gitHub = Just gitHub
-                  , subscribedToPollCreated = subscribedToPollCreated
-                  }))
-
-sqlGetUserById :: UserId -> Statement UserId (Maybe (Entity User))
-sqlGetUserById userId =
-  Statement sql encoder decoder True
-
-  where
-    sql :: ByteString
-    sql =
+  runDB $
+    statement
       "SELECT email, gitHub, subscribed_to_poll_created FROM users WHERE id = $1"
-
-    encoder :: Encoder.Params UserId
-    encoder =
-      Encoder.param userIdEncoder
-
-    decoder :: Decoder.Result (Maybe (Entity User))
-    decoder =
-      Decoder.rowMaybe
+      userId
+      (Encoder.param userIdEncoder)
+      (Decoder.rowMaybe
         (Entity userId
           <$> (do
                 email <- Decoder.nullableColumn Decoder.text
@@ -181,54 +76,90 @@ sqlGetUserById userId =
                   { email = email
                   , gitHub = gitHub
                   , subscribedToPollCreated = subscribedToPollCreated
-                  }))
+                  })))
 
-sqlGetUserEmailsSubscribedToPollCreatedEvents :: Statement () [Text]
-sqlGetUserEmailsSubscribedToPollCreatedEvents =
-  Statement sql Encoder.unit decoder True
-
-  where
-    sql :: ByteString
-    sql =
+doGetUserEmailsSubscribedToPollCreatedEvents ::
+     ( Carrier sig m
+     , Member DB sig
+     )
+  => m [Text]
+doGetUserEmailsSubscribedToPollCreatedEvents =
+  runDB $
+    statement
       "SELECT email FROM users WHERE subscribed_to_poll_created = true AND email IS NOT NULL"
-
-    decoder :: Decoder.Result [Text]
-    decoder =
+      ()
+      Encoder.unit
       -- TODO Decoder.rowVector
-      Decoder.rowList (Decoder.column Decoder.text)
+      (Decoder.rowList (Decoder.column Decoder.text))
 
-sqlPutUser :: Statement (Maybe Text, Maybe GitHubUserName) UserId
-sqlPutUser =
-  Statement sql encoder decoder True
 
-  where
-    sql :: ByteString
-    sql =
-      "INSERT INTO users (email, github) VALUES ($1, $2) RETURNING id"
+doPutUserByGitHubUser ::
+     ( Carrier sig m
+     , Member DB sig
+     )
+  => GitHubUser
+  -> m (Entity User)
+doPutUserByGitHubUser GitHubUser { email, login } =
+  runDB $
+    transaction $ do
+      result :: Maybe (Entity User) <-
+        statement
+          "SELECT id, email, subscribed_to_poll_created FROM users WHERE github = $1"
+          login
+          (Encoder.param gitHubUserNameEncoder)
+          (Decoder.rowMaybe
+            (Entity
+              <$> Decoder.column userIdDecoder
+              <*> (do
+                    email <- Decoder.nullableColumn Decoder.text
+                    subscribedToPollCreated <- Decoder.column Decoder.bool
+                    pure User
+                      { email = email
+                      , gitHub = Just login
+                      , subscribedToPollCreated = subscribedToPollCreated
+                      })))
 
-    encoder :: Encoder.Params (Maybe Text, Maybe GitHubUserName)
-    encoder =
-      fold
-        [ view _1 >$< Encoder.nullableParam Encoder.text
-        , view _2 >$< Encoder.nullableParam gitHubUserNameEncoder
-        ]
+      case result of
+        Nothing -> do
+          userId :: UserId <-
+            statement
+              "INSERT INTO users (email, github) VALUES ($1, $2) RETURNING id"
+              (email, Just login)
+              (fold
+                [ view _1 >$< Encoder.nullableParam Encoder.text
+                , view _2 >$< Encoder.nullableParam gitHubUserNameEncoder
+                ])
+              (Decoder.singleRow (Decoder.column userIdDecoder))
 
-    decoder :: Decoder.Result UserId
-    decoder =
-      Decoder.singleRow (Decoder.column userIdDecoder)
+          pure
+            (Entity userId User
+              { email = email
+              , gitHub = Just login
+              , subscribedToPollCreated = False
+              })
 
-sqlSetUserSubscription :: Statement (UserId, Subscription) ()
-sqlSetUserSubscription =
-  Statement sql encoder Decoder.unit True
+        Just user ->
+          pure user
 
-  where
-    sql :: ByteString
-    sql =
+doSetUserSubscription ::
+     ( Carrier sig m
+     , Member DB sig
+     )
+  => UserId
+  -> Subscription
+  -> m ()
+doSetUserSubscription userId sub =
+  runDB $
+    statement
       "UPDATE users SET subscribed_to_poll_created = $1 WHERE id = $2"
-
-    encoder :: Encoder.Params (UserId, Subscription)
-    encoder =
-      fold
+      (userId, sub)
+      (fold
         [ view (_2 . #pollCreated) >$< Encoder.param Encoder.bool
         , view _1 >$< Encoder.param userIdEncoder
-        ]
+        ])
+      Decoder.unit
+
+runPersistUserDB :: PersistUserCarrierDB m a -> m a
+runPersistUserDB (PersistUserCarrierDB m) =
+  m
+

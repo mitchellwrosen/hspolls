@@ -12,17 +12,16 @@ import Hp.Entity                (Entity(..))
 import Hp.Entity.Poll           (PollId, pollIdEncoder)
 import Hp.Entity.PollAnswer     (PollAnswer(..), pollAnswerIdDecoder)
 import Hp.Entity.User           (UserId, userIdEncoder)
+import Hp.Hasql                 (statement)
 import Hp.PollQuestionAnswer    (PollQuestionAnswer)
 
 import Control.Effect
 import Control.Effect.Carrier
 import Control.Effect.Sum
 import Data.Aeson             (eitherDecodeStrict, toJSON)
-import Hasql.Statement        (Statement(..))
 
 import qualified Hasql.Decoders as Decoder
 import qualified Hasql.Encoders as Encoder
-import qualified Hasql.Session  as Hasql (statement)
 
 
 newtype PersistPollAnswerCarrierDB m a
@@ -59,27 +58,14 @@ doGetPollAnswers ::
   => PollId
   -> m (Vector [PollQuestionAnswer])
 doGetPollAnswers pollId =
-  runDB (Hasql.statement pollId statement)
-
-  where
-    statement :: Statement PollId (Vector [PollQuestionAnswer])
-    statement =
-      Statement sql encoder decoder True
-
-      where
-        sql :: ByteString
-        sql =
-          "SELECT response FROM poll_responses WHERE pollId = $1"
-
-        encoder :: Encoder.Params PollId
-        encoder =
-          Encoder.param pollIdEncoder
-
-        decoder :: Decoder.Result (Vector [PollQuestionAnswer])
-        decoder =
-          Decoder.rowVector
-            (Decoder.column
-              (Decoder.jsonbBytes (over _Left (view packed) . eitherDecodeStrict)))
+  runDB $
+    statement
+      "SELECT response FROM poll_responses WHERE pollId = $1"
+      pollId
+      (Encoder.param pollIdEncoder)
+      (Decoder.rowVector
+        (Decoder.column
+          (Decoder.jsonbBytes (over _Left (view packed) . eitherDecodeStrict))))
 
 doPutPollAnswer ::
      ( Carrier sig m
@@ -90,45 +76,29 @@ doPutPollAnswer ::
   -> Maybe UserId
   -> m (Entity PollAnswer)
 doPutPollAnswer answers pollId userId =
-  runDB (Hasql.statement (pollId, answers, userId) statement)
-
-  where
-    statement ::
-         Statement
-           (PollId, [PollQuestionAnswer], Maybe UserId)
-           (Entity PollAnswer)
-    statement =
-      Statement sql encoder decoder True
-
-      where
-        sql :: ByteString
-        sql =
-          "INSERT INTO poll_responses (pollId, response, userId) VALUES ($1, $2, $3) RETURNING id, created_at"
-
-        encoder :: Encoder.Params (PollId, [PollQuestionAnswer], Maybe UserId)
-        encoder =
-          fold
-            [ view _1 >$< Encoder.param pollIdEncoder
-            , toJSON . view _2 >$< Encoder.param Encoder.jsonb
-            , view _3 >$< Encoder.nullableParam userIdEncoder
-            ]
-
-        decoder :: Decoder.Result (Entity PollAnswer)
-        decoder =
-          Decoder.singleRow
-            (do
-              pollAnswerId <- Decoder.column pollAnswerIdDecoder
-              created <- Decoder.column Decoder.timestamptz
-              pure Entity
-                { key = pollAnswerId
-                , value =
-                    PollAnswer
-                      { answers = answers
-                      , created = created
-                      , pollId = pollId
-                      , userId = userId
-                      }
-                })
+  runDB $
+    statement
+      "INSERT INTO poll_responses (pollId, response, userId) VALUES ($1, $2, $3) RETURNING id, created_at"
+      (pollId, answers, userId)
+      (fold
+        [ view _1 >$< Encoder.param pollIdEncoder
+        , toJSON . view _2 >$< Encoder.param Encoder.jsonb
+        , view _3 >$< Encoder.nullableParam userIdEncoder
+        ])
+      (Decoder.singleRow
+        (do
+          pollAnswerId <- Decoder.column pollAnswerIdDecoder
+          created <- Decoder.column Decoder.timestamptz
+          pure Entity
+            { key = pollAnswerId
+            , value =
+                PollAnswer
+                  { answers = answers
+                  , created = created
+                  , pollId = pollId
+                  , userId = userId
+                  }
+            }))
 
 runPersistPollAnswerDB :: PersistPollAnswerCarrierDB m a -> m a
 runPersistPollAnswerDB =

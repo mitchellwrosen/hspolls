@@ -2,14 +2,14 @@ module Hp.Eff.PersistUser
   ( PersistUserEffect(..)
   , getUserById
   , getUserEmailsSubscribedToPollCreatedEvents
-  , putUserByGitHubUserName
+  , putUserByGitHubUser
   , setUserSubscription
   ) where
 
 import Hp.Eff.FirstOrder  (FirstOrderEffect(..))
 import Hp.Entity          (Entity)
 import Hp.Entity.User     (User, UserId)
-import Hp.GitHub.UserName (GitHubUserName)
+import Hp.GitHub.User     (GitHubUser(..))
 import Hp.Subscription    (Subscription)
 
 import Control.Effect
@@ -26,9 +26,8 @@ data PersistUserEffect (m :: Type -> Type) (k :: Type) where
        ([Text] -> k)
     -> PersistUserEffect m k
 
-  PutUserByGitHubUserName ::
-       GitHubUserName
-    -> Maybe Text
+  PutUserByGitHubUser ::
+       GitHubUser
     -> (Entity User -> k)
     -> PersistUserEffect m k
 
@@ -61,19 +60,17 @@ getUserEmailsSubscribedToPollCreatedEvents =
   send (GetUserEmailsSubscribedToPollCreatedEvents pure)
 
 
--- | Insert and return a user, given its GitHub user name. If the user already
--- exists, just returns it.
---
--- TODO what if email changed?
-putUserByGitHubUserName ::
+-- | Insert and return a user, given its GitHub user name and email address. If
+-- the user already exists, just returns it (updating email address if
+-- necessary).
+putUserByGitHubUser ::
      ( Carrier sig m
      , Member PersistUserEffect sig
      )
-  => GitHubUserName
-  -> Maybe Text
+  => GitHubUser
   -> m (Entity User)
-putUserByGitHubUserName name email =
-  send (PutUserByGitHubUserName name email pure)
+putUserByGitHubUser user =
+  send (PutUserByGitHubUser user pure)
 
 -- | Set the user's email subscription settings.
 setUserSubscription ::

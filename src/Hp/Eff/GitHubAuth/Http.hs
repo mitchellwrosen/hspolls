@@ -23,7 +23,6 @@ import Control.Effect.Sum
 
 import qualified Servant.Client as Servant (ClientError, Response)
 
--- TODO log failures instead of discarding them
 
 newtype GitHubAuthCarrierHttp m a
   = GitHubAuthCarrierHttp

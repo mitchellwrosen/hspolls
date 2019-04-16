@@ -49,7 +49,6 @@ CREATE TABLE polls (
   PRIMARY KEY (id)
 );
 
--- TODO track some identiy of responder, to kinda sorta prevent duplicate voting
 CREATE TABLE poll_responses (
   id
     uuid

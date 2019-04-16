@@ -5,3 +5,8 @@ source-repository-package
   type: git
   location: https://github.com/fused-effects/fused-effects.git
   tag: 036b5cdc116d6bc2f9d40342967c9b6da0218808
+
+source-repository-package
+  type: git
+  location: https://github.com/mitchellwrosen/hasql-transaction.git
+  tag: fee5d3a5c88f959d827f78f123fdd8291a6804ba

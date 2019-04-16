@@ -138,6 +138,7 @@ library
     Hp.Handler.GetUserProfile
     Hp.Handler.GitHubOauthCallback
     Hp.Handler.Subscribe
+    Hp.Hasql
     Hp.IsEntity
     Hp.Main
     Hp.Metrics
