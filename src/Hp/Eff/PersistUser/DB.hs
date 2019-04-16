@@ -138,8 +138,22 @@ doPutUserByGitHubUser GitHubUser { email, login } =
               , subscribedToPollCreated = False
               })
 
-        Just user ->
-          pure user
+        Just user
+          | user ^. #value . #email == email ->
+              pure user
+
+            -- User changed their email address on GitHub apparently, so use it
+          | otherwise -> do
+              statement
+                "UPDATE users SET email = $1 WHERE id = $2"
+                (email, user ^. #key)
+                (fold
+                  [ view _1 >$< Encoder.nullableParam Encoder.text
+                  , view _2 >$< Encoder.param userIdEncoder
+                  ])
+                Decoder.unit
+
+              pure (user & #value . #email .~ email)
 
 doSetUserSubscription ::
      ( Carrier sig m
