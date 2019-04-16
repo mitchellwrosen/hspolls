@@ -9,14 +9,14 @@ module Hp.Eff.DB
 
 import Hp.Eff.FirstOrder (FirstOrderEffect(..))
 import Hp.Eff.Throw      (ThrowEffect, throw)
+import Hp.Hasql          (Session(..))
 
 import Control.Effect
 import Control.Effect.Carrier
 import Control.Effect.Reader
 import Control.Effect.Sum
-import Hasql.Session
 
-import qualified Hasql.Pool as Hasql
+import qualified Hasql.Pool    as Hasql
 
 data DB (m :: Type -> Type) (k :: Type) where
   RunDB ::
@@ -49,7 +49,7 @@ instance ( Carrier sig m
   eff = DBC . \case
     L (RunDB sess k) -> do
       pool :: Hasql.Pool <- ask
-      liftIO (Hasql.use pool sess) >>= \case
+      liftIO (Hasql.use pool (unSession sess)) >>= \case
         Left err -> throw err
         Right result -> unDBC (k result)
     R other -> eff (R (handleCoercible other))
