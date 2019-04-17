@@ -3,9 +3,9 @@
 module Hp.Config
   ( Config(..)
   , AwsConfig(..)
+  , GitHubConfig(..)
   , PostgresConfig(..)
   , readConfigFile
-  , prettyPrintConfig
   ) where
 
 import Hp.GitHub.ClientId     (GitHubClientId(..))
@@ -21,7 +21,6 @@ import Servant.Auth.Server     (CookieSettings(..), IsSecure(..),
 
 import qualified Crypto.JOSE.JWK as JWK
 import qualified Data.ByteString as ByteString
-import qualified Data.Text.IO    as Text
 import qualified Dhall
 import qualified Network.AWS     as AWS
 
@@ -31,7 +30,7 @@ import qualified Network.AWS     as AWS
 data UnvalidatedConfig
   = UnvalidatedConfig
   { aws :: UnvalidatedAwsConfig
-  , gitHub :: UnvalidatedGitHubConfig
+  , gitHub :: Maybe UnvalidatedGitHubConfig
   , port :: Natural
   , postgres :: UnvalidatedPostgresConfig
   , session :: UnvalidatedSessionConfig
@@ -77,7 +76,7 @@ data UnvalidatedSessionConfig
 data Config
   = Config
   { aws :: AwsConfig
-  , gitHub :: GitHubConfig
+  , gitHub :: Maybe GitHubConfig
   , port :: Natural
   , postgres :: PostgresConfig
   , session :: SessionConfig
@@ -124,8 +123,8 @@ validateConfig config = do
   aws :: AwsConfig <-
     validateAwsConfig (config ^. #aws)
 
-  gitHub :: GitHubConfig <-
-    validateGitHubConfig (config ^. #gitHub)
+  gitHub :: Maybe GitHubConfig <-
+    traverse validateGitHubConfig (config ^. #gitHub)
 
   postgres :: PostgresConfig <-
     validatePostgresConfig (config ^. #postgres)
@@ -241,53 +240,3 @@ validatePostgresConfig config =
     , poolSize = config ^. #poolSize
     , poolTimeout = config ^. #poolTimeout
     }
-
-prettyPrintConfig :: Config -> IO ()
-prettyPrintConfig config = do
-  Text.putStrLn "aws_access_key_id = <AccessKey>"
-  Text.putStrLn "aws_secret_access_key = <SecretKey>"
-  Text.putStrLn $
-    "github_client_id = " <> config ^. #gitHub . #clientId . to show . packed
-  Text.putStrLn $
-    "github_client_secret = " <>
-      config ^. #gitHub . #clientSecret . to show . packed
-  Text.putStrLn ("port = " <> config ^. #port . to show . packed)
-  Text.putStrLn $
-    "postgres_db_name = \"" <> config ^. #postgres . #dbName <> "\""
-  Text.putStrLn $
-    "postgres_host = \"" <> config ^. #postgres . #host <> "\""
-  Text.putStrLn $
-    "postgres_password = \"" <> config ^. #postgres . #password <> "\""
-  Text.putStrLn $
-    "postgres_pool_size = " <>
-      config ^. #postgres . #poolSize . to show . packed
-  Text.putStrLn $
-    "postgres_pool_timeout = " <>
-      config ^. #postgres . #poolTimeout . to show . packed
-  Text.putStrLn $
-    "postgres_port = " <>
-      config ^. #postgres . #port . to show . packed
-  Text.putStrLn $
-    "postgres_user = \"" <> config ^. #postgres . #user <> "\""
-  Text.putStrLn "session_jwk = <JWK>"
-  Text.putStrLn $
-    "session_name = \"" <>
-      config ^?! #session . #cookie . to sessionCookieName . utf8 <>
-      "\""
-  Text.putStrLn $
-    "session_secure = " <>
-      config ^. #session . #cookie . to cookieIsSecure . to renderIsSecure
-  Text.putStrLn $
-    "session_ttl = " <>
-      config ^. #session . #cookie . to cookieMaxAge . to show . packed
-  Text.putStrLn $
-    "session_xsrf = " <>
-      (case config ^. #session . #cookie . to cookieXsrfSetting of
-        Nothing -> "false"
-        Just _ -> "true")
-
-  where
-    renderIsSecure :: IsSecure -> Text
-    renderIsSecure = \case
-      Secure -> "true"
-      NotSecure -> "false"

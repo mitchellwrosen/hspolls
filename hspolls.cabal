@@ -93,6 +93,7 @@ library
     Hp.Eff.FirstOrder
     Hp.Eff.GetCurrentTime
     Hp.Eff.GitHubAuth
+    Hp.Eff.GitHubAuth.AlwaysFail
     Hp.Eff.GitHubAuth.Http
     Hp.Eff.HttpRequest
     Hp.Eff.HttpRequest.IO

@@ -7,10 +7,12 @@ module Hp.Main
   ) where
 
 import Hp.API
-import Hp.Config                      (Config(..), readConfigFile)
+import Hp.Config                      (Config(..), GitHubConfig(..),
+                                       readConfigFile)
 import Hp.Eff.Await.Chan              (runAwaitChan)
 import Hp.Eff.DB                      (runDBC)
 import Hp.Eff.GetCurrentTime          (GetCurrentTimeEffect(..))
+import Hp.Eff.GitHubAuth.AlwaysFail   (runGitHubAuthAlwaysFail)
 import Hp.Eff.GitHubAuth.Http         (runGitHubAuthHttp)
 import Hp.Eff.HttpRequest.IO          (runHttpRequestIO)
 import Hp.Eff.HttpSession.IO          (runHttpSessionIO)
@@ -25,8 +27,6 @@ import Hp.Eff.Yield.Chan              (runYieldChan)
 import Hp.Email                       (Email)
 import Hp.Event.PollAnswered          (PollAnsweredEvent)
 import Hp.Event.PollCreated           (PollCreatedEvent)
-import Hp.GitHub.ClientId             (GitHubClientId)
-import Hp.GitHub.ClientSecret         (GitHubClientSecret)
 import Hp.Handler.AnswerPoll          (handleAnswerPoll)
 import Hp.Handler.CreatePoll          (handleCreatePoll)
 import Hp.Handler.GetMetrics          (handleGetMetrics)
@@ -140,8 +140,7 @@ main = do
     (middleware
       (application
         (config ^. #session . #cookie)
-        (config ^. #gitHub . #clientId)
-        (config ^. #gitHub . #clientSecret)
+        (config ^. #gitHub)
         httpManager
         jwtSettings
         pgPool
@@ -162,8 +161,7 @@ middleware app request respond = do
 
 application ::
      CookieSettings
-  -> GitHubClientId
-  -> GitHubClientSecret
+  -> Maybe GitHubConfig
   -> Http.Manager
   -> JWTSettings
   -> Hasql.Pool
@@ -174,8 +172,7 @@ application ::
   -> IO Wai.ResponseReceived
 application
     cookieSettings
-    gitHubClientId
-    gitHubClientSecret
+    gitHubConfig
     httpManager
     jwtSettings
     postgresPool
@@ -201,7 +198,7 @@ application
   where
     eta :: forall a. _ a -> Servant.Handler a
     eta =   -- Outgoing HTTP requests
-          runGitHubAuthHttp gitHubClientId gitHubClientSecret
+          runGitHubAuth
       >>> runHttpRequestIO httpManager
 
           -- Persistence layer
@@ -239,3 +236,11 @@ application
       >>> runM
       >>> ExceptT
       >>> Servant.Handler
+
+    runGitHubAuth :: _ -> _ -- GHC wants this?
+    runGitHubAuth =
+      case gitHubConfig of
+        Nothing ->
+          runGitHubAuthAlwaysFail
+        Just GitHubConfig { clientId, clientSecret } ->
+          runGitHubAuthHttp clientId clientSecret

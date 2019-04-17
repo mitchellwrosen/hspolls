@@ -6,11 +6,9 @@
     }
 
 , gitHub =
-    ./github.dhall
+    Some ./github.dhall
     ?
-    { clientId = "DummyClientId"
-    , clientSecret = "DummyClientSecret"
-    }
+    None { clientId : Text, clientSecret : Text }
 
 , postgres =
     { host = "127.0.0.1"
