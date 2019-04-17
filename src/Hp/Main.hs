@@ -22,6 +22,7 @@ import Hp.Eff.PersistPoll.DB          (runPersistPollDB)
 import Hp.Eff.PersistPollAnswer.DB    (runPersistPollAnswerDB)
 import Hp.Eff.PersistUser.DB          (runPersistUserDB)
 import Hp.Eff.SendEmail.AmazonSES     (runSendEmailAmazonSES)
+import Hp.Eff.SendEmail.Noop          (runSendEmailNoop)
 import Hp.Eff.Throw                   (ThrowEffect(..), runThrow, throw)
 import Hp.Eff.Yield.Chan              (runYieldChan)
 import Hp.Email                       (Email)
@@ -79,13 +80,14 @@ main = do
   httpManager :: Http.Manager <-
     Http.newManager Http.tlsManagerSettings
 
-  awsEnv :: Aws.Env <-
-    Aws.newEnvWith
-      (Aws.FromKeys
-        (config ^. #aws . #accessKeyId)
-        (config ^. #aws . #secretAccessKey))
-      Nothing
-      httpManager
+  awsEnv :: Maybe Aws.Env <-
+    for (config ^. #aws) $ \awsConfig ->
+      Aws.newEnvWith
+        (Aws.FromKeys
+          (awsConfig ^. #accessKeyId)
+          (awsConfig ^. #secretAccessKey))
+        Nothing
+        httpManager
 
   jwtSettings :: JWTSettings <-
     either id pure (config ^. #session . #jwt)
@@ -131,7 +133,9 @@ main = do
 
     sendEmailWorker
       & runAwaitChan chan
-      & runSendEmailAmazonSES awsEnv
+      & case awsEnv of
+          Nothing -> runSendEmailNoop
+          Just awsEnv -> runSendEmailAmazonSES awsEnv
       & runLogStdout
       & runM
 

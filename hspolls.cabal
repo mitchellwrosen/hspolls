@@ -109,6 +109,7 @@ library
     Hp.Eff.PersistUser.DB
     Hp.Eff.SendEmail
     Hp.Eff.SendEmail.AmazonSES
+    Hp.Eff.SendEmail.Noop
     Hp.Eff.Throw
     Hp.Eff.Yield
     Hp.Eff.Yield.Chan

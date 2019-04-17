@@ -29,7 +29,7 @@ import qualified Network.AWS     as AWS
 -- values (e.g. the JWT must be a certain length string).
 data UnvalidatedConfig
   = UnvalidatedConfig
-  { aws :: UnvalidatedAwsConfig
+  { aws :: Maybe UnvalidatedAwsConfig
   , gitHub :: Maybe UnvalidatedGitHubConfig
   , port :: Natural
   , postgres :: UnvalidatedPostgresConfig
@@ -75,7 +75,7 @@ data UnvalidatedSessionConfig
 
 data Config
   = Config
-  { aws :: AwsConfig
+  { aws :: Maybe AwsConfig
   , gitHub :: Maybe GitHubConfig
   , port :: Natural
   , postgres :: PostgresConfig
@@ -120,8 +120,8 @@ readConfigFile path = do
 
 validateConfig :: UnvalidatedConfig -> Validation [Text] Config
 validateConfig config = do
-  aws :: AwsConfig <-
-    validateAwsConfig (config ^. #aws)
+  aws :: Maybe AwsConfig <-
+    traverse validateAwsConfig (config ^. #aws)
 
   gitHub :: Maybe GitHubConfig <-
     traverse validateGitHubConfig (config ^. #gitHub)

@@ -1,9 +1,7 @@
 { aws =
-    ./aws.dhall
+    Some ./aws.dhall
     ?
-    { accessKeyId = "DummyAccessKeyId"
-    , secretAccessKey = "DummySecretAccessKey"
-    }
+    None { accessKeyId : Text, secretAccessKey : Text }
 
 , gitHub =
     Some ./github.dhall
