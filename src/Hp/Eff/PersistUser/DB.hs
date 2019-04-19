@@ -12,7 +12,7 @@ import Hp.Entity          (Entity(..))
 import Hp.Entity.User     (User(..), UserId, userIdDecoder, userIdEncoder)
 import Hp.GitHub.User     (GitHubUser(..))
 import Hp.GitHub.UserName (gitHubUserNameDecoder, gitHubUserNameEncoder)
-import Hp.Hasql           (statement, transaction)
+import Hp.Hasql           (statement)
 import Hp.Subscription    (Subscription(..))
 
 import Control.Effect
@@ -100,60 +100,59 @@ doPutUserByGitHubUser ::
   => GitHubUser
   -> m (Entity User)
 doPutUserByGitHubUser GitHubUser { email, login } =
-  runDB $
-    transaction $ do
-      result :: Maybe (Entity User) <-
-        statement
-          "SELECT id, email, subscribed_to_poll_created FROM users WHERE github = $1"
-          login
-          (Encoder.param gitHubUserNameEncoder)
-          (Decoder.rowMaybe
-            (Entity
-              <$> Decoder.column userIdDecoder
-              <*> (do
-                    email <- Decoder.nullableColumn Decoder.text
-                    subscribedToPollCreated <- Decoder.column Decoder.bool
-                    pure User
-                      { email = email
-                      , gitHub = Just login
-                      , subscribedToPollCreated = subscribedToPollCreated
-                      })))
+  runDB $ do
+    result :: Maybe (Entity User) <-
+      statement
+        "SELECT id, email, subscribed_to_poll_created FROM users WHERE github = $1"
+        login
+        (Encoder.param gitHubUserNameEncoder)
+        (Decoder.rowMaybe
+          (Entity
+            <$> Decoder.column userIdDecoder
+            <*> (do
+                  email <- Decoder.nullableColumn Decoder.text
+                  subscribedToPollCreated <- Decoder.column Decoder.bool
+                  pure User
+                    { email = email
+                    , gitHub = Just login
+                    , subscribedToPollCreated = subscribedToPollCreated
+                    })))
 
-      case result of
-        Nothing -> do
-          userId :: UserId <-
+    case result of
+      Nothing -> do
+        userId :: UserId <-
+          statement
+            "INSERT INTO users (email, github) VALUES ($1, $2) RETURNING id"
+            (email, Just login)
+            (fold
+              [ view _1 >$< Encoder.nullableParam Encoder.text
+              , view _2 >$< Encoder.nullableParam gitHubUserNameEncoder
+              ])
+            (Decoder.singleRow (Decoder.column userIdDecoder))
+
+        pure
+          (Entity userId User
+            { email = email
+            , gitHub = Just login
+            , subscribedToPollCreated = False
+            })
+
+      Just user
+        | user ^. #value . #email == email ->
+            pure user
+
+          -- User changed their email address on GitHub apparently, so use it
+        | otherwise -> do
             statement
-              "INSERT INTO users (email, github) VALUES ($1, $2) RETURNING id"
-              (email, Just login)
+              "UPDATE users SET email = $1 WHERE id = $2"
+              (email, user ^. #key)
               (fold
                 [ view _1 >$< Encoder.nullableParam Encoder.text
-                , view _2 >$< Encoder.nullableParam gitHubUserNameEncoder
+                , view _2 >$< Encoder.param userIdEncoder
                 ])
-              (Decoder.singleRow (Decoder.column userIdDecoder))
+              Decoder.unit
 
-          pure
-            (Entity userId User
-              { email = email
-              , gitHub = Just login
-              , subscribedToPollCreated = False
-              })
-
-        Just user
-          | user ^. #value . #email == email ->
-              pure user
-
-            -- User changed their email address on GitHub apparently, so use it
-          | otherwise -> do
-              statement
-                "UPDATE users SET email = $1 WHERE id = $2"
-                (email, user ^. #key)
-                (fold
-                  [ view _1 >$< Encoder.nullableParam Encoder.text
-                  , view _2 >$< Encoder.param userIdEncoder
-                  ])
-                Decoder.unit
-
-              pure (user & #value . #email .~ email)
+            pure (user & #value . #email .~ email)
 
 doSetUserSubscription ::
      ( Carrier sig m

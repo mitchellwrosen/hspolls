@@ -9,18 +9,21 @@ module Hp.Eff.DB
 
 import Hp.Eff.FirstOrder (FirstOrderEffect(..))
 import Hp.Eff.Throw      (ThrowEffect, throw)
-import Hp.Hasql          (Session(..))
 
 import Control.Effect
 import Control.Effect.Carrier
 import Control.Effect.Reader
 import Control.Effect.Sum
+import Hasql.Transaction      (Transaction)
 
-import qualified Hasql.Pool    as Hasql
+import qualified Hasql.Pool                 as Hasql
+import qualified Hasql.Session              as Hasql (Session)
+import qualified Hasql.Transaction          as Hasql (Transaction)
+import qualified Hasql.Transaction.Sessions as Hasql (IsolationLevel(..), Mode(..), transaction)
 
 data DB (m :: Type -> Type) (k :: Type) where
   RunDB ::
-       Session a
+       Transaction a
     -> (a -> k)
     -> DB m k
 
@@ -32,7 +35,7 @@ runDB ::
      ( Carrier sig m
      , Member DB sig
      )
-  => Session a
+  => Transaction a
   -> m a
 runDB sess =
   send (RunDB sess pure)
@@ -49,10 +52,17 @@ instance ( Carrier sig m
   eff = DBC . \case
     L (RunDB sess k) -> do
       pool :: Hasql.Pool <- ask
-      liftIO (Hasql.use pool (unSession sess)) >>= \case
+      liftIO (Hasql.use pool (runTransaction sess)) >>= \case
         Left err -> throw err
         Right result -> unDBC (k result)
     R other -> eff (R (handleCoercible other))
+
+    where
+      runTransaction ::
+           Hasql.Transaction a
+        -> Hasql.Session a
+      runTransaction =
+        Hasql.transaction Hasql.Serializable Hasql.Write
 
 runDBC :: forall m a. Hasql.Pool -> DBC m a -> m a
 runDBC pool = runReader pool . unDBC
