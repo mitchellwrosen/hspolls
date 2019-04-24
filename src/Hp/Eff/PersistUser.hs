@@ -23,7 +23,7 @@ data PersistUserEffect (m :: Type -> Type) (k :: Type) where
     -> PersistUserEffect m k
 
   GetUserEmailsSubscribedToPollCreatedEvents ::
-       ([Text] -> k)
+       (Vector Text -> k)
     -> PersistUserEffect m k
 
   PutUserByGitHubUser ::
@@ -55,7 +55,7 @@ getUserEmailsSubscribedToPollCreatedEvents ::
      ( Carrier sig m
      , Member PersistUserEffect sig
      )
-  => m [Text]
+  => m (Vector Text)
 getUserEmailsSubscribedToPollCreatedEvents =
   send (GetUserEmailsSubscribedToPollCreatedEvents pure)
 

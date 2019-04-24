@@ -16,43 +16,33 @@ import Hp.Hasql           (statement)
 import Hp.Subscription    (Subscription(..))
 
 import Control.Effect
-import Control.Effect.Carrier
-import Control.Effect.Sum
-import Prelude                hiding (id)
+import Control.Effect.Interpret
+import Prelude                  hiding (id)
 
 import qualified Hasql.Decoders as Decoder
 import qualified Hasql.Encoders as Encoder
 
 
-newtype PersistUserCarrierDB m a
-  = PersistUserCarrierDB (m a)
-  deriving newtype (Applicative, Functor, Monad, MonadIO)
-
-instance
+runPersistUserDB ::
      ( Carrier sig m
      , Member DB sig
      )
-  => Carrier (PersistUserEffect :+: sig) (PersistUserCarrierDB m) where
+  => InterpretC PersistUserEffect m a
+  -> m a
+runPersistUserDB =
+  runInterpret $ \case
+    GetUserById userId next ->
+      doGetUserById userId >>= next
 
-  eff ::
-       (PersistUserEffect :+: sig) (PersistUserCarrierDB m) (PersistUserCarrierDB m a)
-    -> PersistUserCarrierDB m a
-  eff = \case
-    L (GetUserById userId next) ->
-      PersistUserCarrierDB (doGetUserById userId) >>= next
+    GetUserEmailsSubscribedToPollCreatedEvents next ->
+      doGetUserEmailsSubscribedToPollCreatedEvents >>= next
 
-    L (GetUserEmailsSubscribedToPollCreatedEvents next) ->
-      PersistUserCarrierDB doGetUserEmailsSubscribedToPollCreatedEvents >>= next
+    PutUserByGitHubUser user next ->
+      doPutUserByGitHubUser user >>= next
 
-    L (PutUserByGitHubUser user next) ->
-      PersistUserCarrierDB (doPutUserByGitHubUser user) >>= next
-
-    L (SetUserSubscription userId sub next) -> do
-      PersistUserCarrierDB (doSetUserSubscription userId sub)
+    SetUserSubscription userId sub next -> do
+      doSetUserSubscription userId sub
       next
-
-    R other ->
-      PersistUserCarrierDB (eff (handleCoercible other))
 
 doGetUserById ::
      ( Carrier sig m
@@ -82,15 +72,14 @@ doGetUserEmailsSubscribedToPollCreatedEvents ::
      ( Carrier sig m
      , Member DB sig
      )
-  => m [Text]
+  => m (Vector Text)
 doGetUserEmailsSubscribedToPollCreatedEvents =
   runDB $
     statement
       "SELECT email FROM users WHERE subscribed_to_poll_created = true AND email IS NOT NULL"
       ()
       Encoder.unit
-      -- TODO Decoder.rowVector
-      (Decoder.rowList (Decoder.column Decoder.text))
+      (Decoder.rowVector (Decoder.column Decoder.text))
 
 
 doPutUserByGitHubUser ::
@@ -171,8 +160,3 @@ doSetUserSubscription userId sub =
         , view _1 >$< Encoder.param userIdEncoder
         ])
       Decoder.unit
-
-runPersistUserDB :: PersistUserCarrierDB m a -> m a
-runPersistUserDB (PersistUserCarrierDB m) =
-  m
-

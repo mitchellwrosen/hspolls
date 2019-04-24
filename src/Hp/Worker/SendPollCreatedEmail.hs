@@ -24,7 +24,7 @@ sendPollCreatedEmailWorker =
     event :: PollCreatedEvent <-
       await
 
-    emailAddresses :: [Text] <-
+    emailAddresses :: Vector Text <-
       getUserEmailsSubscribedToPollCreatedEvents
 
     case handlePollCreatedEvent event emailAddresses of
@@ -36,13 +36,13 @@ sendPollCreatedEmailWorker =
 
 handlePollCreatedEvent ::
      PollCreatedEvent
-  -> [Text]
+  -> Vector Text
   -> Maybe Email
 handlePollCreatedEvent event addresses = do
   guard (not (null addresses))
 
   pure $ EmailTransactional TransactionalEmail
-    { bcc = addresses
+    { bcc = toListOf folded addresses
     , body =
         event ^. #poll . #key . Prelude.to show . packed <> " created"
     , from = "mitchellwrosen@gmail.com"
