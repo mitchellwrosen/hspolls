@@ -5,15 +5,15 @@
 
 module Hp.Eff.HttpRequest.IO
   ( runHttpRequestIO
+  , HttpConnectionError(..)
   ) where
 
 import Hp.Eff.HttpRequest (HttpRequestEffect(..))
 import Hp.Eff.Throw       (ThrowEffect, throw)
 
 import Control.Effect
-import Control.Effect.Carrier
-import Control.Effect.Reader
-import Control.Effect.Sum
+import Control.Effect.Interpret
+import Control.Exception.Safe   (tryAny)
 
 import qualified Network.HTTP.Client                as Http
 import qualified Servant.Client                     as Servant
@@ -21,34 +21,30 @@ import qualified Servant.Client.Core                as Servant (Request)
 import qualified Servant.Client.Internal.HttpClient as Servant (performRequest)
 
 
-newtype HttpRequestCarrierIO m a
-  = HttpRequestCarrierIO { unHttpRequestCarrierIO :: ReaderC Http.Manager m a }
-  deriving newtype (Applicative, Functor, Monad, MonadIO)
+newtype HttpConnectionError
+  = HttpConnectionError SomeException
+  deriving stock (Show)
 
-instance
+-- | Run HTTP requests in IO using the provided HTTP manager. Truly unexpected
+-- client errors (due to decoding failures, etc) are thrown, but negative
+-- responses from the server are not.
+runHttpRequestIO ::
      ( Carrier sig m
+     , Member (ThrowEffect HttpConnectionError) sig
      , Member (ThrowEffect Servant.ClientError) sig
      , MonadIO m
      )
-  => Carrier (HttpRequestEffect :+: sig) (HttpRequestCarrierIO m) where
+  => Http.Manager
+  -> InterpretC HttpRequestEffect m a
+  -> m a
+runHttpRequestIO manager =
+  runInterpret $ \case
+    HttpRequest baseUrl request next ->
+      doHttpRequest manager baseUrl request >>= next
 
-  eff ::
-       (HttpRequestEffect :+: sig) (HttpRequestCarrierIO m) (HttpRequestCarrierIO m a)
-    -> HttpRequestCarrierIO m a
-  eff = \case
-    L (HttpRequest baseUrl request next) -> do
-      HttpRequestCarrierIO $ do
-        manager :: Http.Manager <-
-          ask
-
-        doHttpRequestIO manager baseUrl request >>=
-          unHttpRequestCarrierIO . next
-
-    R other ->
-      HttpRequestCarrierIO (eff (R (handleCoercible other)))
-
-doHttpRequestIO ::
+doHttpRequest ::
      ( Carrier sig m
+     , Member (ThrowEffect HttpConnectionError) sig
      , Member (ThrowEffect Servant.ClientError) sig
      , MonadIO m
      )
@@ -56,16 +52,18 @@ doHttpRequestIO ::
   -> Servant.BaseUrl
   -> Servant.Request
   -> m (Either Servant.Response Servant.Response)
-doHttpRequestIO manager baseUrl request =
-  -- TODO catch IOExceptions
-  liftIO doRequest >>= \case
-    Left (Servant.FailureResponse _ response) ->
+doHttpRequest manager baseUrl request =
+  liftIO (tryAny doRequest) >>= \case
+    Left ex ->
+      throw (HttpConnectionError ex)
+
+    Right (Left (Servant.FailureResponse _ response)) ->
       pure (Left response)
 
-    Left clientError ->
+    Right (Left clientError) ->
       throw clientError
 
-    Right response ->
+    Right (Right response) ->
       pure (Right response)
 
   where
@@ -78,10 +76,3 @@ doHttpRequestIO manager baseUrl request =
           , Servant.baseUrl = baseUrl
           , Servant.cookieJar = Nothing
           }
-
-runHttpRequestIO ::
-     Http.Manager
-  -> HttpRequestCarrierIO m a
-  -> m a
-runHttpRequestIO manager =
-  runReader manager . unHttpRequestCarrierIO

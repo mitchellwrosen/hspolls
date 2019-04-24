@@ -14,7 +14,7 @@ import Hp.Eff.DB                      (runDBC)
 import Hp.Eff.GetCurrentTime          (GetCurrentTimeEffect(..))
 import Hp.Eff.GitHubAuth.AlwaysFail   (runGitHubAuthAlwaysFail)
 import Hp.Eff.GitHubAuth.Http         (runGitHubAuthHttp)
-import Hp.Eff.HttpRequest.IO          (runHttpRequestIO)
+import Hp.Eff.HttpRequest.IO          (HttpConnectionError, runHttpRequestIO)
 import Hp.Eff.HttpSession.IO          (runHttpSessionIO)
 import Hp.Eff.Log                     (log)
 import Hp.Eff.Log.Stdout              (runLogStdout)
@@ -222,6 +222,10 @@ application
       >>> runInterpret
             (\(Throw err) -> do
               log (show (err :: Hasql.UsageError) ^. packed)
+              throw Servant.err500)
+      >>> runInterpret
+            (\(Throw err) -> do
+              log (show (err :: HttpConnectionError) ^. packed)
               throw Servant.err500)
       >>> runInterpret
             (\(Throw err) -> do
