@@ -11,12 +11,11 @@ import Control.Effect.Interpret
 import Control.Exception.Safe       (try)
 import Control.Monad.Trans.Resource (runResourceT)
 
+import qualified Data.List                 as List
 import qualified Network.AWS               as Aws
 import qualified Network.AWS.SES.SendEmail as Aws
 import qualified Network.AWS.SES.Types     as Aws
 
-
--- TODO break email up into max 50 recipients each
 
 runSendEmailAmazonSES ::
      ( Carrier sig m
@@ -29,40 +28,75 @@ runSendEmailAmazonSES ::
 runSendEmailAmazonSES env =
   runInterpret $ \case
     SendEmail email next -> do
-      let
-        request :: Aws.SendEmail
-        request =
-          case email of
-            EmailPersonal email ->
-              Aws.sendEmail
-                (email ^. #from)
-                (Aws.destination
-                  & Aws.dToAddresses .~ [email ^. #to])
-                (Aws.message
-                  (Aws.content (email ^. #subject))
-                  (Aws.body
-                    & Aws.bText .~ Just (Aws.content (email ^. #body))))
+      doSendEmail env email
+      next
 
-            EmailTransactional email ->
-              Aws.sendEmail
-                (email ^. #from)
-                (Aws.destination
-                  & Aws.dBCCAddresses .~ email ^. #bcc)
-                (Aws.message
-                  (Aws.content (email ^. #subject))
-                  (Aws.body
-                    & Aws.bText .~ Just (Aws.content (email ^. #body))))
+doSendEmail ::
+     ( Carrier sig m
+     , Member LogEffect sig
+     , MonadIO m
+     )
+  => Aws.Env
+  -> Email
+  -> m ()
+doSendEmail env email =
+  case email of
+    EmailPersonal{} ->
+      doSendEmail_ env email
 
-      liftIO (try @_ @Aws.Error (runResourceT (Aws.runAWS env (Aws.send request)))) >>= \case
-        Left ex -> do
-          log (show ex ^. packed)
-          next
+    -- 50 recipients at a time
+    EmailTransactional email ->
+      (`fix` email) $ \loop email ->
+        case List.splitAt 50 (email ^. #bcc) of
+          (_, []) ->
+            doSendEmail_ env (EmailTransactional email)
 
-        Right response ->
-          case response ^. Aws.sersResponseStatus of
-            200 ->
-              next
+          (xs, ys) -> do
+            doSendEmail env (EmailTransactional (email & #bcc .~ xs))
+            loop (email & #bcc .~ ys)
 
-            _ -> do
-              log (show response ^. packed)
-              next
+-- Precondition: email has <= 50 recipients
+doSendEmail_ ::
+     ( Carrier sig m
+     , Member LogEffect sig
+     , MonadIO m
+     )
+  => Aws.Env
+  -> Email
+  -> m ()
+doSendEmail_ env email =
+  liftIO (try @_ @Aws.Error (runResourceT (Aws.runAWS env (Aws.send request)))) >>= \case
+    Left ex ->
+      log (show ex ^. packed)
+
+    Right response ->
+      case response ^. Aws.sersResponseStatus of
+        200 ->
+          pure ()
+
+        _ ->
+          log (show response ^. packed)
+
+  where
+    request :: Aws.SendEmail
+    request =
+      case email of
+        EmailPersonal email ->
+          Aws.sendEmail
+            (email ^. #from)
+            (Aws.destination
+              & Aws.dToAddresses .~ [email ^. #to])
+            (Aws.message
+              (Aws.content (email ^. #subject))
+              (Aws.body
+                & Aws.bText .~ Just (Aws.content (email ^. #body))))
+
+        EmailTransactional email ->
+          Aws.sendEmail
+            (email ^. #from)
+            (Aws.destination
+              & Aws.dBCCAddresses .~ email ^. #bcc)
+            (Aws.message
+              (Aws.content (email ^. #subject))
+              (Aws.body
+                & Aws.bText .~ Just (Aws.content (email ^. #body))))
