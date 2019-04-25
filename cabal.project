@@ -1,7 +1,1 @@
 packages: .
-
--- For unreleased Control.Effect.Interpret module
-source-repository-package
-  type: git
-  location: https://github.com/fused-effects/fused-effects.git
-  tag: 036b5cdc116d6bc2f9d40342967c9b6da0218808

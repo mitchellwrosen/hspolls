@@ -16,40 +16,26 @@ import Hp.Hasql                 (statement)
 import Hp.PollQuestionAnswer    (PollQuestionAnswer)
 
 import Control.Effect
-import Control.Effect.Carrier
-import Control.Effect.Sum
-import Data.Aeson             (eitherDecodeStrict, toJSON)
+import Control.Effect.Interpret
+import Data.Aeson               (eitherDecodeStrict, toJSON)
 
 import qualified Hasql.Decoders as Decoder
 import qualified Hasql.Encoders as Encoder
 
 
-newtype PersistPollAnswerCarrierDB m a
-  = PersistPollAnswerCarrierDB { unPersistPollAnswerCarrierDB :: m a }
-  deriving newtype (Applicative, Functor, Monad, MonadIO)
-
-instance
+runPersistPollAnswerDB ::
      ( Carrier sig m
      , Member DB sig
      )
-  => Carrier (PersistPollAnswerEffect :+: sig) (PersistPollAnswerCarrierDB m) where
+  => InterpretC PersistPollAnswerEffect m a
+  -> m a
+runPersistPollAnswerDB =
+  runInterpret $ \case
+    GetPollAnswers pollId next ->
+      doGetPollAnswers pollId >>= next
 
-  eff ::
-       (PersistPollAnswerEffect :+: sig)
-         (PersistPollAnswerCarrierDB m)
-         (PersistPollAnswerCarrierDB m a)
-    -> PersistPollAnswerCarrierDB m a
-  eff = \case
-    L (GetPollAnswers pollId next) ->
-      PersistPollAnswerCarrierDB (doGetPollAnswers pollId) >>=
-        next
-
-    L (PutPollAnswer answers pollId userId next) ->
-      PersistPollAnswerCarrierDB (doPutPollAnswer answers pollId userId) >>=
-        next
-
-    R other ->
-      PersistPollAnswerCarrierDB (eff (handleCoercible other))
+    PutPollAnswer answers pollId userId next ->
+      doPutPollAnswer answers pollId userId >>= next
 
 doGetPollAnswers ::
      ( Carrier sig m
@@ -99,7 +85,3 @@ doPutPollAnswer answers pollId userId =
                   , userId = userId
                   }
             }))
-
-runPersistPollAnswerDB :: PersistPollAnswerCarrierDB m a -> m a
-runPersistPollAnswerDB =
-  unPersistPollAnswerCarrierDB

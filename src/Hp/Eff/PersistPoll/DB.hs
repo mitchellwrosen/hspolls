@@ -1,8 +1,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Hp.Eff.PersistPoll.DB
-  ( PersistPollCarrierDB
-  , runPersistPollDB
+  ( runPersistPollDB
   ) where
 
 import Hp.Eff.DB
@@ -14,34 +13,27 @@ import Hp.Hasql           (statement)
 import Hp.PollFormElement (PollFormElement)
 
 import Control.Effect
-import Control.Effect.Carrier
-import Control.Effect.Sum
-import Data.Aeson             (eitherDecodeStrict, toJSON)
-import Data.Time              (DiffTime)
+import Control.Effect.Interpret
+import Data.Aeson               (eitherDecodeStrict, toJSON)
+import Data.Time                (DiffTime)
 
 import qualified Hasql.Decoders as Decoder
 import qualified Hasql.Encoders as Encoder
 
 
-newtype PersistPollCarrierDB m a
-  = PersistPollCarrierDB
-  { unPersistPollCarrierDB :: m a
-  } deriving newtype (Functor, Applicative, Monad, MonadIO)
+runPersistPollDB ::
+     ( Carrier sig m
+     , Member DB sig
+     )
+  => InterpretC PersistPollEffect m a
+  -> m a
+runPersistPollDB =
+  runInterpret $ \case
+    GetPoll pollId next ->
+      doGetPoll pollId >>= next
 
-instance ( Carrier sig m
-         , Member DB sig
-         ) => Carrier (PersistPollEffect :+: sig) (PersistPollCarrierDB m) where
-  eff = PersistPollCarrierDB . \case
-    L (GetPoll pollId k) ->
-      doGetPoll pollId >>=
-        unPersistPollCarrierDB . k
-
-    L (SavePoll duration elements userId k) ->
-      doSavePoll duration elements userId >>=
-        unPersistPollCarrierDB . k
-
-    R other ->
-      eff (handleCoercible other)
+    SavePoll duration elements userId next ->
+      doSavePoll duration elements userId >>= next
 
 doGetPoll ::
      ( Carrier sig m
@@ -97,9 +89,3 @@ doSavePoll duration elements userId =
                   , userId = userId
                   }
             }))
-
-runPersistPollDB ::
-     PersistPollCarrierDB m a
-  -> m a
-runPersistPollDB =
-  unPersistPollCarrierDB

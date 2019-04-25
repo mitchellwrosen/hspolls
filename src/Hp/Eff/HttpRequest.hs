@@ -78,4 +78,3 @@ fromServantClient baseUrl = \case
 
   Pure _ -> impossible
   Free Servant.Throw{} -> impossible
-

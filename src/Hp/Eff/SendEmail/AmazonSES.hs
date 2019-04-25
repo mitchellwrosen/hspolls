@@ -52,7 +52,7 @@ doSendEmail env email =
             doSendEmail_ env (EmailTransactional email)
 
           (xs, ys) -> do
-            doSendEmail env (EmailTransactional (email & #bcc .~ xs))
+            doSendEmail_ env (EmailTransactional (email & #bcc .~ xs))
             loop (email & #bcc .~ ys)
 
 -- Precondition: email has <= 50 recipients
